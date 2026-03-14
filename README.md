@@ -5,7 +5,7 @@ A 2D turn-based roguelite where mages wield wands loaded with spell graphs to fi
 ## Gameplay Loop
 
 ```
-Battle → Loot → Level up Phase -> Path Selection → Battle → ...
+Battle → Loot → Level Up → Path Selection → Battle → ...
 ```
 
 - **Battle** — clear all monsters to continue; all mages die = run over
@@ -78,9 +78,9 @@ All other slots hold effect spells. Their position in the graph determines how t
 This makes the graph layout and mana placement the core strategic decisions.
 
 **Spell Interactions**
-Spells in a wand influence each other when fired together:
-- *Synergy*: e.g. a poison spell + a poison amplifier spell multiply their effect
-- *Cancellation*: e.g. a fire spell + a water spell in the same wand cancel each other out
+Spells carry element tags (e.g. `fire`, `water`, `poison`, `amplify`). Interaction rules operate on tags, not specific spells — a new spell automatically participates in any interaction matching its tags. Examples:
+- *Synergy*: `poison` + `amplify` → multiply effect
+- *Cancellation*: `fire` + `water` → cancel each other out
 
 **Line of Sight**
 A target cannot be hit if a monster or obstacle (tree, stone, wall, etc.) occupies a cell in front of it.
@@ -99,17 +99,25 @@ Each mage:
 - All three mages can act in a single player turn
 - The player chooses where on the board to center the tip's hit pattern
 
-**HP:** Each mage has their own HP value. HP can increase via leveling up (details TBD). *(Level up phase to be designed separately.)*
+**HP:** Each mage has their own HP value.
+
+**Level Up Phase:** After each battle, the player upgrades one base stat of one mage. Upgradeable stats:
+- Max health
+- Max mana spend per round
 
 ### Enemies
 Placed on a 3x5 grid. Stationary during battle. Cleared when HP reaches zero.
 
-**Turn order:**
+**Turn order (always telegraph → act → resolve, no interleaving):**
 1. Each enemy rolls one of their actions and telegraphs it (target mage visible to player)
-2. Mages take their turn
-3. Enemy actions resolve — unless the enemy is disabled (stunned, blinded, dead, etc.)
+2. All mages take their turn (player acts freely across all three mages)
+3. All enemy actions resolve simultaneously — unless the enemy is disabled (stunned, blinded, dead, etc.)
 
 **Actions:** Each monster has a short list (1–3) of possible actions (attack, shield, spellcast, etc.). One is selected randomly each turn.
+
+**Status effects:**
+- *Stunned* — enemy action does not resolve this turn
+- *Blinded* — enemy either misses entirely (50%) or hits a random mage instead of the telegraphed target (50%)
 
 **Size:** Monsters can occupy multiple grid fields. Example: a shield ogre is 2 fields wide and blocks attacks for enemies behind it.
 
@@ -123,12 +131,14 @@ Placed on a 3x5 grid. Stationary during battle. Cleared when HP reaches zero.
 ### Mana Pool
 All three mages share a single mana pool that persists between battles.
 
-- Replenishes gradually each round (base rate TBD)
-- Each mage's focus element adds mana every round
-- Receives a large refill (e.g. 50%) after each battle
-- **Mana cap** is determined by mage items
+- **Starting mana:** 10
+- **Replenishment:** 2 mana per mage per turn (6/turn with a full party of 3)
+- Each mage's focus element adds additional mana every round
+- **Post-battle refill:** 50% of max mana (e.g. +5 if max is 10)
+- **Mana cap** is determined by mage items (TBD — treat as a future variable in design choices until then)
+- Each mage has a **max mana spend per round** stat that limits how much of the pool they can draw in a single turn; this stat is upgradeable
 
-**On each turn:** the player freely allocates mana across any number of wands. If at least one slot on a wand is fully charged, that wand can be zapped. Multiple wands can be zapped in the same turn.
+**On each turn:** the player freely allocates mana across any number of wands, up to each mage's spend cap. If at least one slot on a wand is fully charged, that wand can be zapped. Multiple wands can be zapped in the same turn.
 
 ## Planned Features
 
