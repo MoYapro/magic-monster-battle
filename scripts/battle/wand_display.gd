@@ -94,7 +94,7 @@ func _compute_bounds() -> Rect2:
 	return Rect2(Vector2.ZERO, Vector2(w, h))
 
 
-func _input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
 	if _data == null:
 		return
 	if not (event is InputEventMouseButton and event.pressed

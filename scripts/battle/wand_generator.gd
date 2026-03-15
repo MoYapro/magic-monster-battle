@@ -8,6 +8,15 @@ class_name WandGenerator
 #
 # Column counts and row counts per column are randomised within bounds.
 
+static func generate_starter(rng: RandomNumberGenerator) -> WandData:
+	var wand := generate(rng, 2, 2, 2, 2)
+	for slot: SpellSlotData in wand.slots:
+		if slot.is_tip:
+			slot.spell = SpellData.new("Single", "·", ["tip", "single"],
+					Color(0.90, 0.90, 0.90), [Vector2i(0, 0)], "", 6, 1)
+	return wand
+
+
 static func generate(rng: RandomNumberGenerator, min_cols: int = 2, max_cols: int = 3,
 		min_rows: int = 1, max_rows: int = 3) -> WandData:
 	var slots: Array[SpellSlotData] = []

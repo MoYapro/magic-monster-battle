@@ -53,6 +53,7 @@ var _drag_source: String = ""   # "loot" | "backpack"
 var _dragging_wand: WandData = null
 var _drag_wand_source: int = -2  # -1 = from loot; >= 0 = mage index
 var _drag_pos: Vector2 = Vector2.ZERO
+var _continue_btn: Button = null
 
 
 func _ready() -> void:
@@ -94,7 +95,17 @@ func _input(event: InputEvent) -> void:
 
 
 func _try_start_drag(pos: Vector2) -> void:
-	# Loot wand displays
+	# Spell slots inside any wand (checked before whole-wand drag)
+	var spell := _try_pick_spell_from_wand(pos)
+	if spell != null:
+		_dragging = spell
+		_drag_source = "loot"
+		_drag_pos = pos
+		get_viewport().set_input_as_handled()
+		queue_redraw()
+		return
+
+	# Loot wand displays (click on wand background = drag whole wand)
 	var wand_idx := _loot_wand_index_at(pos)
 	if wand_idx >= 0:
 		_dragging_wand = GameState.pending_loot_wands[wand_idx]
@@ -218,10 +229,27 @@ func _rebuild_equip_wands() -> void:
 	_mage_row_ys.clear()
 	_mage_row_hs.clear()
 	_build_equip_wands()
+	_refresh_continue_btn()
 	queue_redraw()
 
 
 # --- hit testing helpers ---
+
+func _try_pick_spell_from_wand(pos: Vector2) -> SpellData:
+	var all_wands: Array[WandDisplay] = []
+	all_wands.append_array(_loot_wand_displays)
+	for wd: WandDisplay in _equip_wand_displays:
+		if wd != null:
+			all_wands.append(wd)
+	for wd: WandDisplay in all_wands:
+		var slot := wd.get_slot_at(wd.to_local(pos))
+		if slot != null and slot.spell != null:
+			var spell := slot.spell
+			slot.spell = null
+			wd.queue_redraw()
+			return spell
+	return null
+
 
 func _loot_wand_index_at(pos: Vector2) -> int:
 	for i in _loot_wand_displays.size():
@@ -467,12 +495,27 @@ func _draw_bottom_bar_bg() -> void:
 func _build_bottom_bar() -> void:
 	var layer := CanvasLayer.new()
 	add_child(layer)
-	var btn := Button.new()
-	btn.text = "Continue →"
-	btn.size = Vector2(148, BOTTOM_BAR_H - 10)
-	btn.position = Vector2(SCREEN_W - 156.0, SCREEN_H - BOTTOM_BAR_H + 5.0)
-	btn.pressed.connect(_on_continue_pressed)
-	layer.add_child(btn)
+	_continue_btn = Button.new()
+	_continue_btn.text = "Continue →"
+	_continue_btn.size = Vector2(148, BOTTOM_BAR_H - 10)
+	_continue_btn.position = Vector2(SCREEN_W - 156.0, SCREEN_H - BOTTOM_BAR_H + 5.0)
+	_continue_btn.pressed.connect(_on_continue_pressed)
+	layer.add_child(_continue_btn)
+	_refresh_continue_btn()
+
+
+func _refresh_continue_btn() -> void:
+	if _continue_btn == null:
+		return
+	if not GameState.is_initial_setup:
+		_continue_btn.disabled = false
+		return
+	for i in GameState.mages.size():
+		var has_wand := i < GameState.wands.size() and GameState.wands[i] != null
+		if not has_wand:
+			_continue_btn.disabled = true
+			return
+	_continue_btn.disabled = false
 
 
 func _on_continue_pressed() -> void:

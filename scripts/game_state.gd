@@ -41,4 +41,4 @@ func _init_new_game() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	for _i in 4:
-		pending_loot_wands.append(WandGenerator.generate(rng))
+		pending_loot_wands.append(WandGenerator.generate_starter(rng))
