@@ -30,7 +30,7 @@ func set_hovered_cells(cells: Array[Vector2i]) -> void:
 	queue_redraw()
 
 
-func get_hit_cells(target: Vector2i, pattern: Array[Vector2i]) -> Array[Vector2i]:
+static func get_hit_cells(target: Vector2i, pattern: Array[Vector2i]) -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
 	for offset in pattern:
 		var cell := target + offset

@@ -10,11 +10,20 @@ const MANA_X := MARGIN
 const MAGE_X := MANA_X + ManaDisplay.WIDTH + 8.0
 const WAND_X := MAGE_X + MageDisplay.WIDTH + 10.0
 const ROW_GAP := 14.0
+const BOTTOM_BAR_H := 38.0
 
 @onready var enemy_grid: EnemyGrid = $EnemyGrid
 
+var _mages: Array[MageData] = []
 var _mage_displays: Array[MageDisplay] = []
 var _wand_displays: Array[WandDisplay] = []
+var _mana_display: ManaDisplay = null
+var _panel_height: float = 0.0
+
+var _setup: BattleSetup = null
+var _history: BattleHistory = null
+var _undo_button: Button = null
+
 var _targeting_wand: WandDisplay = null
 var _hovered_mage: MageDisplay = null
 var _hovered_wand: WandDisplay = null
@@ -22,17 +31,57 @@ var _hovered_cells: Array[Vector2i] = []
 
 
 func _ready() -> void:
+	_build_bottom_bar()
 	_setup_mage_wand_rows()
-	_populate_test_enemies()
+	_build_setup()
 
+
+# --- bottom bar ---
+
+func _build_bottom_bar() -> void:
+	var layer := CanvasLayer.new()
+	add_child(layer)
+
+	var bg := ColorRect.new()
+	bg.color = Color(0.08, 0.09, 0.10)
+	bg.position = Vector2(0, SCREEN_H - BOTTOM_BAR_H)
+	bg.size = Vector2(SCREEN_W, BOTTOM_BAR_H)
+	layer.add_child(bg)
+
+	var sep := ColorRect.new()
+	sep.color = Color(0.25, 0.28, 0.32)
+	sep.position = Vector2(0, SCREEN_H - BOTTOM_BAR_H)
+	sep.size = Vector2(SCREEN_W, 1)
+	layer.add_child(sep)
+
+	_undo_button = Button.new()
+	_undo_button.text = "↩ Undo  Ctrl+Z"
+	_undo_button.size = Vector2(148, BOTTOM_BAR_H - 10)
+	_undo_button.position = Vector2(SCREEN_W - 156, SCREEN_H - BOTTOM_BAR_H + 5)
+	_undo_button.pressed.connect(_on_undo_pressed)
+	layer.add_child(_undo_button)
+
+
+func _on_undo_pressed() -> void:
+	if _history != null and _history.can_undo():
+		_apply_state(_history.undo())
+
+
+func _refresh_ui() -> void:
+	if _undo_button != null and _history != null:
+		_undo_button.disabled = not _history.can_undo()
+
+
+# --- layout ---
 
 func _setup_mage_wand_rows() -> void:
-	var mages := _make_mage_data()
+	_mages = _make_mage_data()
 	var wand_displays := _create_wand_displays(_make_wand_data())
 	var total_h := _measure_total_height(wand_displays)
-	var start_y := MARGIN + (SCREEN_H - MARGIN * 2.0 - total_h) / 2.0
+	var usable_h := SCREEN_H - BOTTOM_BAR_H
+	var start_y := MARGIN + (usable_h - MARGIN * 2.0 - total_h) / 2.0
 	_place_mana_bar(start_y, total_h)
-	_place_rows(wand_displays, mages, start_y)
+	_place_rows(wand_displays, _mages, start_y)
 	_position_enemy_grid(start_y, total_h)
 
 
@@ -54,10 +103,11 @@ func _measure_total_height(wand_displays: Array[WandDisplay]) -> float:
 
 
 func _place_mana_bar(start_y: float, total_h: float) -> void:
-	var mana := ManaDisplay.new()
-	add_child(mana)
-	mana.position = Vector2(MANA_X, start_y)
-	mana.setup(10, 10, total_h)
+	_panel_height = total_h
+	_mana_display = ManaDisplay.new()
+	add_child(_mana_display)
+	_mana_display.position = Vector2(MANA_X, start_y)
+	_mana_display.setup(10, 10, total_h)
 
 
 func _place_rows(wand_displays: Array[WandDisplay], mages: Array[MageData], start_y: float) -> void:
@@ -85,6 +135,49 @@ func _position_enemy_grid(panel_top: float, panel_h: float) -> void:
 	)
 	enemy_grid.queue_redraw()
 
+
+# --- battle state ---
+
+func _build_setup() -> void:
+	var enemies: Array[EnemyData] = [
+		EnemyData.new("goblin_1",   "Goblin",       40,  Vector2i(1, 1), Color(0.2,  0.65, 0.2)),
+		EnemyData.new("skeleton_1", "Skeleton",     35,  Vector2i(1, 1), Color(0.8,  0.8,  0.7)),
+		EnemyData.new("witch_1",    "Witch",         50,  Vector2i(1, 1), Color(0.55, 0.1,  0.7)),
+		EnemyData.new("ogre_1",     "Shield Ogre",  100, Vector2i(2, 1), Color(0.65, 0.25, 0.15)),
+		EnemyData.new("troll_1",    "Troll",         80,  Vector2i(1, 2), Color(0.3,  0.5,  0.2)),
+	]
+	var positions: Array[Vector2i] = [
+		Vector2i(0, 0), Vector2i(1, 1), Vector2i(2, 3), Vector2i(0, 3), Vector2i(2, 0),
+	]
+	var wands: Array[WandData] = []
+	for wd: WandDisplay in _wand_displays:
+		wands.append(wd.get_wand_data())
+	_setup = BattleSetup.new(enemies, positions, _mages, wands, 10)
+	_history = BattleHistory.new(_setup.make_initial_state(), _setup)
+	_apply_state(_history.current_state())
+
+
+func _apply_state(state: BattleState) -> void:
+	_refresh_enemy_grid(state)
+	for i in _setup.mages.size():
+		_setup.mages[i].current_hp = state.mage_hp[i]
+		_mage_displays[i].queue_redraw()
+	_mana_display.setup(state.mana, _setup.max_mana, _panel_height)
+	_refresh_ui()
+
+
+func _refresh_enemy_grid(state: BattleState) -> void:
+	for enemy: EnemyData in _setup.enemies:
+		enemy_grid.remove_enemy(enemy.id)
+	for i in _setup.enemies.size():
+		var enemy := _setup.enemies[i]
+		if not state.enemy_hp.has(enemy.id):
+			continue
+		enemy.current_hp = state.enemy_hp[enemy.id]
+		enemy_grid.place_enemy(enemy, _setup.enemy_positions[i])
+
+
+# --- targeting ---
 
 func _on_tip_pressed(wand: WandDisplay) -> void:
 	if _targeting_wand == wand:
@@ -148,8 +241,15 @@ func _update_hover(mouse: Vector2) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed \
+			and event.keycode == KEY_Z and event.ctrl_pressed:
+		_on_undo_pressed()
+		get_viewport().set_input_as_handled()
+		return
+
 	if _targeting_wand == null:
 		return
+
 	if event is InputEventMouseMotion:
 		_update_hover((event as InputEventMouseMotion).position)
 		return
@@ -186,16 +286,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _fire_at_cell(cell: Vector2i) -> void:
-	var wand := _targeting_wand.get_wand_data()
-	var tip := _targeting_wand.get_tip_spell()
-	var pattern: Array[Vector2i] = [Vector2i(0, 0)]
-	if tip != null and not tip.hit_pattern.is_empty():
-		pattern = tip.hit_pattern
-	var hit_cells := enemy_grid.get_hit_cells(cell, pattern)
-	var damage := wand.get_total_damage()
-	for hit in hit_cells:
-		enemy_grid.apply_damage(hit, damage)
+	var mage_index := _wand_displays.find(_targeting_wand)
+	_apply_state(_history.push(ActionZapWand.new(mage_index, cell)))
 
+
+# --- data factories ---
 
 func _make_mage_data() -> Array[MageData]:
 	return [
@@ -213,26 +308,3 @@ func _make_wand_data() -> Array[WandData]:
 		WandGenerator.generate(rng),
 		WandGenerator.generate(rng),
 	]
-
-
-func _populate_test_enemies() -> void:
-	enemy_grid.place_enemy(
-		EnemyData.new("goblin_1", "Goblin", 40, Vector2i(1, 1), Color(0.2, 0.65, 0.2)),
-		Vector2i(0, 0)
-	)
-	enemy_grid.place_enemy(
-		EnemyData.new("skeleton_1", "Skeleton", 35, Vector2i(1, 1), Color(0.8, 0.8, 0.7)),
-		Vector2i(1, 1)
-	)
-	enemy_grid.place_enemy(
-		EnemyData.new("witch_1", "Witch", 50, Vector2i(1, 1), Color(0.55, 0.1, 0.7)),
-		Vector2i(2, 3)
-	)
-	enemy_grid.place_enemy(
-		EnemyData.new("ogre_1", "Shield Ogre", 100, Vector2i(2, 1), Color(0.65, 0.25, 0.15)),
-		Vector2i(0, 3)
-	)
-	enemy_grid.place_enemy(
-		EnemyData.new("troll_1", "Troll", 80, Vector2i(1, 2), Color(0.3, 0.5, 0.2)),
-		Vector2i(2, 0)
-	)
