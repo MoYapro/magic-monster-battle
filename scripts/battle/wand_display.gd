@@ -16,7 +16,8 @@ const COLOR_EDGE := Color(0.45, 0.50, 0.58)
 
 signal tip_pressed(wand: WandDisplay)
 
-const COLOR_HIGHLIGHT := Color(1.0, 0.85, 0.2)
+const COLOR_TARGET_AVAILABLE := Color(1.0, 0.85, 0.2)
+const COLOR_TARGET_HOVER := Color(0.95, 0.18, 0.18)
 
 var _data: WandData = null
 var _highlighted := false
@@ -93,12 +94,10 @@ func _draw() -> void:
 	_draw_edges()
 	for slot: SpellSlotData in _data.slots:
 		_draw_slot(slot)
-	if _highlighted:
-		draw_rect(bounds, Color(COLOR_HIGHLIGHT, 0.12), true)
-		draw_rect(bounds, Color(COLOR_HIGHLIGHT, 0.9), false, 2.5)
 	if _hovered:
-		draw_rect(bounds, Color(COLOR_HIGHLIGHT, 0.28), true)
-		draw_rect(bounds, Color(COLOR_HIGHLIGHT, 1.0), false, 3.5)
+		draw_rect(bounds, COLOR_TARGET_HOVER, false, 3.0)
+	elif _highlighted:
+		draw_rect(bounds, COLOR_TARGET_AVAILABLE, false, 2.5)
 
 
 func _draw_edges() -> void:

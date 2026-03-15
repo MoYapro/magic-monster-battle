@@ -10,7 +10,8 @@ const COLOR_BORDER := Color(0.38, 0.42, 0.48)
 const COLOR_HP_FULL := Color(0.20, 0.75, 0.30)
 const COLOR_HP_LOW := Color(0.85, 0.20, 0.15)
 const COLOR_HP_BG := Color(0.10, 0.11, 0.13)
-const COLOR_HIGHLIGHT := Color(1.0, 0.85, 0.2)
+const COLOR_TARGET_AVAILABLE := Color(1.0, 0.85, 0.2)
+const COLOR_TARGET_HOVER := Color(0.95, 0.18, 0.18)
 
 var _mage: MageData = null
 var _height: float = 70.0
@@ -64,9 +65,7 @@ func _draw() -> void:
 			"%d/%d" % [_mage.current_hp, _mage.max_hp],
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.65, 0.80, 0.65))
 	var r := get_rect()
-	if _highlighted:
-		draw_rect(r, Color(COLOR_HIGHLIGHT, 0.12), true)
-		draw_rect(r, Color(COLOR_HIGHLIGHT, 0.9), false, 2.5)
 	if _hovered:
-		draw_rect(r, Color(COLOR_HIGHLIGHT, 0.28), true)
-		draw_rect(r, Color(COLOR_HIGHLIGHT, 1.0), false, 3.5)
+		draw_rect(r, COLOR_TARGET_HOVER, false, 3.0)
+	elif _highlighted:
+		draw_rect(r, COLOR_TARGET_AVAILABLE, false, 2.5)

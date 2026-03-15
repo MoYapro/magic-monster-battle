@@ -9,7 +9,8 @@ const COLOR_CELL := Color(0.18, 0.20, 0.22)
 const COLOR_BORDER := Color(0.45, 0.50, 0.55)
 const COLOR_LABEL := Color(1.0, 1.0, 1.0)
 const COLOR_HP := Color(0.8, 0.95, 0.8)
-const COLOR_HIGHLIGHT := Color(1.0, 0.85, 0.2)
+const COLOR_TARGET_AVAILABLE := Color(1.0, 0.85, 0.2)
+const COLOR_TARGET_HOVER := Color(0.95, 0.18, 0.18)
 
 # cell position -> EnemyData (one entry per occupied cell)
 var _cells: Dictionary = {}
@@ -130,12 +131,10 @@ func _draw_grid() -> void:
 			var rect := Rect2(Vector2(col, row) * cell_size, cell_size)
 			draw_rect(rect, COLOR_CELL, true)
 			draw_rect(rect, COLOR_BORDER, false)
-			if _highlighted:
-				draw_rect(rect, Color(COLOR_HIGHLIGHT, 0.12), true)
-				draw_rect(rect, Color(COLOR_HIGHLIGHT, 0.8), false, 2.5)
 			if _hovered_cells.has(Vector2i(col, row)):
-				draw_rect(rect, Color(COLOR_HIGHLIGHT, 0.28), true)
-				draw_rect(rect, Color(COLOR_HIGHLIGHT, 1.0), false, 3.5)
+				draw_rect(rect, COLOR_TARGET_HOVER, false, 3.0)
+			elif _highlighted:
+				draw_rect(rect, COLOR_TARGET_AVAILABLE, false, 2.5)
 
 
 func _draw_enemies() -> void:
@@ -159,8 +158,10 @@ func _draw_enemies() -> void:
 			if occupied.has(hc):
 				is_hovered = true
 				break
-		draw_rect(enemy_rect, COLOR_HIGHLIGHT if is_hovered else Color.WHITE,
-				false, 3.5 if is_hovered else 2.0)
+		var border_color := COLOR_TARGET_HOVER if is_hovered \
+				else (COLOR_TARGET_AVAILABLE if _highlighted else Color.WHITE)
+		var border_width := 3.0 if (is_hovered or _highlighted) else 2.0
+		draw_rect(enemy_rect, border_color, false, border_width)
 
 		var font := ThemeDB.fallback_font
 		draw_string(font, pixel_pos + Vector2(5, 16), enemy.display_name,
