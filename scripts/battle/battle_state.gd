@@ -4,8 +4,10 @@ class_name BattleState
 var enemy_hp: Dictionary = {}
 var mage_hp: Array[int] = []
 var mana: int = 0
-# "mage_index/slot_id" -> mana placed on that slot
+# "mage_index/slot_id" -> charges placed on that slot
 var slot_charges: Dictionary = {}
+# per-mage mana spent on wand slots this turn
+var mage_mana_spent: Array[int] = []
 
 
 func duplicate() -> BattleState:
@@ -15,4 +17,6 @@ func duplicate() -> BattleState:
 		s.mage_hp.append(hp)
 	s.mana = mana
 	s.slot_charges = slot_charges.duplicate()
+	for v: int in mage_mana_spent:
+		s.mage_mana_spent.append(v)
 	return s

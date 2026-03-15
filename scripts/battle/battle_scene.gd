@@ -54,10 +54,17 @@ func _build_bottom_bar() -> void:
 	sep.size = Vector2(SCREEN_W, 1)
 	layer.add_child(sep)
 
+	var end_turn_button := Button.new()
+	end_turn_button.text = "End Turn"
+	end_turn_button.size = Vector2(100, BOTTOM_BAR_H - 10)
+	end_turn_button.position = Vector2(SCREEN_W - 420, SCREEN_H - BOTTOM_BAR_H + 5)
+	end_turn_button.pressed.connect(_on_end_turn_pressed)
+	layer.add_child(end_turn_button)
+
 	var win_button := Button.new()
 	win_button.text = "🏆 Win"
 	win_button.size = Vector2(90, BOTTOM_BAR_H - 10)
-	win_button.position = Vector2(SCREEN_W - 256, SCREEN_H - BOTTOM_BAR_H + 5)
+	win_button.position = Vector2(SCREEN_W - 310, SCREEN_H - BOTTOM_BAR_H + 5)
 	win_button.pressed.connect(_on_battle_won)
 	layer.add_child(win_button)
 
@@ -67,6 +74,11 @@ func _build_bottom_bar() -> void:
 	_undo_button.position = Vector2(SCREEN_W - 156, SCREEN_H - BOTTOM_BAR_H + 5)
 	_undo_button.pressed.connect(_on_undo_pressed)
 	layer.add_child(_undo_button)
+
+
+func _on_end_turn_pressed() -> void:
+	_cancel_targeting()
+	_apply_state(_history.push(ActionEndTurn.new()))
 
 
 func _on_undo_pressed() -> void:
@@ -123,6 +135,7 @@ func _place_rows(wand_displays: Array[WandDisplay], mages: Array[MageData], star
 		var wand: WandDisplay = wand_displays[i]
 		wand.position = Vector2(WAND_X, y)
 		wand.tip_pressed.connect(_on_tip_pressed)
+		wand.body_slot_clicked.connect(_on_body_slot_clicked)
 		_wand_displays.append(wand)
 		var mage := MageDisplay.new()
 		add_child(mage)
@@ -185,9 +198,23 @@ func _apply_state(state: BattleState) -> void:
 		_setup.mages[i].current_hp = state.mage_hp[i]
 		_mage_displays[i].queue_redraw()
 	_mana_display.setup(state.mana, _setup.max_mana, _panel_height)
+	_refresh_wand_charges(state)
 	_refresh_ui()
 	if _history.can_undo() and state.enemy_hp.is_empty():
 		_on_battle_won()
+
+
+func _refresh_wand_charges(state: BattleState) -> void:
+	for i in _wand_displays.size():
+		var charges := {}
+		var committed := 0
+		for slot: SpellSlotData in _setup.wands[i].slots:
+			var key := "%d/%s" % [i, slot.id]
+			var c: int = state.slot_charges.get(key, 0)
+			charges[slot.id] = c
+			committed += c
+		_wand_displays[i].set_charges(charges)
+		_mage_displays[i].set_mana(state.mage_mana_spent[i], _setup.mana_per_mage)
 
 
 func _on_battle_won() -> void:
@@ -226,10 +253,27 @@ func _refresh_enemy_grid(state: BattleState) -> void:
 
 # --- targeting ---
 
+func _on_body_slot_clicked(wand: WandDisplay, slot_id: String) -> void:
+	if _targeting_wand != null:
+		_cancel_targeting()
+		return
+	var mage_index := _wand_displays.find(wand)
+	_apply_state(_history.push(ActionAddMana.new(mage_index, slot_id)))
+
+
 func _on_tip_pressed(wand: WandDisplay) -> void:
 	if _targeting_wand == wand:
 		_cancel_targeting()
-	else:
+		return
+	var mage_index := _wand_displays.find(wand)
+	var tip := _setup.wands[mage_index].get_tip_slot()
+	if tip == null or tip.spell == null:
+		return
+	var key := "%d/%s" % [mage_index, tip.id]
+	var charges: int = _history.current_state().slot_charges.get(key, 0)
+	if charges < tip.spell.mana_cost:
+		_apply_state(_history.push(ActionAddMana.new(mage_index, tip.id)))
+	elif _history.current_state().mage_mana_spent[mage_index] < _setup.mana_per_mage:
 		_start_targeting(wand)
 
 

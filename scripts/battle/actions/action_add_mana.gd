@@ -13,7 +13,14 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 	var new_state := state.duplicate()
 	if new_state.mana <= 0:
 		return new_state
+	var slot := setup.wands[mage_index].get_slot(slot_id)
+	if slot == null or slot.spell == null:
+		return new_state
 	var key := "%d/%s" % [mage_index, slot_id]
-	new_state.slot_charges[key] = new_state.slot_charges.get(key, 0) + 1
+	var current: int = new_state.slot_charges.get(key, 0)
+	if current >= slot.spell.mana_cost:
+		return new_state
+	new_state.slot_charges[key] = current + 1
 	new_state.mana -= 1
+	new_state.mage_mana_spent[mage_index] += 1
 	return new_state

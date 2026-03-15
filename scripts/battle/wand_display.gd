@@ -15,13 +15,18 @@ const COLOR_BORDER_TIP := Color(0.85, 0.65, 0.20)
 const COLOR_EDGE := Color(0.45, 0.50, 0.58)
 
 signal tip_pressed(wand: WandDisplay)
+signal body_slot_clicked(wand: WandDisplay, slot_id: String)
 
 const COLOR_TARGET_AVAILABLE := Color(1.0, 0.85, 0.2)
 const COLOR_TARGET_HOVER := Color(0.95, 0.18, 0.18)
+const COLOR_PIP_FILLED    := Color(0.35, 0.70, 1.00)
+const COLOR_PIP_EMPTY     := Color(0.18, 0.22, 0.27)
+const COLOR_ACTIVE_BORDER := Color(0.35, 0.70, 1.00)
 
 var _data: WandData = null
 var _highlighted := false
 var _hovered := false
+var _charges: Dictionary = {}  # slot_id -> int
 
 
 func setup(wand_data: WandData) -> void:
@@ -36,6 +41,11 @@ func set_highlighted(on: bool) -> void:
 
 func set_hovered(on: bool) -> void:
 	_hovered = on
+	queue_redraw()
+
+
+func set_charges(charges: Dictionary) -> void:
+	_charges = charges
 	queue_redraw()
 
 
@@ -92,10 +102,14 @@ func _input(event: InputEvent) -> void:
 		return
 	var local := to_local(event.position)
 	for slot: SpellSlotData in _data.slots:
-		if slot.is_tip and Rect2(_slot_pixel_pos(slot), SLOT_SIZE).has_point(local):
+		if not Rect2(_slot_pixel_pos(slot), SLOT_SIZE).has_point(local):
+			continue
+		if slot.is_tip:
 			tip_pressed.emit(self)
-			get_viewport().set_input_as_handled()
-			return
+		else:
+			body_slot_clicked.emit(self, slot.id)
+		get_viewport().set_input_as_handled()
+		return
 
 
 func _draw() -> void:
@@ -174,6 +188,10 @@ func _draw_slot(slot: SpellSlotData) -> void:
 	if slot.spell == null:
 		return
 
+	var charges: int = _charges.get(slot.id, 0)
+	var cost := slot.spell.mana_cost
+	var active: bool = charges >= cost
+
 	if slot.spell.icon.is_empty():
 		draw_rect(rect, Color(slot.spell.element_color, 0.28), true)
 		draw_string(ThemeDB.fallback_font,
@@ -182,3 +200,20 @@ func _draw_slot(slot: SpellSlotData) -> void:
 				HORIZONTAL_ALIGNMENT_CENTER, SLOT_SIZE.x, 11, Color.WHITE)
 	else:
 		_draw_icon(pos, SLOT_SIZE, slot.spell.icon)
+
+	_draw_mana_pips(pos, charges, cost)
+	if active:
+		draw_rect(rect, COLOR_ACTIVE_BORDER, false, 2.0)
+
+
+func _draw_mana_pips(pos: Vector2, charges: int, cost: int) -> void:
+	if cost <= 0:
+		return
+	const PIP := 5.0
+	const GAP := 2.0
+	var total_w := cost * PIP + (cost - 1) * GAP
+	var px := pos.x + (SLOT_SIZE.x - total_w) * 0.5
+	var py := pos.y + SLOT_SIZE.y - PIP - 3.0
+	for i in cost:
+		var color := COLOR_PIP_FILLED if i < charges else COLOR_PIP_EMPTY
+		draw_rect(Rect2(Vector2(px + i * (PIP + GAP), py), Vector2(PIP, PIP)), color, true)
