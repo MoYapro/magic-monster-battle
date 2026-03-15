@@ -1,0 +1,72 @@
+class_name WandGenerator
+
+# Generates a random directed graph wand where all edges point toward the tip.
+#
+# Strategy: build columns left-to-right. Each column's slots each connect to
+# one slot in the next column. The final column is always a single tip slot.
+# This guarantees the tip is the unique sink and the graph is acyclic.
+#
+# Column counts and row counts per column are randomised within bounds.
+
+static func generate(rng: RandomNumberGenerator, min_cols: int = 2, max_cols: int = 3,
+		min_rows: int = 1, max_rows: int = 3) -> WandData:
+	var slots: Array[SpellSlotData] = []
+	var col_count := rng.randi_range(min_cols, max_cols)
+	# build body columns (everything left of the tip)
+	var prev_ids: Array[String] = []
+	for col in col_count:
+		var row_count := rng.randi_range(min_rows, max_rows)
+		var col_ids: Array[String] = []
+		for row in row_count:
+			var id := "s%d_%d" % [col, row]
+			col_ids.append(id)
+			# next_id assigned below once we know the next column's ids
+			slots.append(SpellSlotData.new(id, col, row, ""))
+		# wire previous column → this column
+		_wire_columns(rng, slots, prev_ids, col_ids)
+		prev_ids = col_ids
+
+	# add tip as single final column
+	var tip_row := _center_row(prev_ids, slots)
+	var tip := SpellSlotData.new("tip", col_count, tip_row)
+	slots.append(tip)
+	_wire_columns(rng, slots, prev_ids, ["tip"])
+
+	return WandData.new(slots)
+
+
+# Assign each slot in prev_ids a next_id drawn from next_ids.
+# Every slot in next_ids receives at least one incoming edge.
+static func _wire_columns(rng: RandomNumberGenerator, slots: Array[SpellSlotData],
+		prev_ids: Array[String], next_ids: Array[String]) -> void:
+	if prev_ids.is_empty():
+		return
+	# guarantee every next slot has at least one incoming edge
+	var assigned := prev_ids.duplicate()
+	assigned.shuffle()
+	for i in next_ids.size():
+		_set_next(slots, assigned[i % assigned.size()], next_ids[i])
+	# assign the remainder randomly
+	for i in range(next_ids.size(), assigned.size()):
+		_set_next(slots, assigned[i], next_ids[rng.randi_range(0, next_ids.size() - 1)])
+
+
+static func _set_next(slots: Array[SpellSlotData], slot_id: String, next_id: String) -> void:
+	for slot in slots:
+		if slot.id == slot_id:
+			slot.next_id = next_id
+			slot.is_tip = false
+			return
+
+
+# Pick a grid row for the tip that sits near the vertical centre of the last column.
+static func _center_row(prev_ids: Array[String], slots: Array[SpellSlotData]) -> int:
+	if prev_ids.is_empty():
+		return 0
+	var total_row := 0
+	var count := 0
+	for slot in slots:
+		if slot.id in prev_ids:
+			total_row += slot.grid_row
+			count += 1
+	return roundi(float(total_row) / float(count))

@@ -1,0 +1,119 @@
+@startuml Wand Magic - System Overview
+
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+package "Battle" {
+
+  class BattleScene {
+    +_ready()
+  }
+
+  class EnemyGrid {
+    +COLS: int = 3
+    +ROWS: int = 5
+    --
+    +place_enemy(enemy, pos): bool
+    +remove_enemy(id)
+    +get_enemy_at(pos): EnemyData
+    +can_place_enemy(pos, size): bool
+    ..static..
+    +get_cells_for_enemy(pos, size): Array
+    +is_within_bounds(pos, size): bool
+  }
+
+  class EnemyData {
+    +id: String
+    +display_name: String
+    +max_hp: int
+    +current_hp: int
+    +grid_size: Vector2i
+  }
+
+  class WandDisplay {
+    +setup(name, slot_count)
+  }
+
+  class TurnManager <<planned>> {
+    +start_round()
+    +end_player_turn()
+    +resolve_enemy_actions()
+  }
+
+  class MageRow <<planned>> {
+    +mages: Array[Mage]
+  }
+
+  class Mage <<planned>> {
+    +max_hp: int
+    +current_hp: int
+    +max_mana_spend: int
+    +equipped_wand: Wand
+    +focus_element: FocusElement
+  }
+
+  class ManaPool <<planned>> {
+    +current: int
+    +max: int
+    +replenish_per_turn()
+    +spend(amount): bool
+  }
+
+}
+
+package "Wand System" <<planned>> {
+
+  class Wand <<planned>> {
+    +tip: SpellSlot
+    +slots: Array[SpellSlot]
+    +zap(target)
+  }
+
+  class SpellSlot <<planned>> {
+    +spell: Spell
+    +mana_cost: int
+    +charged: bool
+  }
+
+  class Spell <<planned>> {
+    +tags: Array[String]
+    +effect()
+  }
+
+  class InteractionRule <<planned>> {
+    +tags_a: Array[String]
+    +tags_b: Array[String]
+    +interaction_type: String
+  }
+
+}
+
+package "Progression" <<planned>> {
+
+  class LootScreen <<planned>>
+  class LevelUpScreen <<planned>>
+  class PathSelection <<planned>>
+  class Biome <<planned>> {
+    +monster_roster: Array
+    +loot_table: Array
+    +battle_count: int
+  }
+
+}
+
+BattleScene --> EnemyGrid
+BattleScene "1" *-- "3" WandDisplay
+BattleScene --> TurnManager
+BattleScene --> MageRow
+BattleScene --> ManaPool
+
+EnemyGrid "1" *-- "0..*" EnemyData
+
+MageRow "1" *-- "1..3" Mage
+Mage --> Wand
+
+Wand "1" *-- "2..10" SpellSlot
+SpellSlot --> Spell
+Spell --> InteractionRule
+
+@enduml

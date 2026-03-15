@@ -173,4 +173,5 @@ All three mages share a single mana pool that persists between battles.
 
 ## Implemented Features
 
-_(none yet)_
+### Battle
+- [x] Enemy grid (3x5) with placement, bounds checking, multi-cell enemy support, and removal
