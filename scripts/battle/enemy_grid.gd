@@ -30,15 +30,14 @@ func set_hovered_cells(cells: Array[Vector2i]) -> void:
 	queue_redraw()
 
 
-func get_hit_cells(target: Vector2i, pattern: Array[Vector2i], ignores_los: bool) -> Array[Vector2i]:
+func get_hit_cells(target: Vector2i, pattern: Array[Vector2i]) -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
 	for offset in pattern:
 		var cell := target + offset
 		if cell.x < 0 or cell.x >= COLS or cell.y < 0 or cell.y >= ROWS:
 			continue
-		var effective := cell if ignores_los else get_effective_target(cell)
-		if not result.has(effective):
-			result.append(effective)
+		if not result.has(cell):
+			result.append(cell)
 	return result
 
 
@@ -49,15 +48,6 @@ func get_cell_at(local_pos: Vector2) -> Vector2i:
 		return Vector2i(-1, -1)
 	return Vector2i(col, row)
 
-
-# Returns the first occupied cell between col 0 and the hovered cell (inclusive).
-# Attacks come from the left, so anything in the same row at a lower column blocks.
-func get_effective_target(hovered: Vector2i) -> Vector2i:
-	for col in range(hovered.x - 1, -1, -1):
-		var check := Vector2i(col, hovered.y)
-		if _cells.has(check):
-			return check
-	return hovered
 
 
 # --- pure static helpers (unit-testable, no scene tree needed) ---

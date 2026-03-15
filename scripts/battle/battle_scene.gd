@@ -123,11 +123,9 @@ func _update_hover(mouse: Vector2) -> void:
 	if cell.x >= 0:
 		var tip := _targeting_wand.get_tip_spell()
 		var pattern: Array[Vector2i] = [Vector2i(0, 0)]
-		var ignores_los := false
 		if tip != null and not tip.hit_pattern.is_empty():
 			pattern = tip.hit_pattern
-			ignores_los = tip.ignores_los
-		_hovered_cells = enemy_grid.get_hit_cells(cell, pattern, ignores_los)
+		_hovered_cells = enemy_grid.get_hit_cells(cell, pattern)
 		enemy_grid.set_hovered_cells(_hovered_cells)
 		return
 	for mage in _mage_displays:
