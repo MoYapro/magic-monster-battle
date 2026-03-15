@@ -354,4 +354,4 @@ func _on_continue_pressed() -> void:
 	if GameState.pending_loot_wand != null:
 		GameState.backpack_wands.append(GameState.pending_loot_wand)
 		GameState.pending_loot_wand = null
-	get_tree().change_scene_to_file("res://scenes/battle/battle_scene.tscn")
+	get_tree().change_scene_to_file("res://scenes/level_up/level_up_screen.tscn")

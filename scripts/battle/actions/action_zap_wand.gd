@@ -11,7 +11,7 @@ func _init(p_mage_index: int, p_target_cell: Vector2i) -> void:
 
 func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 	var new_state := state.duplicate()
-	if new_state.mage_mana_spent[mage_index] >= setup.mana_per_mage:
+	if new_state.mage_mana_spent[mage_index] >= setup.mages[mage_index].mana_allowance:
 		return new_state
 	var wand := setup.wands[mage_index]
 

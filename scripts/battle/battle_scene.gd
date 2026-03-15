@@ -214,7 +214,7 @@ func _refresh_wand_charges(state: BattleState) -> void:
 			charges[slot.id] = c
 			committed += c
 		_wand_displays[i].set_charges(charges)
-		_mage_displays[i].set_mana(state.mage_mana_spent[i], _setup.mana_per_mage)
+		_mage_displays[i].set_mana(state.mage_mana_spent[i], _setup.mages[i].mana_allowance)
 
 
 func _on_battle_won() -> void:
@@ -273,7 +273,7 @@ func _on_tip_pressed(wand: WandDisplay) -> void:
 	var charges: int = _history.current_state().slot_charges.get(key, 0)
 	if charges < tip.spell.mana_cost:
 		_apply_state(_history.push(ActionAddMana.new(mage_index, tip.id)))
-	elif _history.current_state().mage_mana_spent[mage_index] < _setup.mana_per_mage:
+	elif _history.current_state().mage_mana_spent[mage_index] < _setup.mages[mage_index].mana_allowance:
 		_start_targeting(wand)
 
 
@@ -384,6 +384,8 @@ func _fire_at_cell(cell: Vector2i) -> void:
 # --- data factories ---
 
 func _make_mage_data() -> Array[MageData]:
+	if not GameState.mages.is_empty():
+		return GameState.mages
 	return [
 		MageData.new("Lyra", 30),
 		MageData.new("Eron", 30),

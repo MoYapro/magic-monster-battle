@@ -7,7 +7,6 @@ var enemy_positions: Array[Vector2i] = []
 var mages: Array[MageData] = []
 var wands: Array[WandData] = []
 var max_mana: int = 10
-var mana_per_mage: int = 5
 
 # cell -> enemy_id (precomputed for fast lookup)
 var _cell_to_enemy: Dictionary = {}
@@ -18,15 +17,13 @@ func _init(
 	p_positions: Array[Vector2i],
 	p_mages: Array[MageData],
 	p_wands: Array[WandData],
-	p_max_mana: int,
-	p_mana_per_mage: int = 5
+	p_max_mana: int
 ) -> void:
 	enemies = p_enemies
 	enemy_positions = p_positions
 	mages = p_mages
 	wands = p_wands
 	max_mana = p_max_mana
-	mana_per_mage = p_mana_per_mage
 	_build_cell_map()
 
 
