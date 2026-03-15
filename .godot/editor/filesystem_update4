@@ -3,3 +3,7 @@ res://scripts/battle/enemy_grid.gd
 res://scripts/battle/mage_display.gd
 res://scripts/battle/wand_display.gd
 res://scripts/battle/mana_display.gd
+res://scripts/battle/spell_slot_data.gd
+res://scripts/battle/wand_generator.gd
+res://scripts/battle/spell_data.gd
+res://scripts/battle/wand_data.gd

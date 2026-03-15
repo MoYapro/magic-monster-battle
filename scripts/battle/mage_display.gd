@@ -10,15 +10,32 @@ const COLOR_BORDER := Color(0.38, 0.42, 0.48)
 const COLOR_HP_FULL := Color(0.20, 0.75, 0.30)
 const COLOR_HP_LOW := Color(0.85, 0.20, 0.15)
 const COLOR_HP_BG := Color(0.10, 0.11, 0.13)
+const COLOR_HIGHLIGHT := Color(1.0, 0.85, 0.2)
 
 var _mage: MageData = null
 var _height: float = 70.0
+var _highlighted := false
+var _hovered := false
 
 
 func setup(mage: MageData, height: float) -> void:
 	_mage = mage
 	_height = height
 	queue_redraw()
+
+
+func set_highlighted(on: bool) -> void:
+	_highlighted = on
+	queue_redraw()
+
+
+func set_hovered(on: bool) -> void:
+	_hovered = on
+	queue_redraw()
+
+
+func get_rect() -> Rect2:
+	return Rect2(Vector2.ZERO, Vector2(WIDTH, _height))
 
 
 func _draw() -> void:
@@ -46,3 +63,10 @@ func _draw() -> void:
 	draw_string(font, Vector2(PAD, bar_y + BAR_HEIGHT + 13.0),
 			"%d/%d" % [_mage.current_hp, _mage.max_hp],
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.65, 0.80, 0.65))
+	var r := get_rect()
+	if _highlighted:
+		draw_rect(r, Color(COLOR_HIGHLIGHT, 0.12), true)
+		draw_rect(r, Color(COLOR_HIGHLIGHT, 0.9), false, 2.5)
+	if _hovered:
+		draw_rect(r, Color(COLOR_HIGHLIGHT, 0.28), true)
+		draw_rect(r, Color(COLOR_HIGHLIGHT, 1.0), false, 3.5)

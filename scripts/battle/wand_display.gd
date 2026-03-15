@@ -14,7 +14,13 @@ const COLOR_BORDER_BODY := Color(0.42, 0.48, 0.55)
 const COLOR_BORDER_TIP := Color(0.85, 0.65, 0.20)
 const COLOR_EDGE := Color(0.45, 0.50, 0.58)
 
+signal tip_pressed(wand: WandDisplay)
+
+const COLOR_HIGHLIGHT := Color(1.0, 0.85, 0.2)
+
 var _data: WandData = null
+var _highlighted := false
+var _hovered := false
 
 
 func setup(wand_data: WandData) -> void:
@@ -22,8 +28,25 @@ func setup(wand_data: WandData) -> void:
 	queue_redraw()
 
 
+func set_highlighted(on: bool) -> void:
+	_highlighted = on
+	queue_redraw()
+
+
+func set_hovered(on: bool) -> void:
+	_hovered = on
+	queue_redraw()
+
+
 func get_display_size() -> Vector2:
 	return _compute_bounds().size
+
+
+func get_tip_spell() -> SpellData:
+	if _data == null:
+		return null
+	var tip := _data.get_tip_slot()
+	return tip.spell if tip else null
 
 
 func _slot_pixel_pos(slot: SpellSlotData) -> Vector2:
@@ -47,6 +70,20 @@ func _compute_bounds() -> Rect2:
 	return Rect2(Vector2.ZERO, Vector2(w, h))
 
 
+func _input(event: InputEvent) -> void:
+	if _data == null:
+		return
+	if not (event is InputEventMouseButton and event.pressed
+			and event.button_index == MOUSE_BUTTON_LEFT):
+		return
+	var local := to_local(event.position)
+	for slot: SpellSlotData in _data.slots:
+		if slot.is_tip and Rect2(_slot_pixel_pos(slot), SLOT_SIZE).has_point(local):
+			tip_pressed.emit(self)
+			get_viewport().set_input_as_handled()
+			return
+
+
 func _draw() -> void:
 	if _data == null:
 		return
@@ -56,6 +93,12 @@ func _draw() -> void:
 	_draw_edges()
 	for slot: SpellSlotData in _data.slots:
 		_draw_slot(slot)
+	if _highlighted:
+		draw_rect(bounds, Color(COLOR_HIGHLIGHT, 0.12), true)
+		draw_rect(bounds, Color(COLOR_HIGHLIGHT, 0.9), false, 2.5)
+	if _hovered:
+		draw_rect(bounds, Color(COLOR_HIGHLIGHT, 0.28), true)
+		draw_rect(bounds, Color(COLOR_HIGHLIGHT, 1.0), false, 3.5)
 
 
 func _draw_edges() -> void:
@@ -81,14 +124,49 @@ func _draw_arrowhead(from: Vector2, to: Vector2) -> void:
 	draw_colored_polygon(PackedVector2Array([tip, base + perp, base - perp]), COLOR_EDGE)
 
 
+func _draw_icon(pos: Vector2, size: Vector2, icon_name: String) -> void:
+	if icon_name == "bomb":
+		_draw_bomb_icon(pos, size)
+
+
+func _draw_bomb_icon(pos: Vector2, size: Vector2) -> void:
+	var center := pos + Vector2(size.x * 0.44, size.y * 0.60)
+	var radius := size.x * 0.27
+
+	draw_circle(center, radius, Color(0.14, 0.14, 0.17))
+	draw_arc(center, radius, 0.0, TAU, 32, Color(0.78, 0.78, 0.82), 1.5)
+	# Shine
+	draw_circle(center + Vector2(-radius * 0.28, -radius * 0.32), radius * 0.22,
+			Color(1.0, 1.0, 1.0, 0.28))
+
+	# Fuse
+	var fuse_base := center + Vector2(radius * 0.60, -radius * 0.78)
+	var fuse_tip := pos + Vector2(size.x * 0.76, size.y * 0.13)
+	draw_line(fuse_base, fuse_tip, Color(0.68, 0.56, 0.30), 1.5)
+
+	# Spark
+	draw_circle(fuse_tip, 3.2, Color(1.0, 0.82, 0.18))
+	draw_circle(fuse_tip, 1.6, Color(1.0, 1.0, 0.80))
+
+
 func _draw_slot(slot: SpellSlotData) -> void:
 	var pos := _slot_pixel_pos(slot)
 	var rect := Rect2(pos, SLOT_SIZE)
 	if slot.is_tip:
 		draw_rect(rect, COLOR_SLOT_TIP, true)
 		draw_rect(rect, COLOR_BORDER_TIP, false, 1.5)
-		draw_string(ThemeDB.fallback_font, pos + Vector2(4.0, 14.0), "T",
-				HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COLOR_BORDER_TIP)
 	else:
 		draw_rect(rect, COLOR_SLOT_BODY, true)
 		draw_rect(rect, COLOR_BORDER_BODY, false, 1.0)
+
+	if slot.spell == null:
+		return
+
+	if slot.spell.icon.is_empty():
+		draw_rect(rect, Color(slot.spell.element_color, 0.28), true)
+		draw_string(ThemeDB.fallback_font,
+				Vector2(pos.x, pos.y + SLOT_SIZE.y * 0.5 + 5.0),
+				slot.spell.abbreviation,
+				HORIZONTAL_ALIGNMENT_CENTER, SLOT_SIZE.x, 11, Color.WHITE)
+	else:
+		_draw_icon(pos, SLOT_SIZE, slot.spell.icon)

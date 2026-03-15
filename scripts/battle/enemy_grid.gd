@@ -9,11 +9,54 @@ const COLOR_CELL := Color(0.18, 0.20, 0.22)
 const COLOR_BORDER := Color(0.45, 0.50, 0.55)
 const COLOR_LABEL := Color(1.0, 1.0, 1.0)
 const COLOR_HP := Color(0.8, 0.95, 0.8)
+const COLOR_HIGHLIGHT := Color(1.0, 0.85, 0.2)
 
 # cell position -> EnemyData (one entry per occupied cell)
 var _cells: Dictionary = {}
 # enemy id -> top-left grid position
 var _enemy_positions: Dictionary = {}
+var _highlighted := false
+var _hovered_cells: Array[Vector2i] = []
+
+
+func set_highlighted(on: bool) -> void:
+	_highlighted = on
+	queue_redraw()
+
+
+func set_hovered_cells(cells: Array[Vector2i]) -> void:
+	_hovered_cells = cells
+	queue_redraw()
+
+
+func get_hit_cells(target: Vector2i, pattern: Array[Vector2i], ignores_los: bool) -> Array[Vector2i]:
+	var result: Array[Vector2i] = []
+	for offset in pattern:
+		var cell := target + offset
+		if cell.x < 0 or cell.x >= COLS or cell.y < 0 or cell.y >= ROWS:
+			continue
+		var effective := cell if ignores_los else get_effective_target(cell)
+		if not result.has(effective):
+			result.append(effective)
+	return result
+
+
+func get_cell_at(local_pos: Vector2) -> Vector2i:
+	var col := int(local_pos.x / cell_size.x)
+	var row := int(local_pos.y / cell_size.y)
+	if col < 0 or col >= COLS or row < 0 or row >= ROWS:
+		return Vector2i(-1, -1)
+	return Vector2i(col, row)
+
+
+# Returns the first occupied cell between col 0 and the hovered cell (inclusive).
+# Attacks come from the left, so anything in the same row at a lower column blocks.
+func get_effective_target(hovered: Vector2i) -> Vector2i:
+	for col in range(hovered.x - 1, -1, -1):
+		var check := Vector2i(col, hovered.y)
+		if _cells.has(check):
+			return check
+	return hovered
 
 
 # --- pure static helpers (unit-testable, no scene tree needed) ---
@@ -87,6 +130,12 @@ func _draw_grid() -> void:
 			var rect := Rect2(Vector2(col, row) * cell_size, cell_size)
 			draw_rect(rect, COLOR_CELL, true)
 			draw_rect(rect, COLOR_BORDER, false)
+			if _highlighted:
+				draw_rect(rect, Color(COLOR_HIGHLIGHT, 0.12), true)
+				draw_rect(rect, Color(COLOR_HIGHLIGHT, 0.8), false, 2.5)
+			if _hovered_cells.has(Vector2i(col, row)):
+				draw_rect(rect, Color(COLOR_HIGHLIGHT, 0.28), true)
+				draw_rect(rect, Color(COLOR_HIGHLIGHT, 1.0), false, 3.5)
 
 
 func _draw_enemies() -> void:
@@ -101,8 +150,17 @@ func _draw_enemies() -> void:
 		var pixel_pos := Vector2(grid_pos) * cell_size
 		var pixel_size := Vector2(enemy.grid_size) * cell_size
 
-		draw_rect(Rect2(pixel_pos, pixel_size), enemy.color, true)
-		draw_rect(Rect2(pixel_pos, pixel_size), Color.WHITE, false, 2.0)
+		var enemy_rect := Rect2(pixel_pos, pixel_size)
+		draw_rect(enemy_rect, enemy.color, true)
+
+		var occupied := get_cells_for_enemy(grid_pos, enemy.grid_size)
+		var is_hovered := false
+		for hc in _hovered_cells:
+			if occupied.has(hc):
+				is_hovered = true
+				break
+		draw_rect(enemy_rect, COLOR_HIGHLIGHT if is_hovered else Color.WHITE,
+				false, 3.5 if is_hovered else 2.0)
 
 		var font := ThemeDB.fallback_font
 		draw_string(font, pixel_pos + Vector2(5, 16), enemy.display_name,

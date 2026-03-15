@@ -13,6 +13,13 @@ const ROW_GAP := 14.0
 
 @onready var enemy_grid: EnemyGrid = $EnemyGrid
 
+var _mage_displays: Array[MageDisplay] = []
+var _wand_displays: Array[WandDisplay] = []
+var _targeting_wand: WandDisplay = null
+var _hovered_mage: MageDisplay = null
+var _hovered_wand: WandDisplay = null
+var _hovered_cells: Array[Vector2i] = []
+
 
 func _ready() -> void:
 	_setup_mage_wand_rows()
@@ -47,11 +54,14 @@ func _setup_mage_wand_rows() -> void:
 	for i in wand_displays.size():
 		var wand: WandDisplay = wand_displays[i]
 		wand.position = Vector2(WAND_X, y)
+		wand.tip_pressed.connect(_on_tip_pressed)
+		_wand_displays.append(wand)
 
 		var mage := MageDisplay.new()
 		add_child(mage)
 		mage.position = Vector2(MAGE_X, y)
 		mage.setup(mages[i], wand.get_display_size().y)
+		_mage_displays.append(mage)
 
 		y += wand.get_display_size().y + ROW_GAP
 
@@ -67,6 +77,109 @@ func _position_enemy_grid(panel_top: float, panel_h: float) -> void:
 		panel_top
 	)
 	enemy_grid.queue_redraw()
+
+
+func _on_tip_pressed(wand: WandDisplay) -> void:
+	if _targeting_wand == wand:
+		_cancel_targeting()
+	else:
+		_start_targeting(wand)
+
+
+func _start_targeting(wand: WandDisplay) -> void:
+	_targeting_wand = wand
+	enemy_grid.set_highlighted(true)
+	for m in _mage_displays:
+		m.set_highlighted(true)
+	for w in _wand_displays:
+		w.set_highlighted(true)
+
+
+func _cancel_targeting() -> void:
+	_clear_hover()
+	_targeting_wand = null
+	enemy_grid.set_highlighted(false)
+	for m in _mage_displays:
+		m.set_highlighted(false)
+	for w in _wand_displays:
+		w.set_highlighted(false)
+
+
+func _clear_hover() -> void:
+	if _hovered_mage != null:
+		_hovered_mage.set_hovered(false)
+		_hovered_mage = null
+	if _hovered_wand != null:
+		_hovered_wand.set_hovered(false)
+		_hovered_wand = null
+	if not _hovered_cells.is_empty():
+		enemy_grid.set_hovered_cells([])
+		_hovered_cells.clear()
+
+
+func _update_hover(mouse: Vector2) -> void:
+	_clear_hover()
+	var cell := enemy_grid.get_cell_at(enemy_grid.to_local(mouse))
+	if cell.x >= 0:
+		var tip := _targeting_wand.get_tip_spell()
+		var pattern: Array[Vector2i] = [Vector2i(0, 0)]
+		var ignores_los := false
+		if tip != null and not tip.hit_pattern.is_empty():
+			pattern = tip.hit_pattern
+			ignores_los = tip.ignores_los
+		_hovered_cells = enemy_grid.get_hit_cells(cell, pattern, ignores_los)
+		enemy_grid.set_hovered_cells(_hovered_cells)
+		return
+	for mage in _mage_displays:
+		if mage.get_rect().has_point(mage.to_local(mouse)):
+			_hovered_mage = mage
+			mage.set_hovered(true)
+			return
+	for wand in _wand_displays:
+		if Rect2(Vector2.ZERO, wand.get_display_size()).has_point(wand.to_local(mouse)):
+			_hovered_wand = wand
+			wand.set_hovered(true)
+			return
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _targeting_wand == null:
+		return
+	if event is InputEventMouseMotion:
+		_update_hover((event as InputEventMouseMotion).position)
+		return
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		_cancel_targeting()
+		get_viewport().set_input_as_handled()
+		return
+	if not (event is InputEventMouseButton and event.pressed
+			and event.button_index == MOUSE_BUTTON_LEFT):
+		return
+
+	var mouse := (event as InputEventMouseButton).position
+
+	var cell := enemy_grid.get_cell_at(enemy_grid.to_local(mouse))
+	if cell.x >= 0:
+		print("Target: enemy cell %s" % cell)
+		_cancel_targeting()
+		get_viewport().set_input_as_handled()
+		return
+
+	for mage in _mage_displays:
+		if mage.get_rect().has_point(mage.to_local(mouse)):
+			print("Target: mage")
+			_cancel_targeting()
+			get_viewport().set_input_as_handled()
+			return
+
+	for wand in _wand_displays:
+		if Rect2(Vector2.ZERO, wand.get_display_size()).has_point(wand.to_local(mouse)):
+			print("Target: wand")
+			_cancel_targeting()
+			get_viewport().set_input_as_handled()
+			return
+
+	_cancel_targeting()
 
 
 func _make_mage_data() -> Array[MageData]:
