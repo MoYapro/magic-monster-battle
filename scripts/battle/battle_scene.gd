@@ -237,13 +237,6 @@ func _refresh_wand_charges(state: BattleState) -> void:
 
 func _on_battle_lost() -> void:
 	_cancel_targeting()
-	GameState.mages.clear()
-	GameState.wands.clear()
-	GameState.backpack.clear()
-	GameState.backpack_wands.clear()
-	GameState.pending_loot.clear()
-	GameState.pending_loot_wand = null
-	GameState.current_biome = null
 	get_tree().change_scene_to_file("res://scenes/game_over/game_over_screen.tscn")
 
 
@@ -262,7 +255,8 @@ func _generate_loot() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	GameState.pending_loot.clear()
-	GameState.pending_loot_wand = WandGenerator.generate(rng)
+	GameState.pending_loot_wands.clear()
+	GameState.pending_loot_wands.append(WandGenerator.generate(rng))
 	GameState.pending_loot.append(WandGenerator._pick_tip_spell(rng))
 	for enemy: EnemyData in _setup.enemies:
 		if not enemy.drop_pool.is_empty():
@@ -484,12 +478,10 @@ func _make_mage_data() -> Array[MageData]:
 
 
 func _make_wand_data() -> Array[WandData]:
-	if not GameState.wands.is_empty():
-		return GameState.wands
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	return [
-		WandGenerator.generate(rng),
-		WandGenerator.generate(rng),
-		WandGenerator.generate(rng),
-	]
+	var result: Array[WandData] = []
+	for i in _mages.size():
+		var w: WandData = GameState.wands[i] if i < GameState.wands.size() else null
+		result.append(w if w != null else WandGenerator.generate(rng))
+	return result

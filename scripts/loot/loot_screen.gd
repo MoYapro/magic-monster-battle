@@ -19,6 +19,9 @@ const CARD_SIZE := 80.0
 const CARD_GAP := 8.0
 const CARDS_PER_ROW := 4
 const BACKPACK_SLOTS := 24
+const MAGE_HEADER_H := 30.0
+const EMPTY_WAND_SLOT_H := 52.0
+const ROW_GAP := 12.0
 
 const COLOR_BG             := Color(0.07, 0.08, 0.09)
 const COLOR_PANEL          := Color(0.10, 0.12, 0.14)
@@ -34,19 +37,26 @@ const COLOR_HP_LOW         := Color(0.85, 0.20, 0.15)
 const COLOR_HP_BG          := Color(0.10, 0.12, 0.14)
 const COLOR_DROP_HIGHLIGHT := Color(1.00, 0.85, 0.20, 0.12)
 const COLOR_DROP_BORDER    := Color(1.00, 0.85, 0.20, 0.80)
+const COLOR_WAND_CARD      := Color(0.18, 0.28, 0.42)
+const COLOR_WAND_CARD_BORDER := Color(0.38, 0.55, 0.78)
 
+# loot wand displays — parallel to GameState.pending_loot_wands
+var _loot_wand_displays: Array[WandDisplay] = []
+# equip wand displays — one per mage (null = no wand)
 var _equip_wand_displays: Array[WandDisplay] = []
 var _mage_row_ys: Array[float] = []
-var _loot_wand_display: WandDisplay = null
+var _mage_row_hs: Array[float] = []
 
 # --- drag state ---
 var _dragging: SpellData = null
 var _drag_source: String = ""   # "loot" | "backpack"
+var _dragging_wand: WandData = null
+var _drag_wand_source: int = -2  # -1 = from loot; >= 0 = mage index
 var _drag_pos: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
-	_build_loot_wand()
+	_build_loot_wands()
 	_build_equip_wands()
 	_build_bottom_bar()
 
@@ -60,13 +70,15 @@ func _draw() -> void:
 	_draw_bottom_bar_bg()
 	if _dragging != null:
 		_draw_spell_card(_drag_pos - Vector2(CARD_SIZE * 0.5, CARD_SIZE * 0.5), _dragging)
+	if _dragging_wand != null:
+		_draw_wand_card(_drag_pos - Vector2(CARD_SIZE * 0.5, CARD_SIZE * 0.5), _dragging_wand)
 
 
 # --- input ---
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
-		if _dragging != null:
+		if _dragging != null or _dragging_wand != null:
 			_drag_pos = (event as InputEventMouseMotion).position
 			queue_redraw()
 		return
@@ -82,16 +94,33 @@ func _input(event: InputEvent) -> void:
 
 
 func _try_start_drag(pos: Vector2) -> void:
+	# Loot wand displays
+	var wand_idx := _loot_wand_index_at(pos)
+	if wand_idx >= 0:
+		_dragging_wand = GameState.pending_loot_wands[wand_idx]
+		GameState.pending_loot_wands.remove_at(wand_idx)
+		_loot_wand_displays[wand_idx].queue_free()
+		_loot_wand_displays.remove_at(wand_idx)
+		_reposition_loot_wands()
+		_drag_wand_source = -1
+		_drag_pos = pos
+		get_viewport().set_input_as_handled()
+		queue_redraw()
+		return
+
+	# Spell cards in loot panel
 	var loot_idx := _card_index_at(pos, LOOT_X, GameState.pending_loot.size())
 	if loot_idx >= 0:
 		_dragging = GameState.pending_loot[loot_idx]
 		GameState.pending_loot.remove_at(loot_idx)
 		_drag_source = "loot"
 		_drag_pos = pos
-		_reposition_loot_wand()
+		_reposition_loot_wands()
 		get_viewport().set_input_as_handled()
 		queue_redraw()
 		return
+
+	# Spell cards in backpack panel
 	var pack_idx := _card_index_at(pos, PACK_X, GameState.backpack.size())
 	if pack_idx >= 0:
 		_dragging = GameState.backpack[pack_idx]
@@ -103,6 +132,9 @@ func _try_start_drag(pos: Vector2) -> void:
 
 
 func _end_drag(pos: Vector2) -> void:
+	if _dragging_wand != null:
+		_end_drag_wand(pos)
+		return
 	if _dragging == null:
 		return
 	if _try_drop_on_wand_slot(pos):
@@ -117,17 +149,36 @@ func _end_drag(pos: Vector2) -> void:
 		GameState.backpack.append(_dragging)
 	_dragging = null
 	_drag_source = ""
-	_reposition_loot_wand()
+	_reposition_loot_wands()
+	queue_redraw()
+
+
+func _end_drag_wand(pos: Vector2) -> void:
+	var mage_idx := _mage_equip_index_at(pos)
+	if mage_idx >= 0:
+		_equip_wand_at(mage_idx, _dragging_wand)
+	else:
+		# Return wand to loot
+		GameState.pending_loot_wands.append(_dragging_wand)
+		var wd := WandDisplay.new()
+		add_child(wd)
+		wd.setup(_dragging_wand)
+		_loot_wand_displays.append(wd)
+		_reposition_loot_wands()
+	_dragging_wand = null
+	_drag_wand_source = -2
 	queue_redraw()
 
 
 func _try_drop_on_wand_slot(pos: Vector2) -> bool:
 	for wd: WandDisplay in _equip_wand_displays:
+		if wd == null:
+			continue
 		var slot := wd.get_slot_at(wd.to_local(pos))
 		if slot == null:
 			continue
 		if slot.is_tip != _dragging.tags.has("tip"):
-			return false  # type mismatch — let fallback return spell to source
+			return false
 		var displaced: SpellData = slot.spell
 		slot.spell = _dragging
 		wd.queue_redraw()
@@ -144,7 +195,41 @@ func _place_spell_in_backpack_or_loot(spell: SpellData) -> void:
 		GameState.pending_loot.append(spell)
 
 
+func _equip_wand_at(mage_index: int, new_wand: WandData) -> void:
+	while GameState.wands.size() <= mage_index:
+		GameState.wands.append(null)
+	var old_wand: WandData = GameState.wands[mage_index]
+	GameState.wands[mage_index] = new_wand
+	if old_wand != null:
+		GameState.pending_loot_wands.append(old_wand)
+		var wd := WandDisplay.new()
+		add_child(wd)
+		wd.setup(old_wand)
+		_loot_wand_displays.append(wd)
+		_reposition_loot_wands()
+	_rebuild_equip_wands()
+
+
+func _rebuild_equip_wands() -> void:
+	for wd: WandDisplay in _equip_wand_displays:
+		if wd != null:
+			wd.queue_free()
+	_equip_wand_displays.clear()
+	_mage_row_ys.clear()
+	_mage_row_hs.clear()
+	_build_equip_wands()
+	queue_redraw()
+
+
 # --- hit testing helpers ---
+
+func _loot_wand_index_at(pos: Vector2) -> int:
+	for i in _loot_wand_displays.size():
+		var wd := _loot_wand_displays[i]
+		if Rect2(wd.position, wd.get_display_size()).has_point(pos):
+			return i
+	return -1
+
 
 func _card_index_at(pos: Vector2, panel_x: float, count: int) -> int:
 	for i in count:
@@ -161,6 +246,20 @@ func _card_rect(panel_x: float, index: int) -> Rect2:
 		),
 		Vector2(CARD_SIZE, CARD_SIZE)
 	)
+
+
+func _loot_wand_section_y() -> float:
+	var spell_rows := ceili(float(GameState.pending_loot.size()) / float(CARDS_PER_ROW))
+	var y := PANEL_TOP + 32.0 + float(spell_rows) * (CARD_SIZE + CARD_GAP)
+	return y + (CARD_GAP if spell_rows > 0 else 0.0)
+
+
+func _mage_equip_index_at(pos: Vector2) -> int:
+	for i in _mage_row_ys.size():
+		var r := Rect2(Vector2(WAND_X, _mage_row_ys[i]), Vector2(PANEL_W, _mage_row_hs[i]))
+		if r.has_point(pos):
+			return i
+	return -1
 
 
 func _panel_rect(panel_x: float) -> Rect2:
@@ -202,20 +301,18 @@ func _draw_drop_highlight(panel_x: float) -> void:
 func _draw_loot_panel() -> void:
 	_draw_panel_frame(LOOT_X, "Battle Loot")
 	_draw_drop_highlight(LOOT_X)
-	var spells := GameState.pending_loot
-	var has_wand := GameState.pending_loot_wand != null
-	if spells.is_empty() and not has_wand:
+	if GameState.pending_loot.is_empty() and GameState.pending_loot_wands.is_empty():
 		draw_string(ThemeDB.fallback_font,
 				Vector2(LOOT_X + PANEL_W * 0.5, PANEL_TOP + 80.0),
 				"No loot this battle",
 				HORIZONTAL_ALIGNMENT_CENTER, PANEL_W, 13, COLOR_SLOT_BORDER)
 		return
-	if not spells.is_empty():
-		_draw_spell_grid(LOOT_X, spells, -1)
-	if has_wand:
+	if not GameState.pending_loot.is_empty():
+		_draw_spell_grid(LOOT_X, GameState.pending_loot, -1)
+	if not GameState.pending_loot_wands.is_empty():
 		draw_string(ThemeDB.fallback_font,
-				Vector2(LOOT_X + 12.0, _loot_wand_y() - 4.0),
-				"Wand drop", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COLOR_SECTION)
+				Vector2(LOOT_X + 12.0, _loot_wand_section_y() + 13.0),
+				"Wands", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COLOR_SECTION)
 
 
 # --- backpack panel ---
@@ -255,6 +352,26 @@ func _draw_spell_card(pos: Vector2, spell: SpellData) -> void:
 			spell.display_name, HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE, 10, COLOR_SECTION)
 
 
+func _draw_wand_card(pos: Vector2, wand: WandData) -> void:
+	var rect := Rect2(pos, Vector2(CARD_SIZE, CARD_SIZE))
+	draw_rect(rect, COLOR_WAND_CARD, true)
+	draw_rect(rect, COLOR_WAND_CARD_BORDER, false, 1.5)
+	var body_count := 0
+	var tip_abbr := "—"
+	for slot: SpellSlotData in wand.slots:
+		if slot.is_tip:
+			if slot.spell != null:
+				tip_abbr = slot.spell.abbreviation
+		else:
+			body_count += 1
+	var font := ThemeDB.fallback_font
+	draw_string(font, Vector2(pos.x, pos.y + CARD_SIZE * 0.5 - 2.0),
+			"Wand", HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE, 15, Color.WHITE)
+	draw_string(font, Vector2(pos.x, pos.y + CARD_SIZE * 0.5 + 16.0),
+			"%d slots  %s" % [body_count, tip_abbr],
+			HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE, 10, COLOR_SECTION)
+
+
 func _draw_empty_slot(pos: Vector2) -> void:
 	draw_rect(Rect2(pos, Vector2(CARD_SIZE, CARD_SIZE)), COLOR_SLOT_EMPTY, true)
 	draw_rect(Rect2(pos, Vector2(CARD_SIZE, CARD_SIZE)), COLOR_SLOT_BORDER, false, 1.0)
@@ -268,6 +385,8 @@ func _draw_equip_wand_panel() -> void:
 		if i >= GameState.mages.size():
 			break
 		_draw_mage_header(GameState.mages[i], _mage_row_ys[i])
+		if _equip_wand_displays[i] == null:
+			_draw_empty_wand_slot(i)
 
 
 func _draw_mage_header(mage: MageData, row_y: float) -> void:
@@ -286,46 +405,55 @@ func _draw_mage_header(mage: MageData, row_y: float) -> void:
 	draw_rect(Rect2(Vector2(WAND_X + pad, bar_y), Vector2(bar_w * hp_frac, 5.0)), hp_color, true)
 
 
-func _build_equip_wands() -> void:
-	var mage_header_h := 30.0
-	var row_gap := 12.0
-	var y := PANEL_TOP + 30.0
-	for wand_data: WandData in GameState.wands:
+func _draw_empty_wand_slot(mage_index: int) -> void:
+	var slot_y := _mage_row_ys[mage_index] + MAGE_HEADER_H
+	var r := Rect2(Vector2(WAND_X + 10.0, slot_y), Vector2(PANEL_W - 20.0, EMPTY_WAND_SLOT_H))
+	var is_target := _dragging_wand != null and _mage_equip_index_at(_drag_pos) == mage_index
+	draw_rect(r, COLOR_DROP_HIGHLIGHT if is_target else COLOR_SLOT_EMPTY, true)
+	draw_rect(r, COLOR_DROP_BORDER if is_target else COLOR_SLOT_BORDER, false, 1.5)
+	draw_string(ThemeDB.fallback_font,
+			Vector2(WAND_X + 10.0, slot_y + EMPTY_WAND_SLOT_H * 0.5 + 5.0),
+			"Drop wand here", HORIZONTAL_ALIGNMENT_CENTER, PANEL_W - 20.0, 11, COLOR_SLOT_BORDER)
+
+
+func _build_loot_wands() -> void:
+	var y := _loot_wand_section_y() + 18.0
+	for wand: WandData in GameState.pending_loot_wands:
 		var wd := WandDisplay.new()
 		add_child(wd)
-		wd.setup(wand_data)
-		var wand_size := wd.get_display_size()
-		wd.position = Vector2(WAND_X + (PANEL_W - wand_size.x) * 0.5, y + mage_header_h)
-		_equip_wand_displays.append(wd)
+		wd.setup(wand)
+		wd.position = Vector2(LOOT_X + (PANEL_W - wd.get_display_size().x) * 0.5, y)
+		_loot_wand_displays.append(wd)
+		y += wd.get_display_size().y + ROW_GAP
+
+
+func _reposition_loot_wands() -> void:
+	var y := _loot_wand_section_y() + 18.0
+	for wd: WandDisplay in _loot_wand_displays:
+		wd.position = Vector2(LOOT_X + (PANEL_W - wd.get_display_size().x) * 0.5, y)
+		y += wd.get_display_size().y + ROW_GAP
+
+
+func _build_equip_wands() -> void:
+	var y := PANEL_TOP + 30.0
+	for i in GameState.mages.size():
 		_mage_row_ys.append(y)
-		y += mage_header_h + wand_size.y + row_gap
-
-
-# --- loot wand ---
-
-func _loot_wand_y() -> float:
-	var spell_rows := ceili(float(GameState.pending_loot.size()) / float(CARDS_PER_ROW))
-	var base := PANEL_TOP + 32.0 + float(spell_rows) * (CARD_SIZE + CARD_GAP)
-	return base + (12.0 if spell_rows > 0 else 0.0) + 14.0
-
-
-func _build_loot_wand() -> void:
-	if GameState.pending_loot_wand == null:
-		return
-	_loot_wand_display = WandDisplay.new()
-	add_child(_loot_wand_display)
-	_loot_wand_display.setup(GameState.pending_loot_wand)
-	_reposition_loot_wand()
-
-
-func _reposition_loot_wand() -> void:
-	if _loot_wand_display == null:
-		return
-	var wand_size := _loot_wand_display.get_display_size()
-	_loot_wand_display.position = Vector2(
-		LOOT_X + (PANEL_W - wand_size.x) * 0.5,
-		_loot_wand_y()
-	)
+		var wand_data: WandData = GameState.wands[i] if i < GameState.wands.size() else null
+		var wd: WandDisplay = null
+		var wand_h: float
+		if wand_data != null:
+			wd = WandDisplay.new()
+			add_child(wd)
+			wd.setup(wand_data)
+			wand_h = wd.get_display_size().y
+			wd.position = Vector2(WAND_X + (PANEL_W - wd.get_display_size().x) * 0.5,
+					y + MAGE_HEADER_H)
+		else:
+			wand_h = EMPTY_WAND_SLOT_H
+		_equip_wand_displays.append(wd)
+		var row_h := MAGE_HEADER_H + wand_h + ROW_GAP
+		_mage_row_hs.append(row_h)
+		y += row_h
 
 
 # --- bottom bar ---
@@ -348,6 +476,11 @@ func _build_bottom_bar() -> void:
 
 
 func _on_continue_pressed() -> void:
+	var was_initial := GameState.is_initial_setup
 	GameState.pending_loot.clear()
-	GameState.pending_loot_wand = null
-	get_tree().change_scene_to_file("res://scenes/level_up/level_up_screen.tscn")
+	GameState.pending_loot_wands.clear()
+	GameState.is_initial_setup = false
+	if was_initial:
+		get_tree().change_scene_to_file("res://scenes/battle/battle_scene.tscn")
+	else:
+		get_tree().change_scene_to_file("res://scenes/level_up/level_up_screen.tscn")

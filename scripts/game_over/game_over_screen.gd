@@ -31,4 +31,5 @@ func _draw() -> void:
 
 
 func _on_play_again() -> void:
-	get_tree().change_scene_to_file("res://scenes/battle/battle_scene.tscn")
+	GameState.reset_to_new_game()
+	get_tree().change_scene_to_file("res://scenes/loot/loot_screen.tscn")

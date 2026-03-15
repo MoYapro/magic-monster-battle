@@ -20,3 +20,4 @@ res://scripts/battle/actions/action_end_turn.gd
 res://scripts/battle/mage_data.gd
 res://scripts/level_up/level_up_screen.gd
 res://scripts/world/path_selection_screen.gd
+res://scripts/game_over/game_over_screen.gd
