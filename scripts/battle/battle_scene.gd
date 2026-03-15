@@ -164,6 +164,13 @@ func _apply_state(state: BattleState) -> void:
 		_mage_displays[i].queue_redraw()
 	_mana_display.setup(state.mana, _setup.max_mana, _panel_height)
 	_refresh_ui()
+	if _history.can_undo() and state.enemy_hp.is_empty():
+		_on_battle_won()
+
+
+func _on_battle_won() -> void:
+	_cancel_targeting()
+	get_tree().change_scene_to_file("res://scenes/loot/loot_screen.tscn")
 
 
 func _refresh_enemy_grid(state: BattleState) -> void:
