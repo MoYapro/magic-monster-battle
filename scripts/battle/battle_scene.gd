@@ -56,6 +56,14 @@ func _build_bottom_bar() -> void:
 	sep.size = Vector2(SCREEN_W, 1)
 	layer.add_child(sep)
 
+	var battle_label := Label.new()
+	battle_label.text = "Battle %d" % (GameState.battle_count + 1)
+	battle_label.position = Vector2(16, SCREEN_H - BOTTOM_BAR_H)
+	battle_label.size = Vector2(200, BOTTOM_BAR_H)
+	battle_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	battle_label.add_theme_color_override("font_color", Color(0.55, 0.62, 0.70))
+	layer.add_child(battle_label)
+
 	var end_turn_button := Button.new()
 	end_turn_button.text = "End Turn"
 	end_turn_button.size = Vector2(100, BOTTOM_BAR_H - 10)
@@ -242,6 +250,7 @@ func _on_battle_lost() -> void:
 
 func _on_battle_won() -> void:
 	_cancel_targeting()
+	GameState.battle_count += 1
 	var wands: Array[WandData] = []
 	for wd: WandDisplay in _wand_displays:
 		wands.append(wd.get_wand_data())

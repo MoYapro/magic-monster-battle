@@ -10,6 +10,7 @@ var pending_loot: Array[SpellData] = []
 var pending_loot_wands: Array[WandData] = []
 var current_biome: BiomeData = null
 var is_initial_setup: bool = true
+var battle_count: int = 0
 
 
 func _ready() -> void:
@@ -26,6 +27,7 @@ func reset_to_new_game() -> void:
 	pending_loot_wands.clear()
 	current_biome = null
 	is_initial_setup = true
+	battle_count = 0
 	_init_new_game()
 
 

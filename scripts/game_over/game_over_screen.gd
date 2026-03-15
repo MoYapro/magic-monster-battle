@@ -28,6 +28,9 @@ func _draw() -> void:
 			"GAME OVER", HORIZONTAL_ALIGNMENT_CENTER, 400.0, 72, COLOR_TITLE)
 	draw_string(font, Vector2(SCREEN_W * 0.5 - 200.0, SCREEN_H * 0.5 + 20.0),
 			"All mages have fallen.", HORIZONTAL_ALIGNMENT_CENTER, 400.0, 20, COLOR_SUB)
+	draw_string(font, Vector2(SCREEN_W * 0.5 - 200.0, SCREEN_H * 0.5 + 48.0),
+			"Battles won: %d" % GameState.battle_count,
+			HORIZONTAL_ALIGNMENT_CENTER, 400.0, 18, COLOR_SUB)
 
 
 func _on_play_again() -> void:
