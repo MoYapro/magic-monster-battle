@@ -144,15 +144,13 @@ All three mages share a single mana pool that persists between battles.
 
 ### Battle
 - [ ] Turn-based combat loop (mages and enemies alternate)
-- [ ] Enemy placement on 3x5 grid
 - [ ] Enemy behaviors and actions
-- [ ] Mage actions driven by equipped wand
-- [ ] Mana and item resource management
 - [ ] Win/lose condition detection
+- [ ] Mana placement on wand slots (mana cost per slot, charge system)
 
 ### Wand System
-- [ ] Spell slot graph structure (directed graph, handful of nodes)
-- [ ] Path traversal during casting
+- [ ] Path traversal during casting (sequential × parallel spell interactions)
+- [ ] Spell tag interactions (fire+water cancel, poison+amplify multiply, etc.)
 - [ ] Wand editor / rearrangement UI
 
 ### Loot & Progression
@@ -165,13 +163,25 @@ All three mages share a single mana pool that persists between battles.
 ### Path Selection
 - [ ] Path selection screen showing random subset of unlocked biomes
 - [ ] Biome definitions with own monster rosters and loot tables
-- [ ] Shared monsters across biomes
 - [ ] Per-biome difficulty scaling
 - [ ] Boss fight trigger after ~10 battles per biome
 - [ ] Biome unlock chain on boss defeat
-- [ ] Cross-biome spell counters
 
 ## Implemented Features
 
 ### Battle
-- [x] Enemy grid (3x5) with placement, bounds checking, multi-cell enemy support, and removal
+- [x] Enemy grid (3×5) with placement, bounds checking, multi-cell enemy support, removal, and damage
+- [x] Enemy display with name and HP bar; enemies removed at 0 HP
+- [x] Three mages with HP bars (MageDisplay)
+- [x] Mana pool display — individual droplets that overlap when count is high
+- [x] Targeting mode: click wand tip → all valid targets highlight yellow
+- [x] Hover during targeting: hovered cells/enemies/mages/wands highlight red, hit pattern applied
+- [x] Wand firing: deals summed spell damage to all cells in the tip's hit pattern
+
+### Wand System
+- [x] Directed spell-graph wand (SpellSlotData with next_id chain toward tip)
+- [x] Wand generator: randomised column layout, guaranteed single tip, all slots connected
+- [x] Body spells: Ember (fire), Frost (water), Venom (poison), Amplify (amplify), Shield (no dmg)
+- [x] Tip spells: Single (1 cell), Line (3 vertical), Pierce (3 horizontal), Bomb (3×3 area)
+- [x] Bomb has a hand-drawn icon; other spells show element-tinted abbreviation
+- [x] Spell damage: each slot contributes damage summed at fire time

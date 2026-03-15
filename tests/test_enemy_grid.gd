@@ -135,3 +135,88 @@ func test_can_place_after_removal() -> void:
 	grid.remove_enemy("e1")
 	assert_true(grid.can_place_enemy(Vector2i(1, 1), Vector2i(1, 1)))
 	grid.free()
+
+
+# --- get_hit_cells ---
+
+func test_single_cell_pattern_returns_target() -> void:
+	var grid := EnemyGrid.new()
+	var cells := grid.get_hit_cells(Vector2i(1, 2), [Vector2i(0, 0)])
+	assert_eq(cells.size(), 1)
+	assert_true(Vector2i(1, 2) in cells)
+	grid.free()
+
+
+func test_multi_cell_pattern_returns_all_in_bounds() -> void:
+	var grid := EnemyGrid.new()
+	var pattern: Array[Vector2i] = [Vector2i(0, -1), Vector2i(0, 0), Vector2i(0, 1)]
+	var cells := grid.get_hit_cells(Vector2i(1, 2), pattern)
+	assert_eq(cells.size(), 3)
+	assert_true(Vector2i(1, 1) in cells)
+	assert_true(Vector2i(1, 2) in cells)
+	assert_true(Vector2i(1, 3) in cells)
+	grid.free()
+
+
+func test_pattern_clips_out_of_bounds_cells() -> void:
+	var grid := EnemyGrid.new()
+	# row 0 — offset (0,-1) goes to row -1 which is out of bounds
+	var pattern: Array[Vector2i] = [Vector2i(0, -1), Vector2i(0, 0), Vector2i(0, 1)]
+	var cells := grid.get_hit_cells(Vector2i(1, 0), pattern)
+	assert_eq(cells.size(), 2)
+	assert_false(Vector2i(1, -1) in cells)
+	grid.free()
+
+
+func test_pattern_deduplicates_overlapping_offsets() -> void:
+	var grid := EnemyGrid.new()
+	var pattern: Array[Vector2i] = [Vector2i(0, 0), Vector2i(0, 0)]
+	var cells := grid.get_hit_cells(Vector2i(0, 0), pattern)
+	assert_eq(cells.size(), 1)
+	grid.free()
+
+
+# --- apply_damage ---
+
+func test_apply_damage_reduces_enemy_hp() -> void:
+	var grid := EnemyGrid.new()
+	var enemy := EnemyData.new("e1", "Test", 20, Vector2i(1, 1), Color.RED)
+	grid.place_enemy(enemy, Vector2i(0, 0))
+	grid.apply_damage(Vector2i(0, 0), 7)
+	assert_eq(enemy.current_hp, 13)
+	grid.free()
+
+
+func test_apply_damage_removes_enemy_at_zero_hp() -> void:
+	var grid := EnemyGrid.new()
+	var enemy := EnemyData.new("e1", "Test", 10, Vector2i(1, 1), Color.RED)
+	grid.place_enemy(enemy, Vector2i(0, 0))
+	grid.apply_damage(Vector2i(0, 0), 10)
+	assert_null(grid.get_enemy_at(Vector2i(0, 0)))
+	grid.free()
+
+
+func test_apply_damage_removes_enemy_when_overkilled() -> void:
+	var grid := EnemyGrid.new()
+	var enemy := EnemyData.new("e1", "Test", 10, Vector2i(1, 1), Color.RED)
+	grid.place_enemy(enemy, Vector2i(0, 0))
+	grid.apply_damage(Vector2i(0, 0), 99)
+	assert_null(grid.get_enemy_at(Vector2i(0, 0)))
+	grid.free()
+
+
+func test_apply_damage_to_empty_cell_does_nothing() -> void:
+	var grid := EnemyGrid.new()
+	grid.apply_damage(Vector2i(0, 0), 10)  # should not crash
+	assert_null(grid.get_enemy_at(Vector2i(0, 0)))
+	grid.free()
+
+
+func test_apply_damage_to_multi_cell_enemy_removes_all_cells() -> void:
+	var grid := EnemyGrid.new()
+	var ogre := EnemyData.new("ogre", "Ogre", 10, Vector2i(2, 1), Color.RED)
+	grid.place_enemy(ogre, Vector2i(0, 0))
+	grid.apply_damage(Vector2i(0, 0), 10)
+	assert_null(grid.get_enemy_at(Vector2i(0, 0)))
+	assert_null(grid.get_enemy_at(Vector2i(1, 0)))
+	grid.free()

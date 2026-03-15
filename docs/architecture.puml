@@ -7,6 +7,11 @@ package "Battle" {
 
   class BattleScene {
     +_ready()
+    --
+    -_fire_at_cell(cell: Vector2i)
+    -_start_targeting(wand: WandDisplay)
+    -_cancel_targeting()
+    -_update_hover(mouse: Vector2)
   }
 
   class EnemyGrid {
@@ -16,6 +21,8 @@ package "Battle" {
     +place_enemy(enemy, pos): bool
     +remove_enemy(id)
     +get_enemy_at(pos): EnemyData
+    +apply_damage(cell, amount)
+    +get_hit_cells(target, pattern): Array
     +can_place_enemy(pos, size): bool
     ..static..
     +get_cells_for_enemy(pos, size): Array
@@ -28,28 +35,31 @@ package "Battle" {
     +max_hp: int
     +current_hp: int
     +grid_size: Vector2i
+    +color: Color
   }
 
-  class WandDisplay {
-    +setup(name, slot_count)
+  class MageDisplay {
+    +setup(mage: MageData, height: float)
+    +set_highlighted(on: bool)
+    +set_hovered(on: bool)
+    +get_rect(): Rect2
+  }
+
+  class MageData {
+    +name: String
+    +max_hp: int
+    +current_hp: int
+  }
+
+  class ManaDisplay {
+    +WIDTH: float
+    +setup(current, max, height)
   }
 
   class TurnManager <<planned>> {
     +start_round()
     +end_player_turn()
     +resolve_enemy_actions()
-  }
-
-  class MageRow <<planned>> {
-    +mages: Array[Mage]
-  }
-
-  class Mage <<planned>> {
-    +max_hp: int
-    +current_hp: int
-    +max_mana_spend: int
-    +equipped_wand: Wand
-    +focus_element: FocusElement
   }
 
   class ManaPool <<planned>> {
@@ -61,26 +71,52 @@ package "Battle" {
 
 }
 
-package "Wand System" <<planned>> {
+package "Wand System" {
 
-  class Wand <<planned>> {
-    +tip: SpellSlot
-    +slots: Array[SpellSlot]
-    +zap(target)
+  class WandDisplay {
+    +setup(wand: WandData)
+    +get_wand_data(): WandData
+    +get_tip_spell(): SpellData
+    +get_display_size(): Vector2
+    +set_highlighted(on: bool)
+    +set_hovered(on: bool)
+    --
+    signal tip_pressed(wand)
   }
 
-  class SpellSlot <<planned>> {
-    +spell: Spell
-    +mana_cost: int
-    +charged: bool
+  class WandData {
+    +slots: Array[SpellSlotData]
+    --
+    +get_tip_slot(): SpellSlotData
+    +get_slot(id): SpellSlotData
+    +get_total_damage(): int
   }
 
-  class Spell <<planned>> {
+  class SpellSlotData {
+    +id: String
+    +grid_col: int
+    +grid_row: int
+    +next_id: String
+    +is_tip: bool
+    +spell: SpellData
+  }
+
+  class SpellData {
+    +display_name: String
+    +abbreviation: String
     +tags: Array[String]
-    +effect()
+    +element_color: Color
+    +hit_pattern: Array[Vector2i]
+    +icon: String
+    +damage: int
   }
 
-  class InteractionRule <<planned>> {
+  class WandGenerator {
+    ..static..
+    +generate(rng): WandData
+  }
+
+  class SpellInteraction <<planned>> {
     +tags_a: Array[String]
     +tags_b: Array[String]
     +interaction_type: String
@@ -103,17 +139,17 @@ package "Progression" <<planned>> {
 
 BattleScene --> EnemyGrid
 BattleScene "1" *-- "3" WandDisplay
+BattleScene "1" *-- "3" MageDisplay
+BattleScene "1" *-- "1" ManaDisplay
 BattleScene --> TurnManager
-BattleScene --> MageRow
-BattleScene --> ManaPool
 
 EnemyGrid "1" *-- "0..*" EnemyData
+MageDisplay --> MageData
 
-MageRow "1" *-- "1..3" Mage
-Mage --> Wand
-
-Wand "1" *-- "2..10" SpellSlot
-SpellSlot --> Spell
-Spell --> InteractionRule
+WandDisplay --> WandData
+WandData "1" *-- "2..10" SpellSlotData
+SpellSlotData --> SpellData
+WandGenerator ..> WandData : creates
+SpellData --> SpellInteraction
 
 @enduml

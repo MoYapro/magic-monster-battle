@@ -28,44 +28,51 @@ func _ready() -> void:
 
 func _setup_mage_wand_rows() -> void:
 	var mages := _make_mage_data()
-	var wands := _make_wand_data()
+	var wand_displays := _create_wand_displays(_make_wand_data())
+	var total_h := _measure_total_height(wand_displays)
+	var start_y := MARGIN + (SCREEN_H - MARGIN * 2.0 - total_h) / 2.0
+	_place_mana_bar(start_y, total_h)
+	_place_rows(wand_displays, mages, start_y)
+	_position_enemy_grid(start_y, total_h)
 
-	# Pass 1: create and measure to get total panel height
-	var wand_displays: Array[WandDisplay] = []
-	var total_h := 0.0
-	for i in wands.size():
+
+func _create_wand_displays(wands: Array[WandData]) -> Array[WandDisplay]:
+	var result: Array[WandDisplay] = []
+	for wand_data: WandData in wands:
 		var wand := WandDisplay.new()
 		add_child(wand)
-		wand.setup(wands[i])
-		wand_displays.append(wand)
-		total_h += wand.get_display_size().y
-	total_h += ROW_GAP * (wands.size() - 1)
+		wand.setup(wand_data)
+		result.append(wand)
+	return result
 
-	# Vertically centre rows within content area
-	var start_y := MARGIN + (SCREEN_H - MARGIN * 2.0 - total_h) / 2.0
 
-	# Pass 2: position everything
+func _measure_total_height(wand_displays: Array[WandDisplay]) -> float:
+	var total := 0.0
+	for wand: WandDisplay in wand_displays:
+		total += wand.get_display_size().y
+	return total + ROW_GAP * (wand_displays.size() - 1)
+
+
+func _place_mana_bar(start_y: float, total_h: float) -> void:
 	var mana := ManaDisplay.new()
 	add_child(mana)
 	mana.position = Vector2(MANA_X, start_y)
 	mana.setup(10, 10, total_h)
 
+
+func _place_rows(wand_displays: Array[WandDisplay], mages: Array[MageData], start_y: float) -> void:
 	var y := start_y
 	for i in wand_displays.size():
 		var wand: WandDisplay = wand_displays[i]
 		wand.position = Vector2(WAND_X, y)
 		wand.tip_pressed.connect(_on_tip_pressed)
 		_wand_displays.append(wand)
-
 		var mage := MageDisplay.new()
 		add_child(mage)
 		mage.position = Vector2(MAGE_X, y)
 		mage.setup(mages[i], wand.get_display_size().y)
 		_mage_displays.append(mage)
-
 		y += wand.get_display_size().y + ROW_GAP
-
-	_position_enemy_grid(start_y, total_h)
 
 
 func _position_enemy_grid(panel_top: float, panel_h: float) -> void:
@@ -165,14 +172,12 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	for mage in _mage_displays:
 		if mage.get_rect().has_point(mage.to_local(mouse)):
-			print("Target: mage")
 			_cancel_targeting()
 			get_viewport().set_input_as_handled()
 			return
 
 	for wand in _wand_displays:
 		if Rect2(Vector2.ZERO, wand.get_display_size()).has_point(wand.to_local(mouse)):
-			print("Target: wand")
 			_cancel_targeting()
 			get_viewport().set_input_as_handled()
 			return
