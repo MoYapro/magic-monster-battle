@@ -2,3 +2,4 @@ res://scripts/battle/battle_scene.gd
 res://scripts/battle/enemy_grid.gd
 res://scripts/battle/mage_display.gd
 res://scripts/battle/wand_display.gd
+res://scripts/battle/mana_display.gd

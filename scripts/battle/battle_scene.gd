@@ -6,7 +6,8 @@ const MARGIN := 40.0
 const WAND_PANEL_W := 580.0
 const BATTLE_PANEL_W := SCREEN_W - WAND_PANEL_W  # 700.0
 
-const MAGE_X := MARGIN
+const MANA_X := MARGIN
+const MAGE_X := MANA_X + ManaDisplay.WIDTH + 8.0
 const WAND_X := MAGE_X + MageDisplay.WIDTH + 10.0
 const ROW_GAP := 14.0
 
@@ -37,6 +38,11 @@ func _setup_mage_wand_rows() -> void:
 	var start_y := MARGIN + (SCREEN_H - MARGIN * 2.0 - total_h) / 2.0
 
 	# Pass 2: position everything
+	var mana := ManaDisplay.new()
+	add_child(mana)
+	mana.position = Vector2(MANA_X, start_y)
+	mana.setup(10, 10, total_h)
+
 	var y := start_y
 	for i in wand_displays.size():
 		var wand: WandDisplay = wand_displays[i]
