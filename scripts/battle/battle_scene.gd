@@ -28,6 +28,8 @@ var _targeting_wand: WandDisplay = null
 var _hovered_mage: MageDisplay = null
 var _hovered_wand: WandDisplay = null
 var _hovered_cells: Array[Vector2i] = []
+var _intent_hover_enemy: String = ""
+var _intent_hover_mage: int = -1
 
 
 func _ready() -> void:
@@ -78,7 +80,9 @@ func _build_bottom_bar() -> void:
 
 func _on_end_turn_pressed() -> void:
 	_cancel_targeting()
-	_apply_state(_history.push(ActionEndTurn.new()))
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	_apply_state(_history.push(ActionEndTurn.new(rng.seed)))
 
 
 func _on_undo_pressed() -> void:
@@ -189,6 +193,12 @@ func _make_enemy_data() -> Array[EnemyData]:
 	ogre.drop_pool     = [shield, ember]
 	troll.drop_pool    = [venom, frost]
 
+	goblin.action_pool   = [MonsterActionAttack.new("Scratch", 3), MonsterActionAttack.new("Bite", 5)]
+	skeleton.action_pool = [MonsterActionAttack.new("Strike", 4), MonsterActionAttack.new("Rattle", 2)]
+	witch.action_pool    = [MonsterActionAttack.new("Curse", 3), MonsterActionAttack.new("Hex", 6), MonsterActionHeal.new("Brew", 10)]
+	ogre.action_pool     = [MonsterActionAttack.new("Punch", 8), MonsterActionHeal.new("Shield Up", 25)]
+	troll.action_pool    = [MonsterActionAttack.new("Smash", 7), MonsterActionHeal.new("Regenerate", 20), MonsterActionAttack.new("Throw", 4)]
+
 	return [goblin, skeleton, witch, ogre, troll]
 
 
@@ -200,6 +210,14 @@ func _apply_state(state: BattleState) -> void:
 	_mana_display.setup(state.mana, _setup.max_mana, _panel_height)
 	_refresh_wand_charges(state)
 	_refresh_ui()
+	var all_mages_dead := true
+	for hp: int in state.mage_hp:
+		if hp > 0:
+			all_mages_dead = false
+			break
+	if all_mages_dead:
+		_on_battle_lost()
+		return
 	if _history.can_undo() and state.enemy_hp.is_empty():
 		_on_battle_won()
 
@@ -215,6 +233,18 @@ func _refresh_wand_charges(state: BattleState) -> void:
 			committed += c
 		_wand_displays[i].set_charges(charges)
 		_mage_displays[i].set_mana(state.mage_mana_spent[i], _setup.mages[i].mana_allowance)
+
+
+func _on_battle_lost() -> void:
+	_cancel_targeting()
+	GameState.mages.clear()
+	GameState.wands.clear()
+	GameState.backpack.clear()
+	GameState.backpack_wands.clear()
+	GameState.pending_loot.clear()
+	GameState.pending_loot_wand = null
+	GameState.current_biome = null
+	get_tree().change_scene_to_file("res://scenes/game_over/game_over_screen.tscn")
 
 
 func _on_battle_won() -> void:
@@ -249,6 +279,7 @@ func _refresh_enemy_grid(state: BattleState) -> void:
 			continue
 		enemy.current_hp = state.enemy_hp[enemy.id]
 		enemy_grid.place_enemy(enemy, _setup.enemy_positions[i])
+	enemy_grid.set_intents(state.monster_intents)
 
 
 # --- targeting ---
@@ -258,6 +289,8 @@ func _on_body_slot_clicked(wand: WandDisplay, slot_id: String) -> void:
 		_cancel_targeting()
 		return
 	var mage_index := _wand_displays.find(wand)
+	if _history.current_state().mage_hp[mage_index] <= 0:
+		return
 	_apply_state(_history.push(ActionAddMana.new(mage_index, slot_id)))
 
 
@@ -266,6 +299,8 @@ func _on_tip_pressed(wand: WandDisplay) -> void:
 		_cancel_targeting()
 		return
 	var mage_index := _wand_displays.find(wand)
+	if _history.current_state().mage_hp[mage_index] <= 0:
+		return
 	var tip := _setup.wands[mage_index].get_tip_slot()
 	if tip == null or tip.spell == null:
 		return
@@ -278,6 +313,7 @@ func _on_tip_pressed(wand: WandDisplay) -> void:
 
 
 func _start_targeting(wand: WandDisplay) -> void:
+	_clear_intent_hover()
 	_targeting_wand = wand
 	enemy_grid.set_highlighted(true)
 	for m in _mage_displays:
@@ -306,6 +342,58 @@ func _clear_hover() -> void:
 	if not _hovered_cells.is_empty():
 		enemy_grid.set_hovered_cells([])
 		_hovered_cells.clear()
+
+
+func _update_intent_hover(mouse: Vector2) -> void:
+	var cell := enemy_grid.get_cell_at(enemy_grid.to_local(mouse))
+	var hovered_id := ""
+	if cell.x >= 0:
+		var enemy := enemy_grid.get_enemy_at(cell)
+		if enemy != null:
+			hovered_id = enemy.id
+	if hovered_id == _intent_hover_enemy:
+		return
+	_clear_intent_hover()
+	_intent_hover_enemy = hovered_id
+	if hovered_id != "":
+		var intent: Dictionary = _history.current_state().monster_intents.get(hovered_id, {})
+		_intent_hover_mage = intent.get("target", -1)
+		if _intent_hover_mage >= 0 and _intent_hover_mage < _mage_displays.size():
+			_mage_displays[_intent_hover_mage].set_highlighted(true)
+	queue_redraw()
+
+
+func _clear_intent_hover() -> void:
+	if _intent_hover_mage >= 0 and _intent_hover_mage < _mage_displays.size():
+		_mage_displays[_intent_hover_mage].set_highlighted(false)
+	_intent_hover_enemy = ""
+	_intent_hover_mage = -1
+	queue_redraw()
+
+
+func _draw() -> void:
+	if _intent_hover_enemy == "" or _intent_hover_mage < 0:
+		return
+	var from := _get_enemy_scene_center(_intent_hover_enemy)
+	var to := _mage_displays[_intent_hover_mage].position \
+			+ _mage_displays[_intent_hover_mage].get_rect().get_center()
+	var color := Color(1.0, 0.45, 0.1, 0.9)
+	draw_line(from, to, color, 2.5, true)
+	var dir := (to - from).normalized()
+	var perp := Vector2(-dir.y, dir.x)
+	var tip := to - dir * 4.0
+	draw_line(tip - dir * 10.0 + perp * 6.0, tip, color, 2.5, true)
+	draw_line(tip - dir * 10.0 - perp * 6.0, tip, color, 2.5, true)
+
+
+func _get_enemy_scene_center(enemy_id: String) -> Vector2:
+	for i in _setup.enemies.size():
+		if _setup.enemies[i].id == enemy_id:
+			var enemy := _setup.enemies[i]
+			var px := Vector2(_setup.enemy_positions[i]) * enemy_grid.cell_size
+			var ps := Vector2(enemy.grid_size) * enemy_grid.cell_size
+			return enemy_grid.position + px + ps * 0.5
+	return Vector2.ZERO
 
 
 func _update_hover(mouse: Vector2) -> void:
@@ -339,6 +427,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if _targeting_wand == null:
+		if event is InputEventMouseMotion:
+			_update_intent_hover((event as InputEventMouseMotion).position)
 		return
 
 	if event is InputEventMouseMotion:

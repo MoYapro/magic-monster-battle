@@ -35,11 +35,42 @@ func make_initial_state() -> BattleState:
 		state.mage_hp.append(mage.max_hp)
 		state.mage_mana_spent.append(0)
 	state.mana = max_mana
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	state.monster_intents = roll_intents(state, rng)
 	return state
 
 
 func get_enemy_id_at(cell: Vector2i) -> String:
 	return _cell_to_enemy.get(cell, "")
+
+
+func get_enemy(p_id: String) -> EnemyData:
+	for enemy: EnemyData in enemies:
+		if enemy.id == p_id:
+			return enemy
+	return null
+
+
+func roll_intents(state: BattleState, rng: RandomNumberGenerator) -> Dictionary:
+	var intents := {}
+	for enemy: EnemyData in enemies:
+		if not state.enemy_hp.has(enemy.id) or enemy.action_pool.is_empty():
+			continue
+		var action_index := rng.randi_range(0, enemy.action_pool.size() - 1)
+		var action: MonsterActionData = enemy.action_pool[action_index]
+		var target := -1
+		var target_name := ""
+		if action.target_type == MonsterActionData.TargetType.MAGE:
+			target = rng.randi_range(0, mages.size() - 1)
+			target_name = mages[target].name
+		intents[enemy.id] = {
+			"action_index": action_index,
+			"action_name": action.name,
+			"target": target,
+			"target_name": target_name,
+		}
+	return intents
 
 
 func _build_cell_map() -> void:

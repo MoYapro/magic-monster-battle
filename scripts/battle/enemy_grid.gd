@@ -18,6 +18,12 @@ var _cells: Dictionary = {}
 var _enemy_positions: Dictionary = {}
 var _highlighted := false
 var _hovered_cells: Array[Vector2i] = []
+var _intents: Dictionary = {}
+
+
+func set_intents(intents: Dictionary) -> void:
+	_intents = intents
+	queue_redraw()
 
 
 func set_highlighted(on: bool) -> void:
@@ -170,3 +176,11 @@ func _draw_enemies() -> void:
 		draw_string(font, pixel_pos + Vector2(5, 32),
 				"%d / %d" % [enemy.current_hp, enemy.max_hp],
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COLOR_HP)
+		if _intents.has(enemy.id):
+			var intent: Dictionary = _intents[enemy.id]
+			var action_name: String = intent.get("action_name", "")
+			var target_name: String = intent.get("target_name", "")
+			var label := action_name + (" → " + target_name if target_name != "" else "")
+			draw_string(font, pixel_pos + Vector2(5, pixel_size.y - 6),
+					label, HORIZONTAL_ALIGNMENT_LEFT, pixel_size.x - 10, 10,
+					Color(1.0, 0.75, 0.35))

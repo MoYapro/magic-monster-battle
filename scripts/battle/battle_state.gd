@@ -8,6 +8,8 @@ var mana: int = 0
 var slot_charges: Dictionary = {}
 # per-mage mana spent on wand slots this turn
 var mage_mana_spent: Array[int] = []
+# enemy_id -> { action_index, action_name, target, target_name }
+var monster_intents: Dictionary = {}
 
 
 func duplicate() -> BattleState:
@@ -19,4 +21,5 @@ func duplicate() -> BattleState:
 	s.slot_charges = slot_charges.duplicate()
 	for v: int in mage_mana_spent:
 		s.mage_mana_spent.append(v)
+	s.monster_intents = monster_intents.duplicate(true)
 	return s

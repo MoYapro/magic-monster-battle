@@ -5,7 +5,8 @@ const WIDTH := 80.0
 const PAD := 9.0
 const BAR_HEIGHT := 9.0
 
-const COLOR_BG := Color(0.15, 0.17, 0.19)
+const COLOR_BG      := Color(0.15, 0.17, 0.19)
+const COLOR_BG_DEAD := Color(0.35, 0.06, 0.06)
 const COLOR_BORDER := Color(0.38, 0.42, 0.48)
 const COLOR_HP_FULL := Color(0.20, 0.75, 0.30)
 const COLOR_HP_LOW := Color(0.85, 0.20, 0.15)
@@ -52,7 +53,8 @@ func get_rect() -> Rect2:
 func _draw() -> void:
 	if _mage == null:
 		return
-	draw_rect(Rect2(Vector2.ZERO, Vector2(WIDTH, _height)), COLOR_BG, true)
+	var is_dead := _mage.current_hp <= 0
+	draw_rect(Rect2(Vector2.ZERO, Vector2(WIDTH, _height)), COLOR_BG_DEAD if is_dead else COLOR_BG, true)
 	draw_rect(Rect2(Vector2.ZERO, Vector2(WIDTH, _height)), COLOR_BORDER, false, 1.0)
 
 	# vertically centre the content block

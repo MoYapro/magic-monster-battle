@@ -7,6 +7,7 @@ var current_hp: int
 var grid_size: Vector2i  # width x height in grid cells
 var color: Color         # placeholder until art exists
 var drop_pool: Array[SpellData] = []
+var action_pool: Array[MonsterActionData] = []
 
 
 func _init(
