@@ -140,4 +140,4 @@ func _on_confirm_pressed() -> void:
 	else:
 		mage.mana_allowance += MANA_GAIN
 	GameState.mages = _mages
-	get_tree().change_scene_to_file("res://scenes/battle/battle_scene.tscn")
+	get_tree().change_scene_to_file("res://scenes/world/path_selection_screen.tscn")

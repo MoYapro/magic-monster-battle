@@ -394,6 +394,8 @@ func _make_mage_data() -> Array[MageData]:
 
 
 func _make_wand_data() -> Array[WandData]:
+	if not GameState.wands.is_empty():
+		return GameState.wands
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	return [

@@ -18,7 +18,7 @@ const WAND_X := PACK_X + PANEL_W + PANEL_GAP
 const CARD_SIZE := 80.0
 const CARD_GAP := 8.0
 const CARDS_PER_ROW := 4
-const BACKPACK_SLOTS := 12
+const BACKPACK_SLOTS := 24
 
 const COLOR_BG             := Color(0.07, 0.08, 0.09)
 const COLOR_PANEL          := Color(0.10, 0.12, 0.14)
@@ -348,10 +348,6 @@ func _build_bottom_bar() -> void:
 
 
 func _on_continue_pressed() -> void:
-	for spell: SpellData in GameState.pending_loot:
-		GameState.backpack.append(spell)
 	GameState.pending_loot.clear()
-	if GameState.pending_loot_wand != null:
-		GameState.backpack_wands.append(GameState.pending_loot_wand)
-		GameState.pending_loot_wand = null
+	GameState.pending_loot_wand = null
 	get_tree().change_scene_to_file("res://scenes/level_up/level_up_screen.tscn")
