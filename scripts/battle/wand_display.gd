@@ -43,6 +43,10 @@ func get_display_size() -> Vector2:
 	return _compute_bounds().size
 
 
+func get_wand_data() -> WandData:
+	return _data
+
+
 func get_tip_spell() -> SpellData:
 	if _data == null:
 		return null

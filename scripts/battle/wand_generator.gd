@@ -40,11 +40,11 @@ static func generate(rng: RandomNumberGenerator, min_cols: int = 2, max_cols: in
 
 static func _pick_body_spell(rng: RandomNumberGenerator) -> SpellData:
 	var spells: Array[SpellData] = [
-		SpellData.new("Ember",   "Em",  ["fire"],    Color(1.00, 0.45, 0.10)),
-		SpellData.new("Frost",   "Fr",  ["water"],   Color(0.25, 0.65, 1.00)),
-		SpellData.new("Venom",   "Vn",  ["poison"],  Color(0.30, 0.85, 0.20)),
-		SpellData.new("Amplify", "Amp", ["amplify"], Color(0.80, 0.30, 1.00)),
-		SpellData.new("Shield",  "Sh",  ["shield"],  Color(0.65, 0.75, 0.90)),
+		SpellData.new("Ember",   "Em",  ["fire"],    Color(1.00, 0.45, 0.10), [], false, "", 3),
+		SpellData.new("Frost",   "Fr",  ["water"],   Color(0.25, 0.65, 1.00), [], false, "", 2),
+		SpellData.new("Venom",   "Vn",  ["poison"],  Color(0.30, 0.85, 0.20), [], false, "", 2),
+		SpellData.new("Amplify", "Amp", ["amplify"], Color(0.80, 0.30, 1.00), [], false, "", 5),
+		SpellData.new("Shield",  "Sh",  ["shield"],  Color(0.65, 0.75, 0.90), [], false, "", 0),
 	]
 	return spells[rng.randi_range(0, spells.size() - 1)]
 
@@ -52,15 +52,15 @@ static func _pick_body_spell(rng: RandomNumberGenerator) -> SpellData:
 static func _pick_tip_spell(rng: RandomNumberGenerator) -> SpellData:
 	var spells: Array[SpellData] = [
 		SpellData.new("Single", "·",   ["tip", "single"], Color(0.90, 0.90, 0.90),
-			[Vector2i(0, 0)], false),
+			[Vector2i(0, 0)], false, "", 6),
 		SpellData.new("Line",   "|||", ["tip", "line"],   Color(0.30, 0.80, 0.95),
-			[Vector2i(0, -1), Vector2i(0, 0), Vector2i(0, 1)], false),
+			[Vector2i(0, -1), Vector2i(0, 0), Vector2i(0, 1)], false, "", 4),
 		SpellData.new("Pierce", "→→",  ["tip", "pierce"], Color(0.95, 0.55, 0.20),
-			[Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)], true),
+			[Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)], true, "", 4),
 		SpellData.new("Bomb",   "",    ["tip", "aoe"],    Color(0.25, 0.25, 0.28),
 			[Vector2i(-1,-1), Vector2i(-1, 0), Vector2i(-1, 1),
 			 Vector2i( 0,-1), Vector2i( 0, 0), Vector2i( 0, 1),
-			 Vector2i( 1,-1), Vector2i( 1, 0), Vector2i( 1, 1)], true, "bomb"),
+			 Vector2i( 1,-1), Vector2i( 1, 0), Vector2i( 1, 1)], true, "bomb", 3),
 	]
 	return spells[rng.randi_range(0, spells.size() - 1)]
 

@@ -158,7 +158,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	var cell := enemy_grid.get_cell_at(enemy_grid.to_local(mouse))
 	if cell.x >= 0:
-		print("Target: enemy cell %s" % cell)
+		_fire_at_cell(cell)
 		_cancel_targeting()
 		get_viewport().set_input_as_handled()
 		return
@@ -178,6 +178,18 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 
 	_cancel_targeting()
+
+
+func _fire_at_cell(cell: Vector2i) -> void:
+	var wand := _targeting_wand.get_wand_data()
+	var tip := _targeting_wand.get_tip_spell()
+	var pattern: Array[Vector2i] = [Vector2i(0, 0)]
+	if tip != null and not tip.hit_pattern.is_empty():
+		pattern = tip.hit_pattern
+	var hit_cells := enemy_grid.get_hit_cells(cell, pattern)
+	var damage := wand.get_total_damage()
+	for hit in hit_cells:
+		enemy_grid.apply_damage(hit, damage)
 
 
 func _make_mage_data() -> Array[MageData]:
@@ -200,22 +212,22 @@ func _make_wand_data() -> Array[WandData]:
 
 func _populate_test_enemies() -> void:
 	enemy_grid.place_enemy(
-		EnemyData.new("goblin_1", "Goblin", 10, Vector2i(1, 1), Color(0.2, 0.65, 0.2)),
+		EnemyData.new("goblin_1", "Goblin", 40, Vector2i(1, 1), Color(0.2, 0.65, 0.2)),
 		Vector2i(0, 0)
 	)
 	enemy_grid.place_enemy(
-		EnemyData.new("skeleton_1", "Skeleton", 8, Vector2i(1, 1), Color(0.8, 0.8, 0.7)),
+		EnemyData.new("skeleton_1", "Skeleton", 35, Vector2i(1, 1), Color(0.8, 0.8, 0.7)),
 		Vector2i(1, 1)
 	)
 	enemy_grid.place_enemy(
-		EnemyData.new("witch_1", "Witch", 14, Vector2i(1, 1), Color(0.55, 0.1, 0.7)),
+		EnemyData.new("witch_1", "Witch", 50, Vector2i(1, 1), Color(0.55, 0.1, 0.7)),
 		Vector2i(2, 3)
 	)
 	enemy_grid.place_enemy(
-		EnemyData.new("ogre_1", "Shield Ogre", 30, Vector2i(2, 1), Color(0.65, 0.25, 0.15)),
+		EnemyData.new("ogre_1", "Shield Ogre", 100, Vector2i(2, 1), Color(0.65, 0.25, 0.15)),
 		Vector2i(0, 3)
 	)
 	enemy_grid.place_enemy(
-		EnemyData.new("troll_1", "Troll", 25, Vector2i(1, 2), Color(0.3, 0.5, 0.2)),
+		EnemyData.new("troll_1", "Troll", 80, Vector2i(1, 2), Color(0.3, 0.5, 0.2)),
 		Vector2i(2, 0)
 	)
