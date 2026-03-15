@@ -9,3 +9,5 @@ res://scripts/battle/spell_data.gd
 res://scripts/battle/wand_data.gd
 res://README.md
 res://tests/test_enemy_grid.gd
+res://scripts/loot/loot_screen.gd
+res://scripts/game_state.gd

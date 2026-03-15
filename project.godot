@@ -15,9 +15,13 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="Wand Magic"
-run/main_scene="res://scenes/battle/battle_scene.tscn"
+run/main_scene="res://scenes/loot/loot_screen.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
-config/main_scene="res://scenes/battle/battle_scene.tscn"
+config/main_scene="res://scenes/loot/loot_screen.tscn"
+
+[autoload]
+
+GameState="*res://scripts/game_state.gd"
 
 [display]
 

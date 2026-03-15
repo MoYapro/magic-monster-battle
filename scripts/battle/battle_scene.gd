@@ -54,6 +54,13 @@ func _build_bottom_bar() -> void:
 	sep.size = Vector2(SCREEN_W, 1)
 	layer.add_child(sep)
 
+	var win_button := Button.new()
+	win_button.text = "🏆 Win"
+	win_button.size = Vector2(90, BOTTOM_BAR_H - 10)
+	win_button.position = Vector2(SCREEN_W - 256, SCREEN_H - BOTTOM_BAR_H + 5)
+	win_button.pressed.connect(_on_battle_won)
+	layer.add_child(win_button)
+
 	_undo_button = Button.new()
 	_undo_button.text = "↩ Undo  Ctrl+Z"
 	_undo_button.size = Vector2(148, BOTTOM_BAR_H - 10)
@@ -170,7 +177,28 @@ func _apply_state(state: BattleState) -> void:
 
 func _on_battle_won() -> void:
 	_cancel_targeting()
+	var wands: Array[WandData] = []
+	for wd: WandDisplay in _wand_displays:
+		wands.append(wd.get_wand_data())
+	GameState.mages = _mages
+	GameState.wands = wands
+	_generate_loot()
 	get_tree().change_scene_to_file("res://scenes/loot/loot_screen.tscn")
+
+
+func _generate_loot() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	GameState.pending_loot.clear()
+	GameState.pending_loot_wand = null
+	for _enemy: EnemyData in _setup.enemies:
+		var roll := rng.randf()
+		if roll < 0.15:
+			pass  # no drop
+		elif roll < 0.35 and GameState.pending_loot_wand == null:
+			GameState.pending_loot_wand = WandGenerator.generate(rng)
+		else:
+			GameState.pending_loot.append(WandGenerator._pick_body_spell(rng))
 
 
 func _refresh_enemy_grid(state: BattleState) -> void:
