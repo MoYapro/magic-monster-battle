@@ -146,22 +146,37 @@ func _position_enemy_grid(panel_top: float, panel_h: float) -> void:
 # --- battle state ---
 
 func _build_setup() -> void:
-	var enemies: Array[EnemyData] = [
-		EnemyData.new("goblin_1",   "Goblin",       40,  Vector2i(1, 1), Color(0.2,  0.65, 0.2)),
-		EnemyData.new("skeleton_1", "Skeleton",     35,  Vector2i(1, 1), Color(0.8,  0.8,  0.7)),
-		EnemyData.new("witch_1",    "Witch",         50,  Vector2i(1, 1), Color(0.55, 0.1,  0.7)),
-		EnemyData.new("ogre_1",     "Shield Ogre",  100, Vector2i(2, 1), Color(0.65, 0.25, 0.15)),
-		EnemyData.new("troll_1",    "Troll",         80,  Vector2i(1, 2), Color(0.3,  0.5,  0.2)),
-	]
 	var positions: Array[Vector2i] = [
 		Vector2i(0, 0), Vector2i(1, 1), Vector2i(2, 3), Vector2i(0, 3), Vector2i(2, 0),
 	]
 	var wands: Array[WandData] = []
 	for wd: WandDisplay in _wand_displays:
 		wands.append(wd.get_wand_data())
-	_setup = BattleSetup.new(enemies, positions, _mages, wands, 10)
+	_setup = BattleSetup.new(_make_enemy_data(), positions, _mages, wands, 10)
 	_history = BattleHistory.new(_setup.make_initial_state(), _setup)
 	_apply_state(_history.current_state())
+
+
+func _make_enemy_data() -> Array[EnemyData]:
+	var ember  := SpellData.new("Ember",  "Em",  ["fire"],    Color(1.00, 0.45, 0.10), [], "", 3)
+	var frost  := SpellData.new("Frost",  "Fr",  ["water"],   Color(0.25, 0.65, 1.00), [], "", 2)
+	var venom  := SpellData.new("Venom",  "Vn",  ["poison"],  Color(0.30, 0.85, 0.20), [], "", 2)
+	var amplify := SpellData.new("Amplify","Amp", ["amplify"], Color(0.80, 0.30, 1.00), [], "", 5)
+	var shield := SpellData.new("Shield", "Sh",  ["shield"],  Color(0.65, 0.75, 0.90), [], "", 0)
+
+	var goblin   := EnemyData.new("goblin_1",   "Goblin",      40,  Vector2i(1, 1), Color(0.2,  0.65, 0.2))
+	var skeleton := EnemyData.new("skeleton_1", "Skeleton",    35,  Vector2i(1, 1), Color(0.8,  0.8,  0.7))
+	var witch    := EnemyData.new("witch_1",    "Witch",        50,  Vector2i(1, 1), Color(0.55, 0.1,  0.7))
+	var ogre     := EnemyData.new("ogre_1",     "Shield Ogre", 100, Vector2i(2, 1), Color(0.65, 0.25, 0.15))
+	var troll    := EnemyData.new("troll_1",    "Troll",        80,  Vector2i(1, 2), Color(0.3,  0.5,  0.2))
+
+	goblin.drop_pool   = [ember, venom]
+	skeleton.drop_pool = [frost, shield]
+	witch.drop_pool    = [venom, amplify]
+	ogre.drop_pool     = [shield, ember]
+	troll.drop_pool    = [venom, frost]
+
+	return [goblin, skeleton, witch, ogre, troll]
 
 
 func _apply_state(state: BattleState) -> void:
@@ -190,15 +205,12 @@ func _generate_loot() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	GameState.pending_loot.clear()
-	GameState.pending_loot_wand = null
-	for _enemy: EnemyData in _setup.enemies:
-		var roll := rng.randf()
-		if roll < 0.15:
-			pass  # no drop
-		elif roll < 0.35 and GameState.pending_loot_wand == null:
-			GameState.pending_loot_wand = WandGenerator.generate(rng)
-		else:
-			GameState.pending_loot.append(WandGenerator._pick_body_spell(rng))
+	GameState.pending_loot_wand = WandGenerator.generate(rng)
+	GameState.pending_loot.append(WandGenerator._pick_tip_spell(rng))
+	for enemy: EnemyData in _setup.enemies:
+		if not enemy.drop_pool.is_empty():
+			GameState.pending_loot.append(
+				enemy.drop_pool[rng.randi_range(0, enemy.drop_pool.size() - 1)])
 
 
 func _refresh_enemy_grid(state: BattleState) -> void:

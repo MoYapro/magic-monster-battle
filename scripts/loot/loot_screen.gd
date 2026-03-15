@@ -105,7 +105,9 @@ func _try_start_drag(pos: Vector2) -> void:
 func _end_drag(pos: Vector2) -> void:
 	if _dragging == null:
 		return
-	if _panel_rect(LOOT_X).has_point(pos):
+	if _try_drop_on_wand_slot(pos):
+		pass
+	elif _panel_rect(LOOT_X).has_point(pos):
 		GameState.pending_loot.append(_dragging)
 	elif _panel_rect(PACK_X).has_point(pos) and GameState.backpack.size() < BACKPACK_SLOTS:
 		GameState.backpack.append(_dragging)
@@ -117,6 +119,29 @@ func _end_drag(pos: Vector2) -> void:
 	_drag_source = ""
 	_reposition_loot_wand()
 	queue_redraw()
+
+
+func _try_drop_on_wand_slot(pos: Vector2) -> bool:
+	for wd: WandDisplay in _equip_wand_displays:
+		var slot := wd.get_slot_at(wd.to_local(pos))
+		if slot == null:
+			continue
+		if slot.is_tip != _dragging.tags.has("tip"):
+			return false  # type mismatch — let fallback return spell to source
+		var displaced: SpellData = slot.spell
+		slot.spell = _dragging
+		wd.queue_redraw()
+		if displaced != null:
+			_place_spell_in_backpack_or_loot(displaced)
+		return true
+	return false
+
+
+func _place_spell_in_backpack_or_loot(spell: SpellData) -> void:
+	if GameState.backpack.size() < BACKPACK_SLOTS:
+		GameState.backpack.append(spell)
+	else:
+		GameState.pending_loot.append(spell)
 
 
 # --- hit testing helpers ---

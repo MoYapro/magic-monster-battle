@@ -47,6 +47,15 @@ func get_wand_data() -> WandData:
 	return _data
 
 
+func get_slot_at(local_pos: Vector2) -> SpellSlotData:
+	if _data == null:
+		return null
+	for slot: SpellSlotData in _data.slots:
+		if Rect2(_slot_pixel_pos(slot), SLOT_SIZE).has_point(local_pos):
+			return slot
+	return null
+
+
 func get_tip_spell() -> SpellData:
 	if _data == null:
 		return null

@@ -11,3 +11,4 @@ res://README.md
 res://tests/test_enemy_grid.gd
 res://scripts/loot/loot_screen.gd
 res://scripts/game_state.gd
+res://scripts/battle/enemy_data.gd

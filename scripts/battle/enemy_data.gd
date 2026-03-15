@@ -6,6 +6,7 @@ var max_hp: int
 var current_hp: int
 var grid_size: Vector2i  # width x height in grid cells
 var color: Color         # placeholder until art exists
+var drop_pool: Array[SpellData] = []
 
 
 func _init(
