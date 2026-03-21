@@ -78,10 +78,17 @@ func _build_bottom_bar() -> void:
 	win_button.pressed.connect(_on_battle_won)
 	layer.add_child(win_button)
 
+	var reroll_button := Button.new()
+	reroll_button.text = "↺ Reroll"
+	reroll_button.size = Vector2(90, BOTTOM_BAR_H - 10)
+	reroll_button.position = Vector2(SCREEN_W - 210, SCREEN_H - BOTTOM_BAR_H + 5)
+	reroll_button.pressed.connect(_on_reroll_pressed)
+	layer.add_child(reroll_button)
+
 	_undo_button = Button.new()
 	_undo_button.text = "↩ Undo  Ctrl+Z"
 	_undo_button.size = Vector2(148, BOTTOM_BAR_H - 10)
-	_undo_button.position = Vector2(SCREEN_W - 156, SCREEN_H - BOTTOM_BAR_H + 5)
+	_undo_button.position = Vector2(SCREEN_W - 112, SCREEN_H - BOTTOM_BAR_H + 5)
 	_undo_button.pressed.connect(_on_undo_pressed)
 	layer.add_child(_undo_button)
 
@@ -96,6 +103,11 @@ func _on_end_turn_pressed() -> void:
 func _on_undo_pressed() -> void:
 	if _history != null and _history.can_undo():
 		_apply_state(_history.undo())
+
+
+func _on_reroll_pressed() -> void:
+	_cancel_targeting()
+	_build_setup()
 
 
 func _refresh_ui() -> void:
@@ -172,19 +184,19 @@ func _position_enemy_grid(panel_top: float, panel_h: float) -> void:
 # --- battle state ---
 
 func _build_setup() -> void:
-	var positions: Array[Vector2i] = [
-		Vector2i(0, 0), Vector2i(1, 1), Vector2i(2, 3), Vector2i(0, 3), Vector2i(2, 0),
-	]
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var biome: BiomeData = GameState.current_biome
+	if biome == null:
+		biome = BiomesData.all()[0]
+	var biome_level: int = GameState.battle_count_by_biome.get(biome.name, 0) + 1
+	var composition := BattleComposer.compose(biome, biome_level, rng)
 	var wands: Array[WandData] = []
 	for wd: WandDisplay in _wand_displays:
 		wands.append(wd.get_wand_data())
-	_setup = BattleSetup.new(_make_enemy_data(), positions, _mages, wands, 10)
+	_setup = BattleSetup.new(composition["enemies"], composition["positions"], _mages, wands, 10)
 	_history = BattleHistory.new(_setup.make_initial_state(), _setup)
 	_apply_state(_history.current_state())
-
-
-func _make_enemy_data() -> Array[EnemyData]:
-	return [Goblin.new(), Skeleton.new(), Witch.new(), ShieldOgre.new(), Troll.new()]
 
 
 func _apply_state(state: BattleState) -> void:
