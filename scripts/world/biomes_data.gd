@@ -55,12 +55,12 @@ static func _build() -> Array[BiomeData]:
 	var ruins    := BiomeData.new("Ruins",    "Something still walks these halls.",    Color(0.55, 0.45, 0.35), Vector2i(7, 6))
 
 	desert.monster_pool   = [Goblin, Skeleton, Scorpion]
-	volcano.monster_pool  = [Goblin, ShieldOgre, FireElemental]
-	forest.monster_pool   = [Goblin, Troll, Treant]
-	mountain.monster_pool = [Troll, ShieldOgre, StoneGiant]
-	tundra.monster_pool   = [Skeleton, Troll, FrostMage]
-	swamp.monster_pool    = [Goblin, Witch, Troll, BogShambler]
-	cave.monster_pool     = [Goblin, Troll, ShieldOgre, CaveSpider]
-	ruins.monster_pool    = [Skeleton, Witch, ShieldOgre, CursedKnight]
+	volcano.monster_pool  = [Goblin, ShieldOgre, FireElemental, WarDrummer]
+	forest.monster_pool   = [Goblin, Troll, Treant, WraithBlade, ShadowPanther, GroveTender]
+	mountain.monster_pool = [Troll, ShieldOgre, StoneGiant, WarDrummer]
+	tundra.monster_pool   = [Skeleton, Troll, FrostMage, Banshee]
+	swamp.monster_pool    = [Goblin, Witch, Troll, BogShambler, ShadowPanther, GroveTender]
+	cave.monster_pool     = [Goblin, Troll, ShieldOgre, CaveSpider, WraithBlade]
+	ruins.monster_pool    = [Skeleton, Witch, ShieldOgre, CursedKnight, Banshee, BoneCaller, WarDrummer, FallenPaladin]
 
 	return [desert, volcano, forest, mountain, tundra, swamp, cave, ruins]
