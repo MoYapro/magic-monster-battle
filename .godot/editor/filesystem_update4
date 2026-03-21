@@ -38,3 +38,5 @@ res://scripts/battle/monsters/wraith_blade.gd
 res://scripts/battle/wand_display.gd
 res://scripts/battle/monster_traits/monster_trait_fire.gd
 res://scripts/battle/spells/spell_frost.gd
+res://scripts/battle/enemy_data.gd
+res://scripts/battle/wand_data.gd

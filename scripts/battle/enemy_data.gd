@@ -27,5 +27,3 @@ func _init(
 	current_hp = p_hp
 	grid_size = p_size
 	color = p_color
-
-

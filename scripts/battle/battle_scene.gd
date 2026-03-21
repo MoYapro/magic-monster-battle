@@ -602,9 +602,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	var cell := enemy_grid.get_cell_at(enemy_grid.to_local(mouse))
 	if cell.x >= 0:
+		get_viewport().set_input_as_handled()
 		_fire_at_cell(cell)
 		_cancel_targeting()
-		get_viewport().set_input_as_handled()
 		return
 
 	for mage in _mage_displays:

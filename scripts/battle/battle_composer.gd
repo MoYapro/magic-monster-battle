@@ -158,7 +158,8 @@ static func _place_items(items: Array, rng: RandomNumberGenerator, occupied: Dic
 		if valid.is_empty():
 			positions[i] = Vector2i(-1, -1)
 			continue
-		var off_role: MonsterRole.Type = items[i].get("off_role", MonsterRole.Type.NONE)
+		var _raw_off_role: Variant = items[i].get("off_role")
+		var off_role: MonsterRole.Type = _raw_off_role if _raw_off_role != null else MonsterRole.Type.NONE
 		var pref_row := _blended_row(role, off_role)
 		var chosen := _pick_biased(valid, pref_row, rng)
 		positions[i] = chosen
