@@ -536,6 +536,7 @@ func _on_auto_assign_pressed() -> void:
 		_loot_wand_displays.remove_at(0)
 		_equip_wand_at(i, wand)
 	_reposition_loot_wands()
+	_on_continue_pressed()
 
 
 func _on_continue_pressed() -> void:

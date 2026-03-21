@@ -3,7 +3,6 @@ extends Node2D
 const SCREEN_W := 1280.0
 const SCREEN_H := 720.0
 const HEADER_H := 48.0
-const BOTTOM_BAR_H := 38.0
 
 const CARD_W := 500.0
 const CARD_H := 360.0
@@ -11,24 +10,20 @@ const CARD_GAP := 40.0
 const CARDS_TOTAL_W := 2.0 * CARD_W + CARD_GAP
 const CARD_X_LEFT  := (SCREEN_W - CARDS_TOTAL_W) * 0.5
 const CARD_X_RIGHT := CARD_X_LEFT + CARD_W + CARD_GAP
-const CARD_Y := HEADER_H + (SCREEN_H - HEADER_H - BOTTOM_BAR_H - CARD_H) * 0.5
+const CARD_Y := HEADER_H + (SCREEN_H - HEADER_H - CARD_H) * 0.5
 
-const COLOR_BG           := Color(0.07, 0.08, 0.09)
-const COLOR_HEADER_BG    := Color(0.08, 0.09, 0.11)
-const COLOR_BORDER       := Color(0.22, 0.26, 0.30)
-const COLOR_CARD         := Color(0.10, 0.12, 0.14)
-const COLOR_TITLE        := Color(0.85, 0.90, 0.95)
-const COLOR_TAGLINE      := Color(0.50, 0.57, 0.65)
-const COLOR_SELECTED_BG  := Color(0.08, 0.10, 0.12)
+const COLOR_BG        := Color(0.07, 0.08, 0.09)
+const COLOR_HEADER_BG := Color(0.08, 0.09, 0.11)
+const COLOR_BORDER    := Color(0.22, 0.26, 0.30)
+const COLOR_CARD      := Color(0.10, 0.12, 0.14)
+const COLOR_TITLE     := Color(0.85, 0.90, 0.95)
+const COLOR_TAGLINE   := Color(0.50, 0.57, 0.65)
 
 var _choices: Array[BiomeData] = []
-var _selected: int = -1
-var _confirm_button: Button = null
 
 
 func _ready() -> void:
 	_pick_choices()
-	_build_bottom_bar()
 
 
 func _pick_choices() -> void:
@@ -50,7 +45,6 @@ func _draw() -> void:
 	_draw_header()
 	for i in _choices.size():
 		_draw_card(i)
-	_draw_bottom_bar_bg()
 
 
 func _draw_header() -> void:
@@ -64,17 +58,14 @@ func _draw_header() -> void:
 func _draw_card(i: int) -> void:
 	var biome := _choices[i]
 	var r := _card_rect(i)
-	var selected := _selected == i
 
 	# Background with biome colour tint
 	var tint := biome.color
-	tint.a = 0.18 if selected else 0.08
+	tint.a = 0.08
 	draw_rect(r, COLOR_CARD, true)
 	draw_rect(r, tint, true)
 
-	# Border — brighter when selected
-	var border_color := Color(biome.color, 0.90) if selected else Color(biome.color, 0.35)
-	draw_rect(r, border_color, false, 2.5 if selected else 1.5)
+	draw_rect(r, Color(biome.color, 0.35), false, 1.5)
 
 	var font := ThemeDB.fallback_font
 	var lx := r.position.x
@@ -104,31 +95,10 @@ func _input(event: InputEvent) -> void:
 	var pos := (event as InputEventMouseButton).position
 	for i in _choices.size():
 		if _card_rect(i).has_point(pos):
-			_selected = i
-			_confirm_button.disabled = false
-			queue_redraw()
 			get_viewport().set_input_as_handled()
+			GameState.current_biome = _choices[i]
+			if GameState.is_initial_setup:
+				get_tree().change_scene_to_file("res://scenes/loot/loot_screen.tscn")
+			else:
+				get_tree().change_scene_to_file("res://scenes/battle/battle_scene.tscn")
 			return
-
-
-func _draw_bottom_bar_bg() -> void:
-	var bar_y := SCREEN_H - BOTTOM_BAR_H
-	draw_rect(Rect2(Vector2(0, bar_y), Vector2(SCREEN_W, BOTTOM_BAR_H)), COLOR_HEADER_BG, true)
-	draw_rect(Rect2(Vector2(0, bar_y), Vector2(SCREEN_W, 1)), COLOR_BORDER, true)
-
-
-func _build_bottom_bar() -> void:
-	var layer := CanvasLayer.new()
-	add_child(layer)
-	_confirm_button = Button.new()
-	_confirm_button.text = "Venture forth →"
-	_confirm_button.size = Vector2(164, BOTTOM_BAR_H - 10)
-	_confirm_button.position = Vector2(SCREEN_W - 172.0, SCREEN_H - BOTTOM_BAR_H + 5.0)
-	_confirm_button.disabled = true
-	_confirm_button.pressed.connect(_on_confirm_pressed)
-	layer.add_child(_confirm_button)
-
-
-func _on_confirm_pressed() -> void:
-	GameState.current_biome = _choices[_selected]
-	get_tree().change_scene_to_file("res://scenes/battle/battle_scene.tscn")

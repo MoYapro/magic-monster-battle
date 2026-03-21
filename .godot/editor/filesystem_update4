@@ -1,2 +1,6 @@
 res://scripts/battle/battle_scene.gd
 res://scripts/battle/battle_composer.gd
+res://scripts/world/path_selection_screen.gd
+res://scripts/loot/loot_screen.gd
+res://scenes/loot/loot_screen.tscn
+res://scripts/battle/monsters/shield_ogre.gd
