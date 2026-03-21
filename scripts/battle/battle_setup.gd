@@ -31,6 +31,9 @@ func make_initial_state() -> BattleState:
 	var state := BattleState.new()
 	for enemy: EnemyData in enemies:
 		state.enemy_hp[enemy.id] = enemy.max_hp
+		for t: MonsterTraitData in enemy.traits:
+			if t is MonsterTraitArmor:
+				state.enemy_armor[enemy.id] = (t as MonsterTraitArmor).armor_amount
 	for mage: MageData in mages:
 		state.mage_hp.append(mage.max_hp)
 		state.mage_mana_spent.append(0)

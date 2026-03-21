@@ -23,6 +23,13 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 		var action: MonsterActionData = enemy.action_pool[action_index]
 		new_state = action.execute(new_state, setup, enemy_id, target)
 
+	# Apply end-of-round traits (regen, armor refresh, etc.)
+	for enemy: EnemyData in setup.enemies:
+		if not new_state.enemy_hp.has(enemy.id):
+			continue
+		for t: MonsterTraitData in enemy.traits:
+			new_state = t.apply_end_of_round(new_state, setup, enemy.id) as BattleState
+
 	# Reset turn resources
 	new_state.mana = setup.max_mana
 	for i in new_state.mage_mana_spent.size():

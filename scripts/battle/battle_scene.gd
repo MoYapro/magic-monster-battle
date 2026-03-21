@@ -201,6 +201,9 @@ func _make_enemy_data() -> Array[EnemyData]:
 	ogre.drop_pool     = [shield, ember]
 	troll.drop_pool    = [venom, frost]
 
+	troll.traits = [MonsterTraitRegen.new(15)]
+	ogre.traits  = [MonsterTraitArmor.new(30)]
+
 	goblin.action_pool   = [MonsterActionAttack.new("Scratch", 3), MonsterActionAttack.new("Bite", 5)]
 	skeleton.action_pool = [MonsterActionAttack.new("Strike", 4), MonsterActionAttack.new("Rattle", 2)]
 	witch.action_pool    = [MonsterActionAttack.new("Curse", 3), MonsterActionAttack.new("Hex", 6), MonsterActionHeal.new("Brew", 10)]
@@ -283,6 +286,7 @@ func _refresh_enemy_grid(state: BattleState) -> void:
 		enemy.current_hp = state.enemy_hp[enemy.id]
 		enemy_grid.place_enemy(enemy, _setup.enemy_positions[i])
 	enemy_grid.set_intents(state.monster_intents)
+	enemy_grid.set_armors(state.enemy_armor)
 
 
 # --- targeting ---

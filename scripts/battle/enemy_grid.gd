@@ -19,6 +19,12 @@ var _enemy_positions: Dictionary = {}
 var _highlighted := false
 var _hovered_cells: Array[Vector2i] = []
 var _intents: Dictionary = {}
+var _armors: Dictionary = {}
+
+
+func set_armors(armors: Dictionary) -> void:
+	_armors = armors
+	queue_redraw()
 
 
 func set_intents(intents: Dictionary) -> void:
@@ -176,6 +182,10 @@ func _draw_enemies() -> void:
 		draw_string(font, pixel_pos + Vector2(5, 32),
 				"%d / %d" % [enemy.current_hp, enemy.max_hp],
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COLOR_HP)
+		if _armors.has(enemy.id) and _armors[enemy.id] > 0:
+			draw_string(font, pixel_pos + Vector2(5, 44),
+					"🛡 %d" % _armors[enemy.id],
+					HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1.0, 0.85, 0.3))
 		if _intents.has(enemy.id):
 			var intent: Dictionary = _intents[enemy.id]
 			var action_name: String = intent.get("action_name", "")

@@ -33,9 +33,17 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 		var eid: String = setup.get_enemy_id_at(cell)
 		if eid.is_empty() or not new_state.enemy_hp.has(eid):
 			continue
-		new_state.enemy_hp[eid] -= damage
+		var remaining := damage
+		if new_state.enemy_armor.has(eid):
+			var absorbed := mini(new_state.enemy_armor[eid], remaining)
+			new_state.enemy_armor[eid] -= absorbed
+			remaining -= absorbed
+			if new_state.enemy_armor[eid] <= 0:
+				new_state.enemy_armor.erase(eid)
+		new_state.enemy_hp[eid] -= remaining
 		if new_state.enemy_hp[eid] <= 0:
 			new_state.enemy_hp.erase(eid)
+			new_state.enemy_armor.erase(eid)
 
 	for slot: SpellSlotData in wand.slots:
 		new_state.slot_charges.erase("%d/%s" % [mage_index, slot.id])

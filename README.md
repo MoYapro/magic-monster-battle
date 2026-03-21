@@ -37,7 +37,8 @@ After each battle the player sees three areas:
 The player freely moves loot between all three areas. Anything left in the loot area when the phase ends is lost. The phase ends explicitly when the player confirms they are done.
 
 ### Path Selection
-After loot, the player picks the next battle from a random subset of currently unlocked biomes. The player is always shown **2 choices**; as more biomes unlock this may grow to **3**. The phase ends explicitly when the player confirms their selection.
+After loot, the player picks the next battle from a random subset of currently unlocked biomes. The player is always shown **2 choices**; as more biomes unlock this may grow to **3**. 
+The phase ends explicitly when the player confirms their selection.
 
 **Biomes:**
 - There are at least **3 starter biomes** available from the beginning
