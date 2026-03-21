@@ -8,3 +8,12 @@ res://scripts/battle/monster_role.gd
 res://scripts/battle/battle_setup.gd
 res://scripts/battle/battle_state.gd
 res://scripts/battle/obstacles/tree.gd
+res://scripts/world/biomes_data.gd
+res://scripts/battle/actions/action_end_turn.gd
+res://scripts/battle/monsters/cave_spider.gd
+res://scripts/battle/monsters/scorpion.gd
+res://scripts/battle/monster_actions/monster_action_attack.gd
+res://scripts/battle/monster_traits/monster_trait_data.gd
+res://scripts/battle/monster_traits/monster_trait_venom.gd
+res://scripts/battle/actions/action_zap_wand.gd
+res://scripts/battle/monsters/fire_elemental.gd

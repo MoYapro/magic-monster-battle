@@ -7,6 +7,10 @@ var enemy_armor: Dictionary = {}
 # obstacle_id -> current_hp (absent = destroyed)
 var obstacle_hp: Dictionary = {}
 var mage_hp: Array[int] = []
+var mage_poison: Array[int] = []   # stacks per mage; each stack deals 1 dmg then decrements
+var enemy_poison: Dictionary = {}  # enemy_id -> stacks
+var mage_fire: Array[int] = []     # fire stacks per mage; deal stacks dmg then halve each round
+var enemy_fire: Dictionary = {}    # enemy_id -> fire stacks
 var mana: int = 0
 # "mage_index/slot_id" -> charges placed on that slot
 var slot_charges: Dictionary = {}
@@ -23,6 +27,12 @@ func duplicate() -> BattleState:
 	s.obstacle_hp = obstacle_hp.duplicate()
 	for hp: int in mage_hp:
 		s.mage_hp.append(hp)
+	for v: int in mage_poison:
+		s.mage_poison.append(v)
+	s.enemy_poison = enemy_poison.duplicate()
+	for v: int in mage_fire:
+		s.mage_fire.append(v)
+	s.enemy_fire = enemy_fire.duplicate()
 	s.mana = mana
 	s.slot_charges = slot_charges.duplicate()
 	for v: int in mage_mana_spent:

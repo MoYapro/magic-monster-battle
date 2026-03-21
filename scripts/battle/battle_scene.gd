@@ -1,5 +1,21 @@
 extends Node2D
 
+const _MONSTERS: Array = [
+	["Goblin",        preload("res://scripts/battle/monsters/goblin.gd")],
+	["Skeleton",      preload("res://scripts/battle/monsters/skeleton.gd")],
+	["Witch",         preload("res://scripts/battle/monsters/witch.gd")],
+	["Troll",         preload("res://scripts/battle/monsters/troll.gd")],
+	["Shield Ogre",   preload("res://scripts/battle/monsters/shield_ogre.gd")],
+	["Scorpion",      preload("res://scripts/battle/monsters/scorpion.gd")],
+	["Fire Elemental",preload("res://scripts/battle/monsters/fire_elemental.gd")],
+	["Treant",        preload("res://scripts/battle/monsters/treant.gd")],
+	["Stone Giant",   preload("res://scripts/battle/monsters/stone_giant.gd")],
+	["Frost Mage",    preload("res://scripts/battle/monsters/frost_mage.gd")],
+	["Bog Shambler",  preload("res://scripts/battle/monsters/bog_shambler.gd")],
+	["Cave Spider",   preload("res://scripts/battle/monsters/cave_spider.gd")],
+	["Cursed Knight", preload("res://scripts/battle/monsters/cursed_knight.gd")],
+]
+
 const SCREEN_W := 1280.0
 const SCREEN_H := 720.0
 const MARGIN := 40.0
@@ -31,6 +47,14 @@ var _hovered_cells: Array[Vector2i] = []
 var _intent_hover_enemy: String = ""
 var _intent_hover_mage: int = -1
 
+# debug placement
+var _battle_enemies: Array[EnemyData] = []
+var _battle_positions: Array[Vector2i] = []
+var _place_cls: Variant = null
+var _place_size: Vector2i = Vector2i(1, 1)
+var _place_id_counter: Dictionary = {}
+var _place_dropdown: OptionButton = null
+
 
 func _ready() -> void:
 	_build_bottom_bar()
@@ -55,6 +79,22 @@ func _build_bottom_bar() -> void:
 	sep.position = Vector2(0, SCREEN_H - BOTTOM_BAR_H)
 	sep.size = Vector2(SCREEN_W, 1)
 	layer.add_child(sep)
+
+	var clear_button := Button.new()
+	clear_button.text = "Clear"
+	clear_button.size = Vector2(70, BOTTOM_BAR_H - 10)
+	clear_button.position = Vector2(220, SCREEN_H - BOTTOM_BAR_H + 5)
+	clear_button.pressed.connect(_on_clear_pressed)
+	layer.add_child(clear_button)
+
+	_place_dropdown = OptionButton.new()
+	_place_dropdown.size = Vector2(175, BOTTOM_BAR_H - 10)
+	_place_dropdown.position = Vector2(298, SCREEN_H - BOTTOM_BAR_H + 5)
+	_place_dropdown.add_item("Place...")
+	for entry in _MONSTERS:
+		_place_dropdown.add_item(entry[0])
+	_place_dropdown.item_selected.connect(_on_place_item_selected)
+	layer.add_child(_place_dropdown)
 
 	var battle_label := Label.new()
 	battle_label.text = "Battle %d" % (GameState.battle_count + 1)
@@ -107,7 +147,50 @@ func _on_undo_pressed() -> void:
 
 func _on_reroll_pressed() -> void:
 	_cancel_targeting()
+	_place_cls = null
 	_build_setup()
+
+
+func _on_clear_pressed() -> void:
+	_cancel_targeting()
+	_place_cls = null
+	_battle_enemies.clear()
+	_battle_positions.clear()
+	_place_id_counter.clear()
+	_rebuild_battle()
+
+
+func _on_place_item_selected(index: int) -> void:
+	if index == 0:
+		_place_cls = null
+		return
+	_cancel_targeting()
+	var entry: Array = _MONSTERS[index - 1]
+	_place_cls = entry[1]
+	_place_size = (_place_cls.new() as EnemyData).grid_size
+
+
+func _place_enemy_at(cell: Vector2i) -> void:
+	var occupied: Dictionary = {}
+	for i in _battle_positions.size():
+		var sz: Vector2i = _battle_enemies[i].grid_size
+		for dx in range(sz.x):
+			for dy in range(sz.y):
+				occupied[_battle_positions[i] + Vector2i(dx, dy)] = true
+	for dx in range(_place_size.x):
+		for dy in range(_place_size.y):
+			var c := cell + Vector2i(dx, dy)
+			if c.x >= EnemyGrid.COLS or c.y >= EnemyGrid.ROWS or occupied.has(c):
+				return
+	var enemy: EnemyData = _place_cls.new()
+	var base_id := enemy.display_name.to_lower().replace(" ", "_")
+	_place_id_counter[base_id] = _place_id_counter.get(base_id, 0) + 1
+	enemy.id = base_id + "_" + str(_place_id_counter[base_id])
+	_battle_enemies.append(enemy)
+	_battle_positions.append(cell)
+	_rebuild_battle()
+	_place_dropdown.select(0)
+	_place_cls = null
 
 
 func _refresh_ui() -> void:
@@ -191,11 +274,30 @@ func _build_setup() -> void:
 		biome = BiomesData.all()[0]
 	var biome_level: int = GameState.battle_count_by_biome.get(biome.name, 0) + 1
 	var composition := BattleComposer.compose(biome, biome_level, rng)
+	_battle_enemies = composition["enemies"]
+	_battle_positions = composition["positions"]
+	_place_id_counter.clear()
 	var wands: Array[WandData] = []
 	for wd: WandDisplay in _wand_displays:
 		wands.append(wd.get_wand_data())
-	_setup = BattleSetup.new(composition["enemies"], composition["positions"], _mages, wands, 10, composition["obstacles"], composition["obstacle_positions"])
+	_setup = BattleSetup.new(_battle_enemies, _battle_positions, _mages, wands, 10, composition["obstacles"], composition["obstacle_positions"])
 	_history = BattleHistory.new(_setup.make_initial_state(), _setup)
+	_apply_state(_history.current_state())
+
+
+func _rebuild_battle() -> void:
+	var prev := _history.current_state()
+	var wands: Array[WandData] = []
+	for wd: WandDisplay in _wand_displays:
+		wands.append(wd.get_wand_data())
+	_setup = BattleSetup.new(_battle_enemies, _battle_positions, _mages, wands, _setup.max_mana, _setup.obstacles, _setup.obstacle_positions)
+	var new_state := _setup.make_initial_state()
+	for i in new_state.mage_hp.size():
+		new_state.mage_hp[i] = prev.mage_hp[i]
+	new_state.mana = prev.mana
+	new_state.slot_charges = prev.slot_charges.duplicate()
+	new_state.mage_mana_spent = prev.mage_mana_spent.duplicate()
+	_history = BattleHistory.new(new_state, _setup)
 	_apply_state(_history.current_state())
 
 
@@ -430,6 +532,31 @@ func _unhandled_input(event: InputEvent) -> void:
 		_on_undo_pressed()
 		get_viewport().set_input_as_handled()
 		return
+
+	if _place_cls != null:
+		if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+			enemy_grid.set_hovered_cells([])
+			_place_dropdown.select(0)
+			_place_cls = null
+			get_viewport().set_input_as_handled()
+			return
+		if event is InputEventMouseMotion:
+			var cell := enemy_grid.get_cell_at(enemy_grid.to_local((event as InputEventMouseMotion).position))
+			var cells: Array[Vector2i] = []
+			if cell.x >= 0:
+				for dx in range(_place_size.x):
+					for dy in range(_place_size.y):
+						cells.append(cell + Vector2i(dx, dy))
+			enemy_grid.set_hovered_cells(cells)
+			return
+		if event is InputEventMouseButton and event.pressed \
+				and event.button_index == MOUSE_BUTTON_LEFT:
+			var cell := enemy_grid.get_cell_at(enemy_grid.to_local((event as InputEventMouseButton).position))
+			if cell.x >= 0:
+				enemy_grid.set_hovered_cells([])
+				_place_enemy_at(cell)
+				get_viewport().set_input_as_handled()
+			return
 
 	if _targeting_wand == null:
 		if event is InputEventMouseMotion:

@@ -16,6 +16,7 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 	var wand := setup.wands[mage_index]
 
 	var damage := 0
+	var fire_damage := 0
 	var pattern: Array[Vector2i] = [Vector2i(0, 0)]
 
 	for slot: SpellSlotData in wand.slots:
@@ -26,8 +27,12 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 		if charges < slot.spell.mana_cost:
 			continue  # inactive — skip
 		damage += slot.spell.damage
+		if slot.spell.tags.has("fire"):
+			fire_damage += slot.spell.damage
 		if slot.is_tip and not slot.spell.hit_pattern.is_empty():
 			pattern = slot.spell.hit_pattern
+
+	var fire_stacks: int = maxi(0, fire_damage - 1)
 
 	for cell: Vector2i in EnemyGrid.get_hit_cells(target_cell, pattern):
 		var eid: String = setup.get_enemy_id_at(cell)
@@ -44,6 +49,8 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 		if new_state.enemy_hp[eid] <= 0:
 			new_state.enemy_hp.erase(eid)
 			new_state.enemy_armor.erase(eid)
+		elif fire_stacks > 0:
+			new_state.enemy_fire[eid] = new_state.enemy_fire.get(eid, 0) + fire_stacks
 
 	for slot: SpellSlotData in wand.slots:
 		new_state.slot_charges.erase("%d/%s" % [mage_index, slot.id])

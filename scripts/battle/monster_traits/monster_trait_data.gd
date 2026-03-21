@@ -12,3 +12,7 @@ func _init(p_label: String, p_tier: int = 1) -> void:
 
 func apply_end_of_round(state: BattleState, _setup: BattleSetup, _enemy_id: String) -> BattleState:
 	return state
+
+
+func apply_on_hit(state: BattleState, _setup: BattleSetup, _enemy_id: String, _target_mage: int, _damage: int) -> BattleState:
+	return state

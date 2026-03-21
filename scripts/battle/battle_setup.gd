@@ -45,6 +45,8 @@ func make_initial_state() -> BattleState:
 	for mage: MageData in mages:
 		state.mage_hp.append(mage.max_hp)
 		state.mage_mana_spent.append(0)
+		state.mage_poison.append(0)
+		state.mage_fire.append(0)
 	state.mana = max_mana
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
