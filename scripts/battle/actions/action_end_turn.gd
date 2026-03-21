@@ -17,11 +17,16 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 		var enemy := setup.get_enemy(enemy_id)
 		if enemy == null or enemy.action_pool.is_empty():
 			continue
+		if new_state.enemy_frozen.has(enemy_id):
+			continue
 		var intent: Dictionary = new_state.monster_intents[enemy_id]
 		var action_index: int = intent.get("action_index", 0)
 		var target: int = intent.get("target", -1)
 		var action: MonsterActionData = enemy.action_pool[action_index]
 		new_state = action.execute(new_state, setup, enemy_id, target)
+		var webbed_slot_id: String = intent.get("webbed_slot_id", "")
+		if not webbed_slot_id.is_empty() and target >= 0:
+			new_state.webbed_slots["%d/%s" % [target, webbed_slot_id]] = true
 
 	# Apply end-of-round traits (regen, armor refresh, etc.)
 	for enemy: EnemyData in setup.enemies:
@@ -50,7 +55,19 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 			new_state.enemy_hp[enemy_id] = max(0, new_state.enemy_hp[enemy_id] - new_state.enemy_fire[enemy_id])
 			new_state.enemy_fire[enemy_id] /= 2
 
+	# Wet: decay 1 stack per turn
+	for i in new_state.mage_wet.size():
+		new_state.mage_wet[i] = maxi(0, new_state.mage_wet[i] - 1)
+	var wet_to_erase: Array[String] = []
+	for eid: String in new_state.enemy_wet:
+		new_state.enemy_wet[eid] -= 1
+		if new_state.enemy_wet[eid] <= 0:
+			wet_to_erase.append(eid)
+	for eid: String in wet_to_erase:
+		new_state.enemy_wet.erase(eid)
+
 	# Reset turn resources
+	new_state.webbed_slots.clear()
 	new_state.mana = setup.max_mana
 	for i in new_state.mage_mana_spent.size():
 		new_state.mage_mana_spent[i] = 0

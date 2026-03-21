@@ -307,7 +307,23 @@ func _apply_state(state: BattleState) -> void:
 		_setup.mages[i].current_hp = state.mage_hp[i]
 		var poison := state.mage_poison[i] if i < state.mage_poison.size() else 0
 		var fire := state.mage_fire[i] if i < state.mage_fire.size() else 0
-		_mage_displays[i].set_status(poison, fire)
+		var incoming_attack := 0
+		for enemy_id: String in state.monster_intents:
+			var intent: Dictionary = state.monster_intents[enemy_id]
+			if intent.get("target", -1) != i or not state.enemy_hp.has(enemy_id):
+				continue
+			if state.enemy_frozen.has(enemy_id):
+				continue
+			var enemy := _setup.get_enemy(enemy_id)
+			if enemy == null:
+				continue
+			var action_index: int = intent.get("action_index", 0)
+			if action_index >= enemy.action_pool.size():
+				continue
+			var action := enemy.action_pool[action_index]
+			if action is MonsterActionAttack:
+				incoming_attack += (action as MonsterActionAttack).damage
+		_mage_displays[i].set_status(poison, fire, incoming_attack)
 	_mana_display.setup(state.mana, _setup.max_mana, _panel_height)
 	_refresh_wand_charges(state)
 	_refresh_ui()
@@ -333,6 +349,11 @@ func _refresh_wand_charges(state: BattleState) -> void:
 			charges[slot.id] = c
 			committed += c
 		_wand_displays[i].set_charges(charges)
+		var webbed := {}
+		for slot: SpellSlotData in _setup.wands[i].slots:
+			if state.webbed_slots.has("%d/%s" % [i, slot.id]):
+				webbed[slot.id] = true
+		_wand_displays[i].set_webbed(webbed)
 		_mage_displays[i].set_mana(state.mage_mana_spent[i], _setup.mages[i].mana_allowance)
 
 

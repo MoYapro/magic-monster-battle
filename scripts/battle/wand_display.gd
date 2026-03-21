@@ -28,6 +28,7 @@ var _data: WandData = null
 var _highlighted := false
 var _hovered := false
 var _charges: Dictionary = {}  # slot_id -> int
+var _webbed: Dictionary = {}   # slot_id -> true
 
 
 func setup(wand_data: WandData) -> void:
@@ -47,6 +48,11 @@ func set_hovered(on: bool) -> void:
 
 func set_charges(charges: Dictionary) -> void:
 	_charges = charges
+	queue_redraw()
+
+
+func set_webbed(webbed: Dictionary) -> void:
+	_webbed = webbed
 	queue_redraw()
 
 
@@ -209,6 +215,24 @@ func _draw_slot(slot: SpellSlotData) -> void:
 	_draw_mana_pips(pos, charges, cost)
 	if active:
 		draw_rect(rect, COLOR_ACTIVE_BORDER, false, 2.0)
+	if _webbed.has(slot.id):
+		_draw_net_overlay(pos)
+
+
+func _draw_net_overlay(pos: Vector2) -> void:
+	draw_rect(Rect2(pos, SLOT_SIZE), Color(0.35, 0.22, 0.05, 0.50), true)
+	var c := Color(0.62, 0.44, 0.14, 0.88)
+	const STEP := 9.0
+	var end_x := pos.x + SLOT_SIZE.x
+	var end_y := pos.y + SLOT_SIZE.y
+	var y := pos.y
+	while y <= end_y:
+		draw_line(Vector2(pos.x, y), Vector2(end_x, y), c, 1.2)
+		y += STEP
+	var x := pos.x
+	while x <= end_x:
+		draw_line(Vector2(x, pos.y), Vector2(x, end_y), c, 1.2)
+		x += STEP
 
 
 func _draw_mana_pips(pos: Vector2, charges: int, cost: int) -> void:

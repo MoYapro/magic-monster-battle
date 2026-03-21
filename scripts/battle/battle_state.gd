@@ -13,6 +13,11 @@ var mage_poison: Array[int] = []   # stacks per mage; each stack deals 1 dmg the
 var enemy_poison: Dictionary = {}  # enemy_id -> stacks
 var mage_fire: Array[int] = []     # fire stacks per mage; deal stacks dmg then halve each round
 var enemy_fire: Dictionary = {}    # enemy_id -> fire stacks
+var mage_wet: Array[int] = []      # wet stacks per mage; absorb incoming fire, decay 1/turn
+var enemy_wet: Dictionary = {}     # enemy_id -> wet stacks
+var mage_frozen: Array[bool] = []  # frozen per mage; immune to fire, removed by first fire hit
+var enemy_frozen: Dictionary = {}  # enemy_id -> true; skips attack, immune to fire, removed by first fire hit
+var webbed_slots: Dictionary = {}  # "mage_index/slot_id" -> true; slot unusable this turn
 var mana: int = 0
 # "mage_index/slot_id" -> charges placed on that slot
 var slot_charges: Dictionary = {}
@@ -36,6 +41,13 @@ func duplicate() -> BattleState:
 	for v: int in mage_fire:
 		s.mage_fire.append(v)
 	s.enemy_fire = enemy_fire.duplicate()
+	s.enemy_wet = enemy_wet.duplicate()
+	for v: int in mage_wet:
+		s.mage_wet.append(v)
+	s.enemy_frozen = enemy_frozen.duplicate()
+	for v: bool in mage_frozen:
+		s.mage_frozen.append(v)
+	s.webbed_slots = webbed_slots.duplicate()
 	s.mana = mana
 	s.slot_charges = slot_charges.duplicate()
 	for v: int in mage_mana_spent:

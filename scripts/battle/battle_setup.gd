@@ -49,6 +49,8 @@ func make_initial_state() -> BattleState:
 		state.mage_mana_spent.append(0)
 		state.mage_poison.append(0)
 		state.mage_fire.append(0)
+		state.mage_wet.append(0)
+		state.mage_frozen.append(false)
 	state.mana = max_mana
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
@@ -79,12 +81,21 @@ func roll_intents(state: BattleState, rng: RandomNumberGenerator) -> Dictionary:
 		if action.target_type == MonsterActionData.TargetType.MAGE:
 			target = rng.randi_range(0, mages.size() - 1)
 			target_name = mages[target].name
-		intents[enemy.id] = {
+		var intent := {
 			"action_index": action_index,
 			"action_name": action.name,
 			"target": target,
 			"target_name": target_name,
 		}
+		if action is MonsterActionAttack and (action as MonsterActionAttack).applies_web \
+				and target >= 0 and target < wands.size():
+			var candidates: Array[SpellSlotData] = []
+			for slot: SpellSlotData in wands[target].slots:
+				if slot.spell != null:
+					candidates.append(slot)
+			if not candidates.is_empty():
+				intent["webbed_slot_id"] = candidates[rng.randi_range(0, candidates.size() - 1)].id
+		intents[enemy.id] = intent
 	return intents
 
 

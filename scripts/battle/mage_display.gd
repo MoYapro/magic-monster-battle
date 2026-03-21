@@ -26,6 +26,7 @@ var _mana_committed: int = 0
 var _mana_max: int = 0
 var _poison: int = 0
 var _fire: int = 0
+var _incoming_attack: int = 0
 
 
 func setup(mage: MageData, height: float) -> void:
@@ -50,9 +51,10 @@ func set_mana(committed: int, max_mana: int) -> void:
 	queue_redraw()
 
 
-func set_status(poison: int, fire: int) -> void:
+func set_status(poison: int, fire: int, incoming_attack: int = 0) -> void:
 	_poison = poison
 	_fire = fire
+	_incoming_attack = incoming_attack
 	queue_redraw()
 
 
@@ -84,8 +86,25 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2(PAD, bar_y), Vector2(bar_w, BAR_HEIGHT)), COLOR_HP_BG, true)
 
 	var hp_frac := float(_mage.current_hp) / float(_mage.max_hp)
+	var total_dmg := _incoming_attack + _fire + _poison
+	var hp_after := maxi(0, _mage.current_hp - total_dmg)
+	var hp_after_frac := float(hp_after) / float(_mage.max_hp)
 	var hp_color := COLOR_HP_FULL.lerp(COLOR_HP_LOW, 1.0 - hp_frac)
-	draw_rect(Rect2(Vector2(PAD, bar_y), Vector2(bar_w * hp_frac, BAR_HEIGHT)), hp_color, true)
+	draw_rect(Rect2(Vector2(PAD, bar_y), Vector2(bar_w * hp_after_frac, BAR_HEIGHT)), hp_color, true)
+
+	var dx := PAD + bar_w * hp_after_frac
+	var max_x := PAD + bar_w * hp_frac
+	var atk_w := minf(bar_w * float(_incoming_attack) / float(_mage.max_hp), max_x - dx)
+	if atk_w > 0.5:
+		draw_rect(Rect2(Vector2(dx, bar_y), Vector2(atk_w, BAR_HEIGHT)), Color(0.85, 0.15, 0.12, 0.88), true)
+		dx += atk_w
+	var fire_w := minf(bar_w * float(_fire) / float(_mage.max_hp), max_x - dx)
+	if fire_w > 0.5:
+		draw_rect(Rect2(Vector2(dx, bar_y), Vector2(fire_w, BAR_HEIGHT)), Color(0.95, 0.45, 0.05, 0.88), true)
+		dx += fire_w
+	var poison_w := minf(bar_w * float(_poison) / float(_mage.max_hp), max_x - dx)
+	if poison_w > 0.5:
+		draw_rect(Rect2(Vector2(dx, bar_y), Vector2(poison_w, BAR_HEIGHT)), Color(0.55, 0.22, 0.70, 0.88), true)
 
 	var hp_text_y := bar_y + BAR_HEIGHT + 13.0
 	draw_string(font, Vector2(PAD, hp_text_y),

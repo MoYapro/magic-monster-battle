@@ -1,13 +1,13 @@
 class_name ShieldOgre extends EnemyData
 
 func _init() -> void:
-	super("ogre_1", "Shield Ogre", 100, Vector2i(1, 2), Color(0.65, 0.25, 0.15))
+	super("ogre_1", "Shield Ogre", 350, Vector2i(1, 2), Color(0.65, 0.25, 0.15))
 	main_role = MonsterRole.Type.TANK
 	off_role = MonsterRole.Type.BRUISER
-	difficulty_rating = 40
+	difficulty_rating = 52
 	traits = [MonsterTraitArmor.new(30)]
 	drop_pool = [SpellShield.create(), SpellEmber.create()]
 	action_pool = [
-		MonsterActionAttack.new("Punch", 8),
-		MonsterActionHeal.new("Shield Up", 25),
+		MonsterActionAttack.new("Punch", 14),
+		MonsterActionHeal.new("Shield Up", 45),
 	]

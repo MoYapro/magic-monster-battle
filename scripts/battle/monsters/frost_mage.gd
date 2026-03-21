@@ -1,12 +1,12 @@
 class_name FrostMage extends EnemyData
 
 func _init() -> void:
-	super("frost_mage_1", "Frost Mage", 55, Vector2i(1, 1), Color(0.55, 0.80, 0.95))
+	super("frost_mage_1", "Frost Mage", 45, Vector2i(1, 1), Color(0.55, 0.80, 0.95))
 	main_role = MonsterRole.Type.MAGE
-	difficulty_rating = 28
+	difficulty_rating = 33
 	drop_pool = [SpellFrost.create(), SpellAmplify.create()]
 	action_pool = [
-		MonsterActionAttack.new("Ice Bolt", 8),
-		MonsterActionAttack.new("Blizzard", 6),
-		MonsterActionAttack.new("Frost Nova", 10),
+		MonsterActionAttack.new("Ice Bolt", 11, 2),
+		MonsterActionAttack.new("Blizzard", 8, 3),
+		MonsterActionAttack.new("Frost Nova", 15, 0, true),
 	]
