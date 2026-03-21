@@ -11,6 +11,8 @@ const COLOR_LABEL := Color(1.0, 1.0, 1.0)
 const COLOR_HP := Color(0.8, 0.95, 0.8)
 const COLOR_TARGET_AVAILABLE := Color(1.0, 0.85, 0.2)
 const COLOR_TARGET_HOVER := Color(0.95, 0.18, 0.18)
+const COLOR_POISON := Color(0.50, 0.20, 0.65)
+const COLOR_FIRE   := Color(0.95, 0.42, 0.05)
 
 # cell position -> EnemyData (one entry per occupied cell)
 var _cells: Dictionary = {}
@@ -20,10 +22,18 @@ var _highlighted := false
 var _hovered_cells: Array[Vector2i] = []
 var _intents: Dictionary = {}
 var _armors: Dictionary = {}
+var _poisons: Dictionary = {}
+var _fires: Dictionary = {}
 
 
 func set_armors(armors: Dictionary) -> void:
 	_armors = armors
+	queue_redraw()
+
+
+func set_statuses(poisons: Dictionary, fires: Dictionary) -> void:
+	_poisons = poisons
+	_fires = fires
 	queue_redraw()
 
 
@@ -192,6 +202,25 @@ func _draw_enemies() -> void:
 			draw_string(font, pixel_pos + Vector2(5, 44),
 					"🛡 %d" % _armors[enemy.id],
 					HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1.0, 0.85, 0.3))
+		var has_poison: bool = _poisons.has(enemy.id) and _poisons[enemy.id] > 0
+		var has_fire: bool = _fires.has(enemy.id) and _fires[enemy.id] > 0
+		if has_poison or has_fire:
+			var pill_h := 12.0
+			var pill_gap := 3.0
+			var pill_w := pixel_size.x - 10.0
+			var pill_count := int(has_poison) + int(has_fire)
+			var intent_reserve := 16.0 if _intents.has(enemy.id) else 4.0
+			var pills_bottom := pixel_size.y - intent_reserve
+			var pill_y := maxf(34.0, pills_bottom - pill_count * pill_h - (pill_count - 1) * pill_gap)
+			if has_poison:
+				draw_rect(Rect2(pixel_pos + Vector2(5.0, pill_y), Vector2(pill_w, pill_h)), COLOR_POISON, true)
+				draw_string(font, pixel_pos + Vector2(5.0, pill_y + 10.0),
+						"POI %d" % _poisons[enemy.id], HORIZONTAL_ALIGNMENT_CENTER, pill_w, 9, Color.WHITE)
+				pill_y += pill_h + pill_gap
+			if has_fire:
+				draw_rect(Rect2(pixel_pos + Vector2(5.0, pill_y), Vector2(pill_w, pill_h)), COLOR_FIRE, true)
+				draw_string(font, pixel_pos + Vector2(5.0, pill_y + 10.0),
+						"FIRE %d" % _fires[enemy.id], HORIZONTAL_ALIGNMENT_CENTER, pill_w, 9, Color.WHITE)
 		if _intents.has(enemy.id):
 			var intent: Dictionary = _intents[enemy.id]
 			var action_name: String = intent.get("action_name", "")

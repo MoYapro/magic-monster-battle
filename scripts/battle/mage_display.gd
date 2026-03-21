@@ -15,6 +15,8 @@ const COLOR_TARGET_AVAILABLE := Color(1.0, 0.85, 0.2)
 const COLOR_TARGET_HOVER     := Color(0.95, 0.18, 0.18)
 const COLOR_MANA             := Color(0.35, 0.70, 1.00)
 const COLOR_MANA_LABEL       := Color(0.40, 0.50, 0.65)
+const COLOR_POISON           := Color(0.50, 0.20, 0.65)
+const COLOR_FIRE             := Color(0.95, 0.42, 0.05)
 
 var _mage: MageData = null
 var _height: float = 70.0
@@ -22,6 +24,8 @@ var _highlighted := false
 var _hovered := false
 var _mana_committed: int = 0
 var _mana_max: int = 0
+var _poison: int = 0
+var _fire: int = 0
 
 
 func setup(mage: MageData, height: float) -> void:
@@ -46,6 +50,12 @@ func set_mana(committed: int, max_mana: int) -> void:
 	queue_redraw()
 
 
+func set_status(poison: int, fire: int) -> void:
+	_poison = poison
+	_fire = fire
+	queue_redraw()
+
+
 func get_rect() -> Rect2:
 	return Rect2(Vector2.ZERO, Vector2(WIDTH, _height))
 
@@ -58,7 +68,11 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, Vector2(WIDTH, _height)), COLOR_BORDER, false, 1.0)
 
 	# vertically centre the content block
+	var has_status := _poison > 0 or _fire > 0
+	var status_count := int(_poison > 0) + int(_fire > 0)
 	var content_h := 16.0 + 6.0 + BAR_HEIGHT + 5.0 + 13.0 + 6.0 + 12.0
+	if has_status:
+		content_h += status_count * (5.0 + 12.0)
 	var y := (_height - content_h) * 0.5
 
 	var font := ThemeDB.fallback_font
@@ -84,6 +98,22 @@ func _draw() -> void:
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COLOR_MANA_LABEL)
 		draw_string(font, Vector2(WIDTH - PAD, hp_text_y + 18.0),
 				"uses", HORIZONTAL_ALIGNMENT_RIGHT, -1, 11, COLOR_MANA_LABEL)
+	if has_status:
+		var pill_y := hp_text_y + 18.0 + 5.0
+		var pill_h := 12.0
+		var pill_w := WIDTH - PAD * 2.0
+		if _poison > 0:
+			var label := "POI %d" % _poison
+			draw_rect(Rect2(Vector2(PAD, pill_y), Vector2(pill_w, pill_h)), COLOR_POISON, true)
+			draw_string(font, Vector2(PAD + pill_w * 0.5, pill_y + 10.0),
+					label, HORIZONTAL_ALIGNMENT_CENTER, pill_w, 9, Color.WHITE)
+			pill_y += pill_h + 5.0
+		if _fire > 0:
+			var label := "FIRE %d" % _fire
+			draw_rect(Rect2(Vector2(PAD, pill_y), Vector2(pill_w, pill_h)), COLOR_FIRE, true)
+			draw_string(font, Vector2(PAD + pill_w * 0.5, pill_y + 10.0),
+					label, HORIZONTAL_ALIGNMENT_CENTER, pill_w, 9, Color.WHITE)
+
 	var r := get_rect()
 	if _hovered:
 		draw_rect(r, COLOR_TARGET_HOVER, false, 3.0)

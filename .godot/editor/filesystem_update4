@@ -18,3 +18,4 @@ res://scripts/battle/monster_traits/monster_trait_venom.gd
 res://scripts/battle/actions/action_zap_wand.gd
 res://scripts/battle/monsters/fire_elemental.gd
 res://scripts/battle/enemy_grid.gd
+res://scripts/battle/mage_display.gd

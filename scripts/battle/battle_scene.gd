@@ -305,7 +305,9 @@ func _apply_state(state: BattleState) -> void:
 	_refresh_enemy_grid(state)
 	for i in _setup.mages.size():
 		_setup.mages[i].current_hp = state.mage_hp[i]
-		_mage_displays[i].queue_redraw()
+		var poison := state.mage_poison[i] if i < state.mage_poison.size() else 0
+		var fire := state.mage_fire[i] if i < state.mage_fire.size() else 0
+		_mage_displays[i].set_status(poison, fire)
 	_mana_display.setup(state.mana, _setup.max_mana, _panel_height)
 	_refresh_wand_charges(state)
 	_refresh_ui()
@@ -377,6 +379,7 @@ func _refresh_enemy_grid(state: BattleState) -> void:
 		enemy_grid.place_enemy(enemy, _setup.enemy_positions[i])
 	enemy_grid.set_intents(state.monster_intents)
 	enemy_grid.set_armors(state.enemy_armor)
+	enemy_grid.set_statuses(state.enemy_poison, state.enemy_fire)
 
 
 # --- targeting ---
