@@ -6,3 +6,6 @@ res://scripts/battle/monster_traits/monster_trait_armor.gd
 res://scripts/battle/monster_traits/monster_trait_data.gd
 res://scripts/battle/monster_traits/monster_trait_regen.gd
 res://scripts/battle/wand_display.gd
+res://scripts/game_state.gd
+res://scripts/world/path_selection_screen.gd
+res://scripts/loot/loot_screen.gd

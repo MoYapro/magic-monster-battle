@@ -255,6 +255,9 @@ func _on_battle_lost() -> void:
 func _on_battle_won() -> void:
 	_cancel_targeting()
 	GameState.battle_count += 1
+	if GameState.current_biome != null:
+		var biome_name := GameState.current_biome.name
+		GameState.battle_count_by_biome[biome_name] = GameState.battle_count_by_biome.get(biome_name, 0) + 1
 	var wands: Array[WandData] = []
 	for wd: WandDisplay in _wand_displays:
 		wands.append(wd.get_wand_data())

@@ -54,6 +54,7 @@ var _dragging_wand: WandData = null
 var _drag_wand_source: int = -2  # -1 = from loot; >= 0 = mage index
 var _drag_pos: Vector2 = Vector2.ZERO
 var _continue_btn: Button = null
+var _auto_assign_btn: Button = null
 
 
 func _ready() -> void:
@@ -501,6 +502,13 @@ func _build_bottom_bar() -> void:
 	_continue_btn.position = Vector2(SCREEN_W - 156.0, SCREEN_H - BOTTOM_BAR_H + 5.0)
 	_continue_btn.pressed.connect(_on_continue_pressed)
 	layer.add_child(_continue_btn)
+	if GameState.is_initial_setup:
+		_auto_assign_btn = Button.new()
+		_auto_assign_btn.text = "Auto Assign"
+		_auto_assign_btn.size = Vector2(120, BOTTOM_BAR_H - 10)
+		_auto_assign_btn.position = Vector2(SCREEN_W - 292.0, SCREEN_H - BOTTOM_BAR_H + 5.0)
+		_auto_assign_btn.pressed.connect(_on_auto_assign_pressed)
+		layer.add_child(_auto_assign_btn)
 	_refresh_continue_btn()
 
 
@@ -516,6 +524,18 @@ func _refresh_continue_btn() -> void:
 			_continue_btn.disabled = true
 			return
 	_continue_btn.disabled = false
+
+
+func _on_auto_assign_pressed() -> void:
+	for i in GameState.mages.size():
+		if GameState.pending_loot_wands.is_empty():
+			break
+		var wand := GameState.pending_loot_wands[0]
+		GameState.pending_loot_wands.remove_at(0)
+		_loot_wand_displays[0].queue_free()
+		_loot_wand_displays.remove_at(0)
+		_equip_wand_at(i, wand)
+	_reposition_loot_wands()
 
 
 func _on_continue_pressed() -> void:

@@ -11,6 +11,7 @@ var pending_loot_wands: Array[WandData] = []
 var current_biome: BiomeData = null
 var is_initial_setup: bool = true
 var battle_count: int = 0
+var battle_count_by_biome: Dictionary = {}  # biome name -> int
 
 
 func _ready() -> void:
@@ -28,6 +29,7 @@ func reset_to_new_game() -> void:
 	current_biome = null
 	is_initial_setup = true
 	battle_count = 0
+	battle_count_by_biome.clear()
 	_init_new_game()
 
 

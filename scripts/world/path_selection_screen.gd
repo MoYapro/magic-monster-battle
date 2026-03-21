@@ -90,6 +90,12 @@ func _draw_card(i: int) -> void:
 			Vector2(lx + 20.0, r.position.y + CARD_H * 0.42 + 38.0),
 			biome.tagline, HORIZONTAL_ALIGNMENT_CENTER, CARD_W - 40.0, 13, COLOR_TAGLINE)
 
+	# Level
+	var level: int = GameState.battle_count_by_biome.get(biome.name, 0) + 1
+	draw_string(font,
+			Vector2(lx, r.position.y + CARD_H * 0.42 + 66.0),
+			"Level %d" % level, HORIZONTAL_ALIGNMENT_CENTER, CARD_W, 12, COLOR_TAGLINE)
+
 
 func _input(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton and event.pressed
