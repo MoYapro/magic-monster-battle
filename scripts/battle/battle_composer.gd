@@ -7,19 +7,37 @@ const HORDE_BASE_COUNT := 5
 const ELITE_BASE_COUNT := 2
 
 
+
 static func compose(biome: BiomeData, biome_level: int, rng: RandomNumberGenerator) -> Dictionary:
 	var battle_type: BattleType = BattleType.HORDE if rng.randi() % 2 == 0 else BattleType.ELITE
 	var enemies := _select_monsters(biome.monster_pool, battle_type, biome_level, rng)
-	var positions := _place(enemies, rng)
+	var obstacles := _select_obstacles(rng)
+
+	# Obstacles placed first — they claim front rows before enemies.
+	var occupied: Dictionary = {}
+	var raw_obs_pos := _place_items(obstacles, rng, occupied)
+	var raw_enemy_pos := _place_items(enemies, rng, occupied)
+
+	var placed_obstacles: Array[ObstacleData] = []
+	var placed_obs_positions: Array[Vector2i] = []
+	for i in obstacles.size():
+		if raw_obs_pos[i].x >= 0:
+			placed_obstacles.append(obstacles[i])
+			placed_obs_positions.append(raw_obs_pos[i])
 
 	var placed_enemies: Array[EnemyData] = []
 	var placed_positions: Array[Vector2i] = []
 	for i in enemies.size():
-		if positions[i].x >= 0:
+		if raw_enemy_pos[i].x >= 0:
 			placed_enemies.append(enemies[i])
-			placed_positions.append(positions[i])
+			placed_positions.append(raw_enemy_pos[i])
 
-	return {"enemies": placed_enemies, "positions": placed_positions}
+	return {
+		"enemies": placed_enemies,
+		"positions": placed_positions,
+		"obstacles": placed_obstacles,
+		"obstacle_positions": placed_obs_positions,
+	}
 
 
 static func _select_monsters(
@@ -54,6 +72,44 @@ static func _select_monsters(
 	return enemies
 
 
+static func _select_obstacles(rng: RandomNumberGenerator) -> Array[ObstacleData]:
+	var pool: Array = [
+		preload("res://scripts/battle/obstacles/stone.gd"),
+		preload("res://scripts/battle/obstacles/barrel.gd"),
+		preload("res://scripts/battle/obstacles/log.gd"),
+		preload("res://scripts/battle/obstacles/tree.gd"),
+		preload("res://scripts/battle/obstacles/boulder.gd"),
+		preload("res://scripts/battle/obstacles/monolith.gd"),
+	]
+
+	var weights: Array[int] = []
+	var total_weight := 0
+	for cls in pool:
+		var w: int = cls.new().generation_weight
+		weights.append(w)
+		total_weight += w
+
+	var count := rng.randi_range(1, 3)
+	var obstacles: Array[ObstacleData] = []
+	var id_counts: Dictionary = {}
+	for _i in count:
+		var roll := rng.randi_range(0, total_weight - 1)
+		var cumulative := 0
+		var chosen_cls: Variant = pool[pool.size() - 1]
+		for j in pool.size():
+			cumulative += weights[j]
+			if roll < cumulative:
+				chosen_cls = pool[j]
+				break
+		var obstacle: ObstacleData = chosen_cls.new()
+		var base_id := obstacle.display_name.to_lower()
+		id_counts[base_id] = id_counts.get(base_id, 0) + 1
+		obstacle.id = base_id + "_" + str(id_counts[base_id])
+		obstacles.append(obstacle)
+
+	return obstacles
+
+
 static func _sort_by_difficulty(pool: Array) -> Array:
 	var sorted := pool.duplicate()
 	var cache: Dictionary = {}
@@ -79,33 +135,34 @@ static func _upper_half(sorted_pool: Array) -> Array:
 	return sorted_pool.slice(sorted_pool.size() / 2)
 
 
-static func _place(enemies: Array[EnemyData], rng: RandomNumberGenerator) -> Array[Vector2i]:
-	# Place front-role monsters first so they claim preferred rows before back-row types.
-	var order := range(enemies.size())
+# Places any items with .main_role and .grid_size, biased by role order.
+# Mutates occupied so callers can chain multiple placement passes.
+static func _place_items(items: Array, rng: RandomNumberGenerator, occupied: Dictionary) -> Array[Vector2i]:
+	var order := range(items.size())
 	order.sort_custom(func(a: int, b: int) -> bool:
-		return int(enemies[a].main_role) < int(enemies[b].main_role)
+		return int(items[a].main_role) < int(items[b].main_role)
 	)
 
-	var occupied: Dictionary = {}
 	var positions: Array[Vector2i] = []
-	positions.resize(enemies.size())
+	positions.resize(items.size())
 
 	for i in order:
-		var enemy: EnemyData = enemies[i]
+		var grid_size: Vector2i = items[i].grid_size
+		var role: MonsterRole.Type = items[i].main_role
 		var valid: Array[Vector2i] = []
-		for col in range(EnemyGrid.COLS - enemy.grid_size.x + 1):
-			for row in range(EnemyGrid.ROWS - enemy.grid_size.y + 1):
+		for col in range(EnemyGrid.COLS - grid_size.x + 1):
+			for row in range(EnemyGrid.ROWS - grid_size.y + 1):
 				var pos := Vector2i(col, row)
-				if _can_place(pos, enemy.grid_size, occupied):
+				if _can_place(pos, grid_size, occupied):
 					valid.append(pos)
 		if valid.is_empty():
 			positions[i] = Vector2i(-1, -1)
 			continue
-		var pref_row := _preferred_row(enemy.main_role)
+		var pref_row := _preferred_row(role)
 		var chosen := _pick_biased(valid, pref_row, rng)
 		positions[i] = chosen
-		for dx in range(enemy.grid_size.x):
-			for dy in range(enemy.grid_size.y):
+		for dx in range(grid_size.x):
+			for dy in range(grid_size.y):
 				occupied[chosen + Vector2i(dx, dy)] = true
 
 	return positions

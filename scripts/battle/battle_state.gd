@@ -4,6 +4,8 @@ class_name BattleState
 var enemy_hp: Dictionary = {}
 # enemy_id -> current armor hp (absent = no armor)
 var enemy_armor: Dictionary = {}
+# obstacle_id -> current_hp (absent = destroyed)
+var obstacle_hp: Dictionary = {}
 var mage_hp: Array[int] = []
 var mana: int = 0
 # "mage_index/slot_id" -> charges placed on that slot
@@ -18,6 +20,7 @@ func duplicate() -> BattleState:
 	var s := BattleState.new()
 	s.enemy_hp = enemy_hp.duplicate()
 	s.enemy_armor = enemy_armor.duplicate()
+	s.obstacle_hp = obstacle_hp.duplicate()
 	for hp: int in mage_hp:
 		s.mage_hp.append(hp)
 	s.mana = mana

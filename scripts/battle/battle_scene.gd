@@ -194,7 +194,7 @@ func _build_setup() -> void:
 	var wands: Array[WandData] = []
 	for wd: WandDisplay in _wand_displays:
 		wands.append(wd.get_wand_data())
-	_setup = BattleSetup.new(composition["enemies"], composition["positions"], _mages, wands, 10)
+	_setup = BattleSetup.new(composition["enemies"], composition["positions"], _mages, wands, 10, composition["obstacles"], composition["obstacle_positions"])
 	_history = BattleHistory.new(_setup.make_initial_state(), _setup)
 	_apply_state(_history.current_state())
 

@@ -4,3 +4,7 @@ res://scripts/world/path_selection_screen.gd
 res://scripts/loot/loot_screen.gd
 res://scenes/loot/loot_screen.tscn
 res://scripts/battle/monsters/shield_ogre.gd
+res://scripts/battle/monster_role.gd
+res://scripts/battle/battle_setup.gd
+res://scripts/battle/battle_state.gd
+res://scripts/battle/obstacles/tree.gd

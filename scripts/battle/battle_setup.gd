@@ -4,6 +4,8 @@ class_name BattleSetup
 
 var enemies: Array[EnemyData] = []
 var enemy_positions: Array[Vector2i] = []
+var obstacles: Array[ObstacleData] = []
+var obstacle_positions: Array[Vector2i] = []
 var mages: Array[MageData] = []
 var wands: Array[WandData] = []
 var max_mana: int = 10
@@ -17,10 +19,14 @@ func _init(
 	p_positions: Array[Vector2i],
 	p_mages: Array[MageData],
 	p_wands: Array[WandData],
-	p_max_mana: int
+	p_max_mana: int,
+	p_obstacles: Array[ObstacleData] = [],
+	p_obstacle_positions: Array[Vector2i] = []
 ) -> void:
 	enemies = p_enemies
 	enemy_positions = p_positions
+	obstacles = p_obstacles
+	obstacle_positions = p_obstacle_positions
 	mages = p_mages
 	wands = p_wands
 	max_mana = p_max_mana
@@ -34,6 +40,8 @@ func make_initial_state() -> BattleState:
 		for t: MonsterTraitData in enemy.traits:
 			if t is MonsterTraitArmor:
 				state.enemy_armor[enemy.id] = (t as MonsterTraitArmor).armor_amount
+	for obstacle: ObstacleData in obstacles:
+		state.obstacle_hp[obstacle.id] = obstacle.max_hp
 	for mage: MageData in mages:
 		state.mage_hp.append(mage.max_hp)
 		state.mage_mana_spent.append(0)
@@ -81,3 +89,7 @@ func _build_cell_map() -> void:
 		var cells := EnemyGrid.get_cells_for_enemy(enemy_positions[i], enemies[i].grid_size)
 		for cell: Vector2i in cells:
 			_cell_to_enemy[cell] = enemies[i].id
+	for i in obstacles.size():
+		var cells := EnemyGrid.get_cells_for_enemy(obstacle_positions[i], obstacles[i].grid_size)
+		for cell: Vector2i in cells:
+			_cell_to_enemy[cell] = obstacles[i].id

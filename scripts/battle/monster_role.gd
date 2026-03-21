@@ -3,6 +3,7 @@ class_name MonsterRole
 # Ordered front to back for placement purposes
 enum Type {
 	NONE,
+	OBSTACLE,
 	TANK,
 	DRAIN_TANK,
 	PALADIN,
