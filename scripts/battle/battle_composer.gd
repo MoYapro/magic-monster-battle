@@ -158,7 +158,8 @@ static func _place_items(items: Array, rng: RandomNumberGenerator, occupied: Dic
 		if valid.is_empty():
 			positions[i] = Vector2i(-1, -1)
 			continue
-		var pref_row := _preferred_row(role)
+		var off_role: MonsterRole.Type = items[i].get("off_role", MonsterRole.Type.NONE)
+		var pref_row := _blended_row(role, off_role)
 		var chosen := _pick_biased(valid, pref_row, rng)
 		positions[i] = chosen
 		for dx in range(grid_size.x):
@@ -173,6 +174,15 @@ static func _preferred_row(role: MonsterRole.Type) -> int:
 	if role == MonsterRole.Type.NONE:
 		return EnemyGrid.ROWS / 2
 	return int(round(float(role) / float(MonsterRole.Type.ARTILLERY) * (EnemyGrid.ROWS - 1)))
+
+
+# Blends main and off role preferred rows (2:1 weight). Falls back to main only if off is NONE.
+static func _blended_row(main_role: MonsterRole.Type, off_role: MonsterRole.Type) -> int:
+	var main_row := _preferred_row(main_role)
+	if off_role == MonsterRole.Type.NONE:
+		return main_row
+	var off_row := _preferred_row(off_role)
+	return int(round((main_row * 2.0 + off_row) / 3.0))
 
 
 # Picks randomly from valid positions biased toward preferred_row.
