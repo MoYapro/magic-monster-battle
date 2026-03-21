@@ -82,6 +82,12 @@ static func is_within_bounds(grid_pos: Vector2i, grid_size: Vector2i) -> bool:
 	return true
 
 
+func clear_enemies() -> void:
+	_cells.clear()
+	_enemy_positions.clear()
+	queue_redraw()
+
+
 # --- placement ---
 
 func can_place_enemy(grid_pos: Vector2i, grid_size: Vector2i) -> bool:

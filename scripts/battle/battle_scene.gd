@@ -368,8 +368,7 @@ func _generate_loot() -> void:
 
 
 func _refresh_enemy_grid(state: BattleState) -> void:
-	for enemy: EnemyData in _setup.enemies:
-		enemy_grid.remove_enemy(enemy.id)
+	enemy_grid.clear_enemies()
 	for i in _setup.enemies.size():
 		var enemy := _setup.enemies[i]
 		if not state.enemy_hp.has(enemy.id):
