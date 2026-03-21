@@ -22,12 +22,18 @@ var _highlighted := false
 var _hovered_cells: Array[Vector2i] = []
 var _intents: Dictionary = {}
 var _armors: Dictionary = {}
+var _blocks: Dictionary = {}
 var _poisons: Dictionary = {}
 var _fires: Dictionary = {}
 
 
 func set_armors(armors: Dictionary) -> void:
 	_armors = armors
+	queue_redraw()
+
+
+func set_blocks(blocks: Dictionary) -> void:
+	_blocks = blocks
 	queue_redraw()
 
 
@@ -202,6 +208,10 @@ func _draw_enemies() -> void:
 			draw_string(font, pixel_pos + Vector2(5, 44),
 					"🛡 %d" % _armors[enemy.id],
 					HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1.0, 0.85, 0.3))
+		if _blocks.has(enemy.id) and _blocks[enemy.id] > 0:
+			draw_string(font, pixel_pos + Vector2(pixel_size.x - 5, 44),
+					"🔲 %d" % _blocks[enemy.id],
+					HORIZONTAL_ALIGNMENT_RIGHT, -1, 11, Color(0.5, 0.8, 1.0))
 		var has_poison: bool = _poisons.has(enemy.id) and _poisons[enemy.id] > 0
 		var has_fire: bool = _fires.has(enemy.id) and _fires[enemy.id] > 0
 		if has_poison or has_fire:

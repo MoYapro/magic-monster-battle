@@ -40,6 +40,8 @@ func make_initial_state() -> BattleState:
 		for t: MonsterTraitData in enemy.traits:
 			if t is MonsterTraitArmor:
 				state.enemy_armor[enemy.id] = (t as MonsterTraitArmor).armor_amount
+			elif t is MonsterTraitBlock:
+				state.enemy_block[enemy.id] = (t as MonsterTraitBlock).block_charges
 	for obstacle: ObstacleData in obstacles:
 		state.obstacle_hp[obstacle.id] = obstacle.max_hp
 	for mage: MageData in mages:

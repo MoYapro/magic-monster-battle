@@ -379,6 +379,7 @@ func _refresh_enemy_grid(state: BattleState) -> void:
 		enemy_grid.place_enemy(enemy, _setup.enemy_positions[i])
 	enemy_grid.set_intents(state.monster_intents)
 	enemy_grid.set_armors(state.enemy_armor)
+	enemy_grid.set_blocks(state.enemy_block)
 	enemy_grid.set_statuses(state.enemy_poison, state.enemy_fire)
 
 

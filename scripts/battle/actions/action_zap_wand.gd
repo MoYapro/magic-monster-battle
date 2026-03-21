@@ -34,9 +34,18 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 
 	var fire_stacks: int = maxi(0, fire_damage - 1)
 
+	var blocked_this_zap: Dictionary = {}
 	for cell: Vector2i in EnemyGrid.get_hit_cells(target_cell, pattern):
 		var eid: String = setup.get_enemy_id_at(cell)
 		if eid.is_empty() or not new_state.enemy_hp.has(eid):
+			continue
+		if blocked_this_zap.has(eid):
+			continue
+		if new_state.enemy_block.get(eid, 0) > 0:
+			new_state.enemy_block[eid] -= 1
+			if new_state.enemy_block[eid] <= 0:
+				new_state.enemy_block.erase(eid)
+			blocked_this_zap[eid] = true
 			continue
 		var remaining := damage
 		if new_state.enemy_armor.has(eid):
@@ -49,6 +58,7 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 		if new_state.enemy_hp[eid] <= 0:
 			new_state.enemy_hp.erase(eid)
 			new_state.enemy_armor.erase(eid)
+			new_state.enemy_block.erase(eid)
 		elif fire_stacks > 0:
 			new_state.enemy_fire[eid] = new_state.enemy_fire.get(eid, 0) + fire_stacks
 
