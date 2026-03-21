@@ -5,3 +5,4 @@ res://scripts/battle/actions/action_end_turn.gd
 res://scripts/battle/monster_traits/monster_trait_armor.gd
 res://scripts/battle/monster_traits/monster_trait_data.gd
 res://scripts/battle/monster_traits/monster_trait_regen.gd
+res://scripts/battle/wand_display.gd

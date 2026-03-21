@@ -148,6 +148,7 @@ func _place_rows(wand_displays: Array[WandDisplay], mages: Array[MageData], star
 		wand.position = Vector2(WAND_X, y)
 		wand.tip_pressed.connect(_on_tip_pressed)
 		wand.body_slot_clicked.connect(_on_body_slot_clicked)
+		wand.body_slot_right_clicked.connect(_on_body_slot_right_clicked)
 		_wand_displays.append(wand)
 		var mage := MageDisplay.new()
 		add_child(mage)
@@ -299,6 +300,15 @@ func _on_body_slot_clicked(wand: WandDisplay, slot_id: String) -> void:
 	if _history.current_state().mage_hp[mage_index] <= 0:
 		return
 	_apply_state(_history.push(ActionAddMana.new(mage_index, slot_id)))
+
+
+func _on_body_slot_right_clicked(wand: WandDisplay, slot_id: String) -> void:
+	if _targeting_wand != null:
+		return
+	var mage_index := _wand_displays.find(wand)
+	if _history.current_state().mage_hp[mage_index] <= 0:
+		return
+	_apply_state(_history.push(ActionRemoveMana.new(mage_index, slot_id)))
 
 
 func _on_tip_pressed(wand: WandDisplay) -> void:

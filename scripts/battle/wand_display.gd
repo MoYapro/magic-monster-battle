@@ -16,6 +16,7 @@ const COLOR_EDGE := Color(0.45, 0.50, 0.58)
 
 signal tip_pressed(wand: WandDisplay)
 signal body_slot_clicked(wand: WandDisplay, slot_id: String)
+signal body_slot_right_clicked(wand: WandDisplay, slot_id: String)
 
 const COLOR_TARGET_AVAILABLE := Color(1.0, 0.85, 0.2)
 const COLOR_TARGET_HOVER := Color(0.95, 0.18, 0.18)
@@ -97,14 +98,18 @@ func _compute_bounds() -> Rect2:
 func _unhandled_input(event: InputEvent) -> void:
 	if _data == null:
 		return
-	if not (event is InputEventMouseButton and event.pressed
-			and event.button_index == MOUSE_BUTTON_LEFT):
+	if not (event is InputEventMouseButton and event.pressed):
+		return
+	var button: MouseButton = event.button_index
+	if button != MOUSE_BUTTON_LEFT and button != MOUSE_BUTTON_RIGHT:
 		return
 	var local := to_local(event.position)
 	for slot: SpellSlotData in _data.slots:
 		if not Rect2(_slot_pixel_pos(slot), SLOT_SIZE).has_point(local):
 			continue
-		if slot.is_tip:
+		if button == MOUSE_BUTTON_RIGHT:
+			body_slot_right_clicked.emit(self, slot.id)
+		elif slot.is_tip:
 			tip_pressed.emit(self)
 		else:
 			body_slot_clicked.emit(self, slot.id)
