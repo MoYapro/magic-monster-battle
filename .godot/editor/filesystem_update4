@@ -9,3 +9,12 @@ res://scripts/battle/wand_display.gd
 res://scripts/game_state.gd
 res://scripts/world/path_selection_screen.gd
 res://scripts/loot/loot_screen.gd
+res://scripts/battle/enemy_data.gd
+res://scripts/world/biome_data.gd
+res://scripts/world/biomes_data.gd
+res://scripts/battle/wand_generator.gd
+res://scripts/battle/monsters/goblin.gd
+res://scripts/battle/monsters/shield_ogre.gd
+res://scripts/battle/monsters/skeleton.gd
+res://scripts/battle/monsters/troll.gd
+res://scripts/battle/monsters/witch.gd

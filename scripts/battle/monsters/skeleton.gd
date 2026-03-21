@@ -1,0 +1,11 @@
+class_name Skeleton extends EnemyData
+
+func _init() -> void:
+	super("skeleton_1", "Skeleton", 35, Vector2i(1, 1), Color(0.8, 0.8, 0.7))
+	main_role = MonsterRole.Type.DAMAGE
+	difficulty_rating = 12
+	drop_pool = [SpellFrost.create(), SpellShield.create()]
+	action_pool = [
+		MonsterActionAttack.new("Strike", 4),
+		MonsterActionAttack.new("Rattle", 2),
+	]

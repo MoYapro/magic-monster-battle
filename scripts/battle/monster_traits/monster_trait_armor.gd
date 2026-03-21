@@ -4,7 +4,7 @@ var armor_amount: int
 
 
 func _init(p_amount: int) -> void:
-	super("Armor %d" % p_amount)
+	super("Armor %d" % p_amount, 2)
 	armor_amount = p_amount
 
 

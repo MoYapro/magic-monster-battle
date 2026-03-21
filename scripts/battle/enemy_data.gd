@@ -2,10 +2,14 @@ class_name EnemyData
 
 var id: String
 var display_name: String
+var base_hp: int
 var max_hp: int
 var current_hp: int
-var grid_size: Vector2i  # width x height in grid cells
-var color: Color         # placeholder until art exists
+var grid_size: Vector2i        # width x height in grid cells
+var color: Color               # placeholder until art exists
+var difficulty_rating: int = 10  # 1–100; used in encounter budget
+var main_role: MonsterRole.Type = MonsterRole.Type.NONE
+var off_role: MonsterRole.Type = MonsterRole.Type.NONE
 var drop_pool: Array[SpellData] = []
 var action_pool: Array[MonsterActionData] = []
 var traits: Array[MonsterTraitData] = []
@@ -20,7 +24,13 @@ func _init(
 ) -> void:
 	id = p_id
 	display_name = p_name
+	base_hp = p_hp
 	max_hp = p_hp
 	current_hp = p_hp
 	grid_size = p_size
 	color = p_color
+
+
+func apply_level(level: int) -> void:
+	max_hp = base_hp * level
+	current_hp = max_hp
