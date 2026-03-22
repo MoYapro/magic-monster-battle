@@ -142,16 +142,6 @@ func get_enemy_at(grid_pos: Vector2i) -> EnemyData:
 	return _cells.get(grid_pos, null)
 
 
-func apply_damage(cell: Vector2i, amount: int) -> void:
-	var enemy: EnemyData = _cells.get(cell, null)
-	if enemy == null:
-		return
-	enemy.current_hp -= amount
-	if enemy.current_hp <= 0:
-		remove_enemy(enemy.id)
-	else:
-		queue_redraw()
-
 
 # --- rendering ---
 

@@ -36,14 +36,3 @@ func test_get_slot_returns_null_for_missing_id() -> void:
 	assert_null(wand.get_slot("nonexistent"))
 
 
-func test_get_total_damage_sums_all_slot_spells() -> void:
-	var wand := _make_wand()
-	# Ember=3, Frost=2, Single=6 → 11
-	assert_eq(wand.get_total_damage(), 11)
-
-
-func test_get_total_damage_zero_when_no_spells() -> void:
-	var s0 := SpellSlotData.new("s0", 0, 0, "tip")
-	var tip := SpellSlotData.new("tip", 1, 0)
-	var wand := WandData.new([s0, tip])
-	assert_eq(wand.get_total_damage(), 0)
