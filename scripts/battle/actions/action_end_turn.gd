@@ -36,36 +36,10 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 		for t: MonsterTraitData in enemy.traits:
 			new_state = t.apply_end_of_round(new_state, setup, enemy.id) as BattleState
 
-	# Poison: 1 damage per stack, remove 1 stack
-	for i in new_state.mage_poison.size():
-		if new_state.mage_poison[i] > 0:
-			new_state.mage_hp[i] = max(0, new_state.mage_hp[i] - 1)
-			new_state.mage_poison[i] -= 1
-	for enemy_id: String in new_state.enemy_poison:
-		if new_state.enemy_poison[enemy_id] > 0 and new_state.enemy_hp.has(enemy_id):
-			new_state.enemy_hp[enemy_id] = max(0, new_state.enemy_hp[enemy_id] - 1)
-			new_state.enemy_poison[enemy_id] -= 1
-
-	# Fire: deal damage equal to stacks, then halve stacks
-	for i in new_state.mage_fire.size():
-		if new_state.mage_fire[i] > 0:
-			new_state.mage_hp[i] = max(0, new_state.mage_hp[i] - new_state.mage_fire[i])
-			new_state.mage_fire[i] /= 2
-	for enemy_id: String in new_state.enemy_fire:
-		if new_state.enemy_fire[enemy_id] > 0 and new_state.enemy_hp.has(enemy_id):
-			new_state.enemy_hp[enemy_id] = max(0, new_state.enemy_hp[enemy_id] - new_state.enemy_fire[enemy_id])
-			new_state.enemy_fire[enemy_id] /= 2
-
-	# Wet: decay 1 stack per turn
-	for i in new_state.mage_wet.size():
-		new_state.mage_wet[i] = maxi(0, new_state.mage_wet[i] - 1)
-	var wet_to_erase: Array[String] = []
-	for eid: String in new_state.enemy_wet:
-		new_state.enemy_wet[eid] -= 1
-		if new_state.enemy_wet[eid] <= 0:
-			wet_to_erase.append(eid)
-	for eid: String in wet_to_erase:
-		new_state.enemy_wet.erase(eid)
+	# Status effects: poison, fire, wet
+	new_state.tick_poison()
+	new_state.tick_fire()
+	new_state.tick_wet()
 
 	# Reset turn resources
 	new_state.enemy_attack_mult.clear()

@@ -10,8 +10,6 @@ func _init(p_amount: int) -> void:
 
 func apply_end_of_round(state: BattleState, setup: BattleSetup, enemy_id: String) -> BattleState:
 	var new_state := state.duplicate()
-	if not new_state.enemy_hp.has(enemy_id):
-		return new_state
 	var enemy := setup.get_enemy(enemy_id)
 	if enemy == null:
 		return new_state

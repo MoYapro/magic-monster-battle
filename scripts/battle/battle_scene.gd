@@ -45,15 +45,7 @@ var _monster_tooltip_stats: Label = null
 var _monster_tooltip_traits: Label = null
 var _monster_tooltip_attacks: Label = null
 
-var _hover_spell: SpellData = null
-var _hover_spell_timer: float = 0.0
-var _spell_cursor_pos: Vector2 = Vector2.ZERO
-var _spell_tooltip_layer: CanvasLayer = null
-var _spell_tooltip_panel: PanelContainer = null
-var _spell_tooltip_name: Label = null
-var _spell_tooltip_desc: Label = null
-var _spell_tooltip_stats: Label = null
-var _spell_tooltip_effects: Label = null
+var _spell_tooltip: SpellTooltip = null
 
 # debug placement
 var _battle_enemies: Array[EnemyData] = []
@@ -70,7 +62,8 @@ func _ready() -> void:
 	_setup_mage_wand_rows()
 	_build_setup()
 	_build_monster_tooltip()
-	_build_spell_tooltip()
+	_spell_tooltip = SpellTooltip.new()
+	add_child(_spell_tooltip)
 
 
 func _build_monsters_list() -> void:
@@ -578,10 +571,6 @@ func _process(delta: float) -> void:
 		_hover_timer += delta
 		if _hover_timer >= TOOLTIP_DELAY:
 			_show_monster_tooltip(_hover_enemy, _enemy_cursor_pos)
-	if _hover_spell != null and not _spell_tooltip_layer.visible:
-		_hover_spell_timer += delta
-		if _hover_spell_timer >= TOOLTIP_DELAY:
-			_show_spell_tooltip(_hover_spell, _spell_cursor_pos)
 
 
 func _update_enemy_hover(pos: Vector2) -> void:
@@ -688,43 +677,6 @@ func _build_monster_tooltip() -> void:
 	vbox.add_child(_monster_tooltip_attacks)
 
 
-func _build_spell_tooltip() -> void:
-	_spell_tooltip_layer = CanvasLayer.new()
-	_spell_tooltip_layer.layer = 11
-	_spell_tooltip_layer.visible = false
-	add_child(_spell_tooltip_layer)
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.07, 0.09, 0.11, 0.97)
-	style.border_color = Color(0.25, 0.30, 0.35)
-	style.set_border_width_all(1)
-	style.set_content_margin_all(10)
-	_spell_tooltip_panel = PanelContainer.new()
-	_spell_tooltip_panel.custom_minimum_size = Vector2(220, 0)
-	_spell_tooltip_panel.add_theme_stylebox_override("panel", style)
-	_spell_tooltip_layer.add_child(_spell_tooltip_panel)
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 5)
-	_spell_tooltip_panel.add_child(vbox)
-	_spell_tooltip_name = Label.new()
-	_spell_tooltip_name.add_theme_font_size_override("font_size", 14)
-	_spell_tooltip_name.modulate = Color(0.92, 0.92, 0.88)
-	vbox.add_child(_spell_tooltip_name)
-	_spell_tooltip_desc = Label.new()
-	_spell_tooltip_desc.add_theme_font_size_override("font_size", 11)
-	_spell_tooltip_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_spell_tooltip_desc.modulate = Color(0.65, 0.70, 0.75)
-	vbox.add_child(_spell_tooltip_desc)
-	vbox.add_child(HSeparator.new())
-	_spell_tooltip_stats = Label.new()
-	_spell_tooltip_stats.add_theme_font_size_override("font_size", 11)
-	_spell_tooltip_stats.modulate = Color(0.82, 0.82, 0.82)
-	vbox.add_child(_spell_tooltip_stats)
-	_spell_tooltip_effects = Label.new()
-	_spell_tooltip_effects.add_theme_font_size_override("font_size", 11)
-	_spell_tooltip_effects.modulate = Color(0.65, 0.70, 0.75)
-	vbox.add_child(_spell_tooltip_effects)
-
-
 func _update_spell_hover(pos: Vector2) -> void:
 	var spell: SpellData = null
 	for wd: WandDisplay in _wand_displays:
@@ -732,30 +684,7 @@ func _update_spell_hover(pos: Vector2) -> void:
 		if slot != null and slot.spell != null:
 			spell = slot.spell
 			break
-	if spell != _hover_spell:
-		_hover_spell = spell
-		_hover_spell_timer = 0.0
-		_spell_tooltip_layer.visible = false
-	_spell_cursor_pos = pos
-
-
-func _show_spell_tooltip(spell: SpellData, pos: Vector2) -> void:
-	_spell_tooltip_name.text = spell.display_name
-	_spell_tooltip_desc.text = spell.description
-	_spell_tooltip_desc.visible = not spell.description.is_empty()
-	_spell_tooltip_stats.text = "Damage: %d     Mana: %d" % [spell.damage, spell.mana_cost]
-	var effect_whitelist := ["fire", "water", "frost", "poison", "shield", "amplify", "aoe"]
-	var effects: Array = spell.tags.filter(func(t: String) -> bool: return t in effect_whitelist)
-	if effects.is_empty():
-		_spell_tooltip_effects.visible = false
-	else:
-		_spell_tooltip_effects.text = "Effects: " + ", ".join(effects.map(func(t: String) -> String: return t.capitalize()))
-		_spell_tooltip_effects.visible = true
-	var tp := pos + Vector2(18.0, 18.0)
-	tp.x = clampf(tp.x, 0.0, SCREEN_W - 240.0)
-	tp.y = clampf(tp.y, 0.0, SCREEN_H - 160.0)
-	_spell_tooltip_panel.position = tp
-	_spell_tooltip_layer.visible = true
+	_spell_tooltip.notify_hover(pos, spell)
 
 
 func _unhandled_input(event: InputEvent) -> void:

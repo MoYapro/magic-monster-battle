@@ -64,22 +64,10 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 				new_state.enemy_armor.erase(eid)
 		new_state.enemy_hp[eid] -= remaining
 		if new_state.enemy_hp[eid] <= 0:
-			new_state.enemy_hp.erase(eid)
-			new_state.enemy_armor.erase(eid)
-			new_state.enemy_block.erase(eid)
+			new_state.kill_enemy(eid)
 		else:
 			if fire_stacks > 0:
-				if new_state.enemy_frozen.has(eid):
-					new_state.enemy_frozen.erase(eid)
-				else:
-					var wet: int = new_state.enemy_wet.get(eid, 0)
-					var remaining_fire: int = fire_stacks - wet
-					if wet > 0:
-						new_state.enemy_wet[eid] = maxi(0, wet - fire_stacks)
-						if new_state.enemy_wet[eid] == 0:
-							new_state.enemy_wet.erase(eid)
-					if remaining_fire > 0:
-						new_state.enemy_fire[eid] = (new_state.enemy_fire.get(eid, 0) as int) + remaining_fire
+				new_state.add_fire_stacks_to_enemy(eid, fire_stacks)
 			if wet_stacks > 0:
 				new_state.enemy_wet[eid] = (new_state.enemy_wet.get(eid, 0) as int) + wet_stacks
 

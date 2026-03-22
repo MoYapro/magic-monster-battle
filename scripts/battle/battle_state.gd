@@ -30,29 +30,100 @@ var enemy_attack_mult: Dictionary = {}  # enemy_id -> float multiplier for this 
 
 func duplicate() -> BattleState:
 	var s := BattleState.new()
-	s.enemy_hp = enemy_hp.duplicate()
-	s.enemy_armor = enemy_armor.duplicate()
-	s.enemy_block = enemy_block.duplicate()
-	s.obstacle_hp = obstacle_hp.duplicate()
-	for hp: int in mage_hp:
-		s.mage_hp.append(hp)
-	for v: int in mage_poison:
-		s.mage_poison.append(v)
-	s.enemy_poison = enemy_poison.duplicate()
-	for v: int in mage_fire:
-		s.mage_fire.append(v)
-	s.enemy_fire = enemy_fire.duplicate()
-	s.enemy_wet = enemy_wet.duplicate()
-	for v: int in mage_wet:
-		s.mage_wet.append(v)
-	s.enemy_frozen = enemy_frozen.duplicate()
-	for v: bool in mage_frozen:
-		s.mage_frozen.append(v)
-	s.webbed_slots = webbed_slots.duplicate()
-	s.mana = mana
-	s.slot_charges = slot_charges.duplicate()
-	for v: int in mage_mana_spent:
-		s.mage_mana_spent.append(v)
-	s.monster_intents = monster_intents.duplicate(true)
-	s.enemy_attack_mult = enemy_attack_mult.duplicate()
+	for prop: Dictionary in get_property_list():
+		if not (prop["usage"] & PROPERTY_USAGE_SCRIPT_VARIABLE):
+			continue
+		var prop_name: String = prop["name"]
+		var val: Variant = get(prop_name)
+		if val is Dictionary:
+			s.set(prop_name, (val as Dictionary).duplicate(true))
+		elif val is Array:
+			s.set(prop_name, (val as Array).duplicate(true))
+		else:
+			s.set(prop_name, val)
 	return s
+
+
+func add_fire_stacks_to_enemy(enemy_id: String, stacks: int) -> void:
+	if stacks <= 0 or not enemy_hp.has(enemy_id):
+		return
+	if enemy_frozen.has(enemy_id):
+		enemy_frozen.erase(enemy_id)
+		return
+	var wet: int = enemy_wet.get(enemy_id, 0)
+	var remaining := stacks - wet
+	if wet > 0:
+		enemy_wet[enemy_id] = maxi(0, wet - stacks)
+		if enemy_wet[enemy_id] == 0:
+			enemy_wet.erase(enemy_id)
+	if remaining > 0:
+		enemy_fire[enemy_id] = (enemy_fire.get(enemy_id, 0) as int) + remaining
+
+
+func add_fire_stacks_to_mage(mage_idx: int, stacks: int) -> void:
+	if stacks <= 0 or mage_idx < 0 or mage_idx >= mage_fire.size():
+		return
+	if mage_frozen[mage_idx]:
+		mage_frozen[mage_idx] = false
+		return
+	var wet := mage_wet[mage_idx]
+	var remaining := stacks - wet
+	if wet > 0:
+		mage_wet[mage_idx] = maxi(0, wet - stacks)
+	if remaining > 0:
+		mage_fire[mage_idx] += remaining
+
+
+func kill_enemy(enemy_id: String) -> void:
+	enemy_hp.erase(enemy_id)
+	enemy_armor.erase(enemy_id)
+	enemy_block.erase(enemy_id)
+	enemy_fire.erase(enemy_id)
+	enemy_poison.erase(enemy_id)
+	enemy_wet.erase(enemy_id)
+	enemy_frozen.erase(enemy_id)
+	enemy_attack_mult.erase(enemy_id)
+
+
+func tick_poison() -> void:
+	for i in mage_poison.size():
+		if mage_poison[i] > 0:
+			mage_hp[i] = max(0, mage_hp[i] - 1)
+			mage_poison[i] -= 1
+	var to_kill: Array[String] = []
+	for enemy_id: String in enemy_poison:
+		if enemy_poison[enemy_id] > 0 and enemy_hp.has(enemy_id):
+			enemy_hp[enemy_id] = max(0, enemy_hp[enemy_id] - 1)
+			enemy_poison[enemy_id] -= 1
+			if enemy_hp[enemy_id] <= 0:
+				to_kill.append(enemy_id)
+	for enemy_id: String in to_kill:
+		kill_enemy(enemy_id)
+
+
+func tick_fire() -> void:
+	for i in mage_fire.size():
+		if mage_fire[i] > 0:
+			mage_hp[i] = max(0, mage_hp[i] - mage_fire[i])
+			mage_fire[i] /= 2
+	var to_kill: Array[String] = []
+	for enemy_id: String in enemy_fire:
+		if enemy_fire[enemy_id] > 0 and enemy_hp.has(enemy_id):
+			enemy_hp[enemy_id] = max(0, enemy_hp[enemy_id] - enemy_fire[enemy_id])
+			enemy_fire[enemy_id] /= 2
+			if enemy_hp[enemy_id] <= 0:
+				to_kill.append(enemy_id)
+	for enemy_id: String in to_kill:
+		kill_enemy(enemy_id)
+
+
+func tick_wet() -> void:
+	for i in mage_wet.size():
+		mage_wet[i] = maxi(0, mage_wet[i] - 1)
+	var to_erase: Array[String] = []
+	for enemy_id: String in enemy_wet:
+		enemy_wet[enemy_id] -= 1
+		if enemy_wet[enemy_id] <= 0:
+			to_erase.append(enemy_id)
+	for enemy_id: String in to_erase:
+		enemy_wet.erase(enemy_id)

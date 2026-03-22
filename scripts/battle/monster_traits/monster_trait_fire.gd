@@ -12,13 +12,5 @@ func apply_on_hit(state: BattleState, _setup: BattleSetup, _enemy_id: String, ta
 	if fire_to_apply == 0:
 		return state
 	var new_state := state.duplicate()
-	if new_state.mage_frozen[target_mage]:
-		new_state.mage_frozen[target_mage] = false
-		return new_state
-	var wet := new_state.mage_wet[target_mage]
-	var remaining_fire := fire_to_apply - wet
-	if wet > 0:
-		new_state.mage_wet[target_mage] = maxi(0, wet - fire_to_apply)
-	if remaining_fire > 0:
-		new_state.mage_fire[target_mage] += remaining_fire
+	new_state.add_fire_stacks_to_mage(target_mage, fire_to_apply)
 	return new_state

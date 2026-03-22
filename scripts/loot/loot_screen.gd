@@ -63,16 +63,7 @@ var _catalog_layer: CanvasLayer = null
 var _catalog_pick: bool = false
 var _catalog_open: bool = false
 
-const TOOLTIP_DELAY := 1.0
-var _hover_spell: SpellData = null
-var _hover_timer: float = 0.0
-var _cursor_pos: Vector2 = Vector2.ZERO
-var _tooltip_layer: CanvasLayer = null
-var _tooltip_panel: PanelContainer = null
-var _tooltip_name: Label = null
-var _tooltip_desc: Label = null
-var _tooltip_stats: Label = null
-var _tooltip_effects: Label = null
+var _spell_tooltip: SpellTooltip = null
 
 
 func _ready() -> void:
@@ -80,7 +71,8 @@ func _ready() -> void:
 	_build_equip_wands()
 	_build_bottom_bar()
 	_build_catalog_layer()
-	_build_tooltip_layer()
+	_spell_tooltip = SpellTooltip.new()
+	add_child(_spell_tooltip)
 
 
 func _draw() -> void:
@@ -640,14 +632,6 @@ func _close_catalog() -> void:
 
 # --- tooltip ---
 
-func _process(delta: float) -> void:
-	if _hover_spell == null or _tooltip_panel.visible:
-		return
-	_hover_timer += delta
-	if _hover_timer >= TOOLTIP_DELAY:
-		_show_tooltip(_hover_spell, _cursor_pos)
-
-
 func _spell_at(pos: Vector2) -> SpellData:
 	var loot_idx := _card_index_at(pos, LOOT_X, GameState.pending_loot.size())
 	if loot_idx >= 0:
@@ -668,80 +652,7 @@ func _spell_at(pos: Vector2) -> SpellData:
 
 
 func _update_hover(pos: Vector2) -> void:
-	if _catalog_open:
-		return
-	var spell := _spell_at(pos)
-	if spell != _hover_spell:
-		_hover_spell = spell
-		_hover_timer = 0.0
-		_tooltip_panel.visible = false
-
-
-func _show_tooltip(spell: SpellData, pos: Vector2) -> void:
-	_tooltip_name.text = spell.display_name
-	_tooltip_desc.text = spell.description
-	_tooltip_desc.visible = not spell.description.is_empty()
-	_tooltip_stats.text = "Damage: %d     Mana: %d" % [spell.damage, spell.mana_cost]
-	var effect_whitelist := ["fire", "water", "frost", "poison", "shield", "amplify", "aoe"]
-	var effects: Array = spell.tags.filter(
-			func(t: String) -> bool: return t in effect_whitelist)
-	if effects.is_empty():
-		_tooltip_effects.visible = false
-	else:
-		var names: Array = effects.map(func(t: String) -> String: return t.capitalize())
-		_tooltip_effects.text = "Effects: " + ", ".join(names)
-		_tooltip_effects.visible = true
-	var tp := pos + Vector2(18.0, 18.0)
-	tp.x = clampf(tp.x, 0.0, SCREEN_W - 250.0)
-	tp.y = clampf(tp.y, 0.0, SCREEN_H - 160.0)
-	_tooltip_panel.position = tp
-	_tooltip_panel.visible = true
-
-
-func _build_tooltip_layer() -> void:
-	_tooltip_layer = CanvasLayer.new()
-	_tooltip_layer.layer = 3
-	add_child(_tooltip_layer)
-	_tooltip_layer.visible = true  # layer always on; panel visibility controls show/hide
-
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.07, 0.09, 0.11, 0.97)
-	style.border_color = COLOR_BORDER
-	style.set_border_width_all(1)
-	style.set_content_margin_all(10)
-
-	_tooltip_panel = PanelContainer.new()
-	_tooltip_panel.custom_minimum_size = Vector2(230, 0)
-	_tooltip_panel.add_theme_stylebox_override("panel", style)
-	_tooltip_panel.visible = false
-	_tooltip_layer.add_child(_tooltip_panel)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 5)
-	_tooltip_panel.add_child(vbox)
-
-	_tooltip_name = Label.new()
-	_tooltip_name.add_theme_font_size_override("font_size", 14)
-	_tooltip_name.modulate = COLOR_SCREEN_TITLE
-	vbox.add_child(_tooltip_name)
-
-	_tooltip_desc = Label.new()
-	_tooltip_desc.add_theme_font_size_override("font_size", 11)
-	_tooltip_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_tooltip_desc.modulate = COLOR_SECTION
-	vbox.add_child(_tooltip_desc)
-
-	vbox.add_child(HSeparator.new())
-
-	_tooltip_stats = Label.new()
-	_tooltip_stats.add_theme_font_size_override("font_size", 11)
-	_tooltip_stats.modulate = COLOR_MAGE_NAME
-	vbox.add_child(_tooltip_stats)
-
-	_tooltip_effects = Label.new()
-	_tooltip_effects.add_theme_font_size_override("font_size", 11)
-	_tooltip_effects.modulate = COLOR_SECTION
-	vbox.add_child(_tooltip_effects)
+	_spell_tooltip.notify_hover(pos, null if _catalog_open else _spell_at(pos))
 
 
 # --- bottom bar ---
