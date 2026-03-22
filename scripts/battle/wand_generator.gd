@@ -57,6 +57,8 @@ static func _pick_body_spell(rng: RandomNumberGenerator) -> SpellData:
 static func _pick_tip_spell(rng: RandomNumberGenerator) -> SpellData:
 	var spells: Array[SpellData] = [
 		SpellSingle.create(), SpellLine.create(), SpellPierce.create(), SpellBomb.create(),
+		SpellBoltN.create(), SpellBoltNE.create(), SpellBoltE.create(), SpellBoltSE.create(),
+		SpellBoltS.create(), SpellBoltSW.create(), SpellBoltW.create(), SpellBoltNW.create(),
 	]
 	return spells[rng.randi_range(0, spells.size() - 1)]
 

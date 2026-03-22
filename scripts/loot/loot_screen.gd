@@ -40,6 +40,9 @@ const COLOR_DROP_BORDER    := Color(1.00, 0.85, 0.20, 0.80)
 const COLOR_WAND_CARD      := Color(0.18, 0.28, 0.42)
 const COLOR_WAND_CARD_BORDER := Color(0.38, 0.55, 0.78)
 
+const CATALOG_W := 900.0
+const CATALOG_H := 480.0
+
 # loot wand displays — parallel to GameState.pending_loot_wands
 var _loot_wand_displays: Array[WandDisplay] = []
 # equip wand displays — one per mage (null = no wand)
@@ -55,12 +58,28 @@ var _drag_wand_source: int = -2  # -1 = from loot; >= 0 = mage index
 var _drag_pos: Vector2 = Vector2.ZERO
 var _continue_btn: Button = null
 var _auto_assign_btn: Button = null
+var _add_spell_btn: Button = null
+var _catalog_layer: CanvasLayer = null
+var _catalog_pick: bool = false
+
+const TOOLTIP_DELAY := 1.0
+var _hover_spell: SpellData = null
+var _hover_timer: float = 0.0
+var _cursor_pos: Vector2 = Vector2.ZERO
+var _tooltip_layer: CanvasLayer = null
+var _tooltip_panel: PanelContainer = null
+var _tooltip_name: Label = null
+var _tooltip_desc: Label = null
+var _tooltip_stats: Label = null
+var _tooltip_effects: Label = null
 
 
 func _ready() -> void:
 	_build_loot_wands()
 	_build_equip_wands()
 	_build_bottom_bar()
+	_build_catalog_layer()
+	_build_tooltip_layer()
 
 
 func _draw() -> void:
@@ -80,9 +99,13 @@ func _draw() -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
+		var motion := event as InputEventMouseMotion
+		_cursor_pos = motion.position
 		if _dragging != null or _dragging_wand != null:
-			_drag_pos = (event as InputEventMouseMotion).position
+			_drag_pos = motion.position
 			queue_redraw()
+		else:
+			_update_hover(motion.position)
 		return
 	if not (event is InputEventMouseButton):
 		return
@@ -90,9 +113,14 @@ func _input(event: InputEvent) -> void:
 	if mb.button_index != MOUSE_BUTTON_LEFT:
 		return
 	if mb.pressed:
-		_try_start_drag(mb.position)
+		if _catalog_pick:
+			_catalog_pick = false
+			_end_drag(mb.position)
+		else:
+			_try_start_drag(mb.position)
 	else:
-		_end_drag(mb.position)
+		if not _catalog_pick:
+			_end_drag(mb.position)
 
 
 func _try_start_drag(pos: Vector2) -> void:
@@ -485,6 +513,233 @@ func _build_equip_wands() -> void:
 		y += row_h
 
 
+# --- spell catalog ---
+
+func _all_body_spells() -> Array[SpellData]:
+	return [SpellEmber.create(), SpellFrost.create(), SpellVenom.create(),
+			SpellAmplify.create(), SpellShield.create()]
+
+
+func _all_tip_spells() -> Array[SpellData]:
+	return [SpellSingle.create(), SpellLine.create(), SpellPierce.create(), SpellBomb.create(),
+			SpellBoltN.create(), SpellBoltNE.create(), SpellBoltE.create(), SpellBoltSE.create(),
+			SpellBoltS.create(), SpellBoltSW.create(), SpellBoltW.create(), SpellBoltNW.create()]
+
+
+func _build_catalog_layer() -> void:
+	_catalog_layer = CanvasLayer.new()
+	_catalog_layer.layer = 2
+	_catalog_layer.visible = false
+	add_child(_catalog_layer)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.0, 0.0, 0.0, 0.72)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	_catalog_layer.add_child(dim)
+
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = COLOR_PANEL
+	panel_style.border_color = COLOR_BORDER
+	panel_style.set_border_width_all(1)
+
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", panel_style)
+	panel.size = Vector2(CATALOG_W, CATALOG_H)
+	panel.position = Vector2((SCREEN_W - CATALOG_W) * 0.5, (SCREEN_H - CATALOG_H) * 0.5)
+	_catalog_layer.add_child(panel)
+
+	var outer := VBoxContainer.new()
+	outer.add_theme_constant_override("separation", 6)
+	panel.add_child(outer)
+
+	var title_row := HBoxContainer.new()
+	outer.add_child(title_row)
+	var title_lbl := Label.new()
+	title_lbl.text = "Add Spell"
+	title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_row.add_child(title_lbl)
+	var close_btn := Button.new()
+	close_btn.text = "×"
+	close_btn.custom_minimum_size = Vector2(28, 28)
+	close_btn.pressed.connect(_close_catalog)
+	title_row.add_child(close_btn)
+
+	var sep := HSeparator.new()
+	outer.add_child(sep)
+
+	var content := HBoxContainer.new()
+	content.add_theme_constant_override("separation", 0)
+	outer.add_child(content)
+
+	content.add_child(_build_spell_section("Body Spells", _all_body_spells()))
+	var vsep := VSeparator.new()
+	content.add_child(vsep)
+	content.add_child(_build_spell_section("Tip Spells", _all_tip_spells()))
+
+
+func _build_spell_section(title: String, spells: Array[SpellData]) -> VBoxContainer:
+	var section := VBoxContainer.new()
+	section.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	section.add_theme_constant_override("separation", 4)
+	var lbl := Label.new()
+	lbl.text = title
+	lbl.add_theme_font_size_override("font_size", 11)
+	section.add_child(lbl)
+	var grid := GridContainer.new()
+	grid.columns = CARDS_PER_ROW
+	grid.add_theme_constant_override("h_separation", CARD_GAP)
+	grid.add_theme_constant_override("v_separation", CARD_GAP)
+	section.add_child(grid)
+	for spell in spells:
+		grid.add_child(_make_spell_button(spell))
+	return section
+
+
+func _make_spell_button(spell: SpellData) -> Button:
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(CARD_SIZE, CARD_SIZE)
+	var tint := spell.element_color
+	tint.a = 0.35
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = tint
+	normal.border_color = COLOR_SLOT_BORDER
+	normal.set_border_width_all(1)
+	var hover := StyleBoxFlat.new()
+	hover.bg_color = spell.element_color * Color(1, 1, 1, 0.55)
+	hover.border_color = spell.element_color
+	hover.set_border_width_all(1)
+	btn.add_theme_stylebox_override("normal", normal)
+	btn.add_theme_stylebox_override("hover", hover)
+	btn.add_theme_stylebox_override("pressed", hover)
+	var label := spell.abbreviation if not spell.abbreviation.is_empty() else "?"
+	btn.text = label + "\n" + spell.display_name
+	btn.pressed.connect(func() -> void: _on_catalog_spell_selected(spell))
+	return btn
+
+
+func _on_catalog_spell_selected(spell: SpellData) -> void:
+	_dragging = spell
+	_drag_pos = get_viewport().get_mouse_position()
+	_drag_source = "loot"
+	_catalog_pick = true
+	_close_catalog()
+
+
+func _on_add_spell_pressed() -> void:
+	_catalog_layer.visible = true
+
+
+func _close_catalog() -> void:
+	_catalog_layer.visible = false
+
+
+# --- tooltip ---
+
+func _process(delta: float) -> void:
+	if _hover_spell == null or _tooltip_layer.visible:
+		return
+	_hover_timer += delta
+	if _hover_timer >= TOOLTIP_DELAY:
+		_show_tooltip(_hover_spell, _cursor_pos)
+
+
+func _spell_at(pos: Vector2) -> SpellData:
+	var loot_idx := _card_index_at(pos, LOOT_X, GameState.pending_loot.size())
+	if loot_idx >= 0:
+		return GameState.pending_loot[loot_idx]
+	var pack_idx := _card_index_at(pos, PACK_X, GameState.backpack.size())
+	if pack_idx >= 0:
+		return GameState.backpack[pack_idx]
+	var all_wands: Array[WandDisplay] = []
+	all_wands.append_array(_loot_wand_displays)
+	for wd: WandDisplay in _equip_wand_displays:
+		if wd != null:
+			all_wands.append(wd)
+	for wd: WandDisplay in all_wands:
+		var slot := wd.get_slot_at(wd.to_local(pos))
+		if slot != null and slot.spell != null:
+			return slot.spell
+	return null
+
+
+func _update_hover(pos: Vector2) -> void:
+	if _catalog_layer.visible:
+		return
+	var spell := _spell_at(pos)
+	if spell != _hover_spell:
+		_hover_spell = spell
+		_hover_timer = 0.0
+		_tooltip_layer.visible = false
+
+
+func _show_tooltip(spell: SpellData, pos: Vector2) -> void:
+	_tooltip_name.text = spell.display_name
+	_tooltip_desc.text = spell.description
+	_tooltip_desc.visible = not spell.description.is_empty()
+	_tooltip_stats.text = "Damage: %d     Mana: %d" % [spell.damage, spell.mana_cost]
+	var effect_whitelist := ["fire", "water", "frost", "poison", "shield", "amplify", "aoe"]
+	var effects: Array = spell.tags.filter(
+			func(t: String) -> bool: return t in effect_whitelist)
+	if effects.is_empty():
+		_tooltip_effects.visible = false
+	else:
+		var names: Array = effects.map(func(t: String) -> String: return t.capitalize())
+		_tooltip_effects.text = "Effects: " + ", ".join(names)
+		_tooltip_effects.visible = true
+	var tp := pos + Vector2(18.0, 18.0)
+	tp.x = clampf(tp.x, 0.0, SCREEN_W - 250.0)
+	tp.y = clampf(tp.y, 0.0, SCREEN_H - 160.0)
+	_tooltip_panel.position = tp
+	_tooltip_layer.visible = true
+
+
+func _build_tooltip_layer() -> void:
+	_tooltip_layer = CanvasLayer.new()
+	_tooltip_layer.layer = 3
+	_tooltip_layer.visible = false
+	add_child(_tooltip_layer)
+
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.07, 0.09, 0.11, 0.97)
+	style.border_color = COLOR_BORDER
+	style.set_border_width_all(1)
+	style.set_content_margin_all(10)
+
+	_tooltip_panel = PanelContainer.new()
+	_tooltip_panel.custom_minimum_size = Vector2(230, 0)
+	_tooltip_panel.add_theme_stylebox_override("panel", style)
+	_tooltip_layer.add_child(_tooltip_panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 5)
+	_tooltip_panel.add_child(vbox)
+
+	_tooltip_name = Label.new()
+	_tooltip_name.add_theme_font_size_override("font_size", 14)
+	_tooltip_name.modulate = COLOR_SCREEN_TITLE
+	vbox.add_child(_tooltip_name)
+
+	_tooltip_desc = Label.new()
+	_tooltip_desc.add_theme_font_size_override("font_size", 11)
+	_tooltip_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tooltip_desc.modulate = COLOR_SECTION
+	vbox.add_child(_tooltip_desc)
+
+	vbox.add_child(HSeparator.new())
+
+	_tooltip_stats = Label.new()
+	_tooltip_stats.add_theme_font_size_override("font_size", 11)
+	_tooltip_stats.modulate = COLOR_MAGE_NAME
+	vbox.add_child(_tooltip_stats)
+
+	_tooltip_effects = Label.new()
+	_tooltip_effects.add_theme_font_size_override("font_size", 11)
+	_tooltip_effects.modulate = COLOR_SECTION
+	vbox.add_child(_tooltip_effects)
+
+
 # --- bottom bar ---
 
 func _draw_bottom_bar_bg() -> void:
@@ -496,6 +751,12 @@ func _draw_bottom_bar_bg() -> void:
 func _build_bottom_bar() -> void:
 	var layer := CanvasLayer.new()
 	add_child(layer)
+	_add_spell_btn = Button.new()
+	_add_spell_btn.text = "+ Spell"
+	_add_spell_btn.size = Vector2(90, BOTTOM_BAR_H - 10)
+	_add_spell_btn.position = Vector2(8.0, SCREEN_H - BOTTOM_BAR_H + 5.0)
+	_add_spell_btn.pressed.connect(_on_add_spell_pressed)
+	layer.add_child(_add_spell_btn)
 	_continue_btn = Button.new()
 	_continue_btn.text = "Continue →"
 	_continue_btn.size = Vector2(148, BOTTOM_BAR_H - 10)
