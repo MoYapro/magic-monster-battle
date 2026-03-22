@@ -78,15 +78,25 @@ func roll_intents(state: BattleState, rng: RandomNumberGenerator) -> Dictionary:
 		var action: MonsterActionData = enemy.action_pool[action_index]
 		var target := -1
 		var target_name := ""
+		var target_enemy_id := ""
 		if action.target_type == MonsterActionData.TargetType.MAGE:
 			target = rng.randi_range(0, mages.size() - 1)
 			target_name = mages[target].name
+		elif action.target_type == MonsterActionData.TargetType.MONSTER:
+			var lowest_hp := INF
+			for e: EnemyData in enemies:
+				if state.enemy_hp.has(e.id) and state.enemy_hp[e.id] < lowest_hp:
+					lowest_hp = state.enemy_hp[e.id]
+					target_enemy_id = e.id
+					target_name = e.display_name
 		var intent := {
 			"action_index": action_index,
 			"action_name": action.name,
 			"target": target,
 			"target_name": target_name,
 		}
+		if not target_enemy_id.is_empty():
+			intent["target_enemy_id"] = target_enemy_id
 		if action is MonsterActionAttack and (action as MonsterActionAttack).applies_web \
 				and target >= 0 and target < wands.size():
 			var candidates: Array[SpellSlotData] = []

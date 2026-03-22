@@ -5,7 +5,7 @@ var amount: int
 
 func _init(p_name: String, p_amount: int) -> void:
 	name = p_name
-	target_type = TargetType.SELF
+	target_type = TargetType.MONSTER
 	amount = p_amount
 
 

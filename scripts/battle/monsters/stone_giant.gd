@@ -2,6 +2,7 @@ class_name StoneGiant extends EnemyData
 
 func _init() -> void:
 	super("stone_giant_1", "Stone Giant", 1000, Vector2i(2, 2), Color(0.50, 0.48, 0.44))
+	description = "A colossal stone behemoth that shrugs off massive damage and crushes all below."
 	main_role = MonsterRole.Type.DRAIN_TANK
 	off_role = MonsterRole.Type.BRUISER
 	difficulty_rating = 70

@@ -1,20 +1,6 @@
 extends Node2D
 
-const _MONSTERS: Array = [
-	["Goblin",        preload("res://scripts/battle/monsters/goblin.gd")],
-	["Skeleton",      preload("res://scripts/battle/monsters/skeleton.gd")],
-	["Witch",         preload("res://scripts/battle/monsters/witch.gd")],
-	["Troll",         preload("res://scripts/battle/monsters/troll.gd")],
-	["Shield Ogre",   preload("res://scripts/battle/monsters/shield_ogre.gd")],
-	["Scorpion",      preload("res://scripts/battle/monsters/scorpion.gd")],
-	["Fire Elemental",preload("res://scripts/battle/monsters/fire_elemental.gd")],
-	["Treant",        preload("res://scripts/battle/monsters/treant.gd")],
-	["Stone Giant",   preload("res://scripts/battle/monsters/stone_giant.gd")],
-	["Frost Mage",    preload("res://scripts/battle/monsters/frost_mage.gd")],
-	["Bog Shambler",  preload("res://scripts/battle/monsters/bog_shambler.gd")],
-	["Cave Spider",   preload("res://scripts/battle/monsters/cave_spider.gd")],
-	["Cursed Knight", preload("res://scripts/battle/monsters/cursed_knight.gd")],
-]
+var _monsters: Array = []
 
 const SCREEN_W := 1280.0
 const SCREEN_H := 720.0
@@ -47,6 +33,28 @@ var _hovered_cells: Array[Vector2i] = []
 var _intent_hover_enemy: String = ""
 var _intent_hover_mage: int = -1
 
+const TOOLTIP_DELAY := 1.0
+var _hover_enemy: EnemyData = null
+var _hover_timer: float = 0.0
+var _enemy_cursor_pos: Vector2 = Vector2.ZERO
+var _monster_tooltip_layer: CanvasLayer = null
+var _monster_tooltip_panel: PanelContainer = null
+var _monster_tooltip_name: Label = null
+var _monster_tooltip_desc: Label = null
+var _monster_tooltip_stats: Label = null
+var _monster_tooltip_traits: Label = null
+var _monster_tooltip_attacks: Label = null
+
+var _hover_spell: SpellData = null
+var _hover_spell_timer: float = 0.0
+var _spell_cursor_pos: Vector2 = Vector2.ZERO
+var _spell_tooltip_layer: CanvasLayer = null
+var _spell_tooltip_panel: PanelContainer = null
+var _spell_tooltip_name: Label = null
+var _spell_tooltip_desc: Label = null
+var _spell_tooltip_stats: Label = null
+var _spell_tooltip_effects: Label = null
+
 # debug placement
 var _battle_enemies: Array[EnemyData] = []
 var _battle_positions: Array[Vector2i] = []
@@ -57,9 +65,24 @@ var _place_dropdown: OptionButton = null
 
 
 func _ready() -> void:
+	_build_monsters_list()
 	_build_bottom_bar()
 	_setup_mage_wand_rows()
 	_build_setup()
+	_build_monster_tooltip()
+	_build_spell_tooltip()
+
+
+func _build_monsters_list() -> void:
+	var seen: Dictionary = {}
+	for biome: BiomeData in BiomesData.all():
+		for cls in biome.monster_pool:
+			if seen.has(cls):
+				continue
+			seen[cls] = true
+			var instance: EnemyData = cls.new()
+			_monsters.append([instance.display_name, cls])
+	_monsters.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
 
 
 # --- bottom bar ---
@@ -91,7 +114,7 @@ func _build_bottom_bar() -> void:
 	_place_dropdown.size = Vector2(175, BOTTOM_BAR_H - 10)
 	_place_dropdown.position = Vector2(298, SCREEN_H - BOTTOM_BAR_H + 5)
 	_place_dropdown.add_item("Place...")
-	for entry in _MONSTERS:
+	for entry in _monsters:
 		_place_dropdown.add_item(entry[0])
 	_place_dropdown.item_selected.connect(_on_place_item_selected)
 	layer.add_child(_place_dropdown)
@@ -165,7 +188,7 @@ func _on_place_item_selected(index: int) -> void:
 		_place_cls = null
 		return
 	_cancel_targeting()
-	var entry: Array = _MONSTERS[index - 1]
+	var entry: Array = _monsters[index - 1]
 	_place_cls = entry[1]
 	_place_size = (_place_cls.new() as EnemyData).grid_size
 
@@ -550,6 +573,191 @@ func _update_hover(mouse: Vector2) -> void:
 			return
 
 
+func _process(delta: float) -> void:
+	if _hover_enemy != null and not _monster_tooltip_layer.visible:
+		_hover_timer += delta
+		if _hover_timer >= TOOLTIP_DELAY:
+			_show_monster_tooltip(_hover_enemy, _enemy_cursor_pos)
+	if _hover_spell != null and not _spell_tooltip_layer.visible:
+		_hover_spell_timer += delta
+		if _hover_spell_timer >= TOOLTIP_DELAY:
+			_show_spell_tooltip(_hover_spell, _spell_cursor_pos)
+
+
+func _update_enemy_hover(pos: Vector2) -> void:
+	_enemy_cursor_pos = pos
+	var cell := enemy_grid.get_cell_at(enemy_grid.to_local(pos))
+	var enemy: EnemyData = null
+	if cell.x >= 0:
+		enemy = enemy_grid.get_enemy_at(cell)
+	if enemy != _hover_enemy:
+		_hover_enemy = enemy
+		_hover_timer = 0.0
+		_monster_tooltip_layer.visible = false
+
+
+func _show_monster_tooltip(enemy: EnemyData, pos: Vector2) -> void:
+	_monster_tooltip_name.text = enemy.display_name
+	_monster_tooltip_desc.text = enemy.description
+	_monster_tooltip_desc.visible = not enemy.description.is_empty()
+	_monster_tooltip_stats.text = "HP: %d / %d" % [enemy.current_hp, enemy.max_hp]
+	if not enemy.traits.is_empty():
+		var labels: Array = enemy.traits.map(func(t: MonsterTraitData) -> String: return t.label)
+		_monster_tooltip_traits.text = "Traits: " + ", ".join(labels)
+		_monster_tooltip_traits.visible = true
+	else:
+		_monster_tooltip_traits.visible = false
+	if not enemy.action_pool.is_empty():
+		var lines: Array = enemy.action_pool.map(
+				func(a: MonsterActionData) -> String: return _format_action(a))
+		_monster_tooltip_attacks.text = "\n".join(lines)
+		_monster_tooltip_attacks.visible = true
+	else:
+		_monster_tooltip_attacks.visible = false
+	var tp := pos + Vector2(18.0, 18.0)
+	tp.x = clampf(tp.x, 0.0, SCREEN_W - 260.0)
+	tp.y = clampf(tp.y, 0.0, SCREEN_H - 240.0)
+	_monster_tooltip_panel.position = tp
+	_monster_tooltip_layer.visible = true
+
+
+func _format_action(action: MonsterActionData) -> String:
+	if action is MonsterActionAttack:
+		var atk := action as MonsterActionAttack
+		var parts: Array[String] = ["%s  %d dmg" % [atk.name, atk.damage]]
+		if atk.wet_stacks > 0:
+			parts.append("Wet %d" % atk.wet_stacks)
+		if atk.applies_frozen:
+			parts.append("Freeze")
+		if atk.applies_web:
+			parts.append("Web")
+		return "  ".join(parts)
+	if action is MonsterActionHeal:
+		return "%s  heals %d (lowest HP ally)" % [action.name, (action as MonsterActionHeal).amount]
+	if action is MonsterActionDrumsOfWar:
+		return "Drums of War  ×2 attack for adjacent allies"
+	return action.name
+
+
+func _build_monster_tooltip() -> void:
+	_monster_tooltip_layer = CanvasLayer.new()
+	_monster_tooltip_layer.layer = 10
+	_monster_tooltip_layer.visible = false
+	add_child(_monster_tooltip_layer)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.07, 0.09, 0.11, 0.97)
+	style.border_color = Color(0.25, 0.30, 0.35)
+	style.set_border_width_all(1)
+	style.set_content_margin_all(10)
+	_monster_tooltip_panel = PanelContainer.new()
+	_monster_tooltip_panel.custom_minimum_size = Vector2(240, 0)
+	_monster_tooltip_panel.add_theme_stylebox_override("panel", style)
+	_monster_tooltip_layer.add_child(_monster_tooltip_panel)
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 5)
+	_monster_tooltip_panel.add_child(vbox)
+	_monster_tooltip_name = Label.new()
+	_monster_tooltip_name.add_theme_font_size_override("font_size", 14)
+	_monster_tooltip_name.modulate = Color(0.92, 0.92, 0.88)
+	vbox.add_child(_monster_tooltip_name)
+	_monster_tooltip_desc = Label.new()
+	_monster_tooltip_desc.add_theme_font_size_override("font_size", 11)
+	_monster_tooltip_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_monster_tooltip_desc.modulate = Color(0.65, 0.70, 0.75)
+	vbox.add_child(_monster_tooltip_desc)
+	vbox.add_child(HSeparator.new())
+	_monster_tooltip_stats = Label.new()
+	_monster_tooltip_stats.add_theme_font_size_override("font_size", 11)
+	_monster_tooltip_stats.modulate = Color(0.82, 0.82, 0.82)
+	vbox.add_child(_monster_tooltip_stats)
+	_monster_tooltip_traits = Label.new()
+	_monster_tooltip_traits.add_theme_font_size_override("font_size", 11)
+	_monster_tooltip_traits.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_monster_tooltip_traits.modulate = Color(0.65, 0.70, 0.75)
+	vbox.add_child(_monster_tooltip_traits)
+	vbox.add_child(HSeparator.new())
+	var attacks_header := Label.new()
+	attacks_header.text = "Attacks"
+	attacks_header.add_theme_font_size_override("font_size", 11)
+	attacks_header.modulate = Color(0.55, 0.62, 0.70)
+	vbox.add_child(attacks_header)
+	_monster_tooltip_attacks = Label.new()
+	_monster_tooltip_attacks.add_theme_font_size_override("font_size", 11)
+	_monster_tooltip_attacks.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_monster_tooltip_attacks.modulate = Color(0.82, 0.82, 0.82)
+	vbox.add_child(_monster_tooltip_attacks)
+
+
+func _build_spell_tooltip() -> void:
+	_spell_tooltip_layer = CanvasLayer.new()
+	_spell_tooltip_layer.layer = 11
+	_spell_tooltip_layer.visible = false
+	add_child(_spell_tooltip_layer)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.07, 0.09, 0.11, 0.97)
+	style.border_color = Color(0.25, 0.30, 0.35)
+	style.set_border_width_all(1)
+	style.set_content_margin_all(10)
+	_spell_tooltip_panel = PanelContainer.new()
+	_spell_tooltip_panel.custom_minimum_size = Vector2(220, 0)
+	_spell_tooltip_panel.add_theme_stylebox_override("panel", style)
+	_spell_tooltip_layer.add_child(_spell_tooltip_panel)
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 5)
+	_spell_tooltip_panel.add_child(vbox)
+	_spell_tooltip_name = Label.new()
+	_spell_tooltip_name.add_theme_font_size_override("font_size", 14)
+	_spell_tooltip_name.modulate = Color(0.92, 0.92, 0.88)
+	vbox.add_child(_spell_tooltip_name)
+	_spell_tooltip_desc = Label.new()
+	_spell_tooltip_desc.add_theme_font_size_override("font_size", 11)
+	_spell_tooltip_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_spell_tooltip_desc.modulate = Color(0.65, 0.70, 0.75)
+	vbox.add_child(_spell_tooltip_desc)
+	vbox.add_child(HSeparator.new())
+	_spell_tooltip_stats = Label.new()
+	_spell_tooltip_stats.add_theme_font_size_override("font_size", 11)
+	_spell_tooltip_stats.modulate = Color(0.82, 0.82, 0.82)
+	vbox.add_child(_spell_tooltip_stats)
+	_spell_tooltip_effects = Label.new()
+	_spell_tooltip_effects.add_theme_font_size_override("font_size", 11)
+	_spell_tooltip_effects.modulate = Color(0.65, 0.70, 0.75)
+	vbox.add_child(_spell_tooltip_effects)
+
+
+func _update_spell_hover(pos: Vector2) -> void:
+	var spell: SpellData = null
+	for wd: WandDisplay in _wand_displays:
+		var slot := wd.get_slot_at(wd.to_local(pos))
+		if slot != null and slot.spell != null:
+			spell = slot.spell
+			break
+	if spell != _hover_spell:
+		_hover_spell = spell
+		_hover_spell_timer = 0.0
+		_spell_tooltip_layer.visible = false
+	_spell_cursor_pos = pos
+
+
+func _show_spell_tooltip(spell: SpellData, pos: Vector2) -> void:
+	_spell_tooltip_name.text = spell.display_name
+	_spell_tooltip_desc.text = spell.description
+	_spell_tooltip_desc.visible = not spell.description.is_empty()
+	_spell_tooltip_stats.text = "Damage: %d     Mana: %d" % [spell.damage, spell.mana_cost]
+	var effect_whitelist := ["fire", "water", "frost", "poison", "shield", "amplify", "aoe"]
+	var effects: Array = spell.tags.filter(func(t: String) -> bool: return t in effect_whitelist)
+	if effects.is_empty():
+		_spell_tooltip_effects.visible = false
+	else:
+		_spell_tooltip_effects.text = "Effects: " + ", ".join(effects.map(func(t: String) -> String: return t.capitalize()))
+		_spell_tooltip_effects.visible = true
+	var tp := pos + Vector2(18.0, 18.0)
+	tp.x = clampf(tp.x, 0.0, SCREEN_W - 240.0)
+	tp.y = clampf(tp.y, 0.0, SCREEN_H - 160.0)
+	_spell_tooltip_panel.position = tp
+	_spell_tooltip_layer.visible = true
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed \
 			and event.keycode == KEY_Z and event.ctrl_pressed:
@@ -584,11 +792,17 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if _targeting_wand == null:
 		if event is InputEventMouseMotion:
-			_update_intent_hover((event as InputEventMouseMotion).position)
+			var pos := (event as InputEventMouseMotion).position
+			_update_intent_hover(pos)
+			_update_enemy_hover(pos)
+			_update_spell_hover(pos)
 		return
 
 	if event is InputEventMouseMotion:
-		_update_hover((event as InputEventMouseMotion).position)
+		var pos := (event as InputEventMouseMotion).position
+		_update_hover(pos)
+		_update_enemy_hover(pos)
+		_update_spell_hover(pos)
 		return
 	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
 		_cancel_targeting()

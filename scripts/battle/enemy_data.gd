@@ -12,6 +12,7 @@ var off_role: MonsterRole.Type = MonsterRole.Type.NONE
 var drop_pool: Array[SpellData] = []
 var action_pool: Array[MonsterActionData] = []
 var traits: Array[MonsterTraitData] = []
+var description: String = ""
 
 
 func _init(

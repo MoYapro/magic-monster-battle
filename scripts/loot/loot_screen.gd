@@ -61,6 +61,7 @@ var _auto_assign_btn: Button = null
 var _add_spell_btn: Button = null
 var _catalog_layer: CanvasLayer = null
 var _catalog_pick: bool = false
+var _catalog_open: bool = false
 
 const TOOLTIP_DELAY := 1.0
 var _hover_spell: SpellData = null
@@ -105,7 +106,7 @@ func _input(event: InputEvent) -> void:
 			_drag_pos = motion.position
 			queue_redraw()
 		else:
-			_update_hover(motion.position)
+				_update_hover(motion.position)
 		return
 	if not (event is InputEventMouseButton):
 		return
@@ -629,16 +630,18 @@ func _on_catalog_spell_selected(spell: SpellData) -> void:
 
 func _on_add_spell_pressed() -> void:
 	_catalog_layer.visible = true
+	_catalog_open = true
 
 
 func _close_catalog() -> void:
 	_catalog_layer.visible = false
+	_catalog_open = false
 
 
 # --- tooltip ---
 
 func _process(delta: float) -> void:
-	if _hover_spell == null or _tooltip_layer.visible:
+	if _hover_spell == null or _tooltip_panel.visible:
 		return
 	_hover_timer += delta
 	if _hover_timer >= TOOLTIP_DELAY:
@@ -665,13 +668,13 @@ func _spell_at(pos: Vector2) -> SpellData:
 
 
 func _update_hover(pos: Vector2) -> void:
-	if _catalog_layer.visible:
+	if _catalog_open:
 		return
 	var spell := _spell_at(pos)
 	if spell != _hover_spell:
 		_hover_spell = spell
 		_hover_timer = 0.0
-		_tooltip_layer.visible = false
+		_tooltip_panel.visible = false
 
 
 func _show_tooltip(spell: SpellData, pos: Vector2) -> void:
@@ -692,14 +695,14 @@ func _show_tooltip(spell: SpellData, pos: Vector2) -> void:
 	tp.x = clampf(tp.x, 0.0, SCREEN_W - 250.0)
 	tp.y = clampf(tp.y, 0.0, SCREEN_H - 160.0)
 	_tooltip_panel.position = tp
-	_tooltip_layer.visible = true
+	_tooltip_panel.visible = true
 
 
 func _build_tooltip_layer() -> void:
 	_tooltip_layer = CanvasLayer.new()
 	_tooltip_layer.layer = 3
-	_tooltip_layer.visible = false
 	add_child(_tooltip_layer)
+	_tooltip_layer.visible = true  # layer always on; panel visibility controls show/hide
 
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.07, 0.09, 0.11, 0.97)
@@ -710,6 +713,7 @@ func _build_tooltip_layer() -> void:
 	_tooltip_panel = PanelContainer.new()
 	_tooltip_panel.custom_minimum_size = Vector2(230, 0)
 	_tooltip_panel.add_theme_stylebox_override("panel", style)
+	_tooltip_panel.visible = false
 	_tooltip_layer.add_child(_tooltip_panel)
 
 	var vbox := VBoxContainer.new()

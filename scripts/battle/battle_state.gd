@@ -25,6 +25,7 @@ var slot_charges: Dictionary = {}
 var mage_mana_spent: Array[int] = []
 # enemy_id -> { action_index, action_name, target, target_name }
 var monster_intents: Dictionary = {}
+var enemy_attack_mult: Dictionary = {}  # enemy_id -> float multiplier for this round
 
 
 func duplicate() -> BattleState:
@@ -53,4 +54,5 @@ func duplicate() -> BattleState:
 	for v: int in mage_mana_spent:
 		s.mage_mana_spent.append(v)
 	s.monster_intents = monster_intents.duplicate(true)
+	s.enemy_attack_mult = enemy_attack_mult.duplicate()
 	return s

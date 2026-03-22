@@ -23,7 +23,8 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 		var action_index: int = intent.get("action_index", 0)
 		var target: int = intent.get("target", -1)
 		var action: MonsterActionData = enemy.action_pool[action_index]
-		new_state = action.execute(new_state, setup, enemy_id, target)
+		var execute_id: String = intent.get("target_enemy_id", enemy_id)
+		new_state = action.execute(new_state, setup, execute_id, target)
 		var webbed_slot_id: String = intent.get("webbed_slot_id", "")
 		if not webbed_slot_id.is_empty() and target >= 0:
 			new_state.webbed_slots["%d/%s" % [target, webbed_slot_id]] = true
@@ -67,6 +68,7 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 		new_state.enemy_wet.erase(eid)
 
 	# Reset turn resources
+	new_state.enemy_attack_mult.clear()
 	new_state.webbed_slots.clear()
 	new_state.mana = setup.max_mana
 	for i in new_state.mage_mana_spent.size():
