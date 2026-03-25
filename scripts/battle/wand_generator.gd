@@ -9,7 +9,7 @@ class_name WandGenerator
 # Column counts and row counts per column are randomised within bounds.
 
 static func generate_starter(rng: RandomNumberGenerator) -> WandData:
-	var wand := generate(rng, 2, 2, 2, 2)
+	var wand := generate(rng, 2, 2, 1, 2)
 	for slot: SpellSlotData in wand.slots:
 		if slot.is_tip:
 			slot.spell = SpellSingle.create()
@@ -41,7 +41,10 @@ static func generate(rng: RandomNumberGenerator, min_cols: int = 2, max_cols: in
 	_wire_columns(rng, slots, prev_ids, ["tip"])
 
 	for slot in slots:
-		slot.spell = _pick_tip_spell(rng) if slot.is_tip else _pick_body_spell(rng)
+		if slot.is_tip:
+			slot.spell = _pick_tip_spell(rng)
+		elif rng.randf() < 0.5:
+			slot.spell = _pick_body_spell(rng)
 
 	return WandData.new(slots)
 
@@ -64,19 +67,31 @@ static func _pick_tip_spell(rng: RandomNumberGenerator) -> SpellData:
 
 
 # Assign each slot in prev_ids a next_id drawn from next_ids.
-# Every slot in next_ids receives at least one incoming edge.
-static func _wire_columns(rng: RandomNumberGenerator, slots: Array[SpellSlotData],
+# Slots are sorted by row and mapped proportionally so edges never cross.
+# When prev >= next, every next slot is guaranteed at least one incoming edge.
+static func _wire_columns(_rng: RandomNumberGenerator, slots: Array[SpellSlotData],
 		prev_ids: Array[String], next_ids: Array[String]) -> void:
 	if prev_ids.is_empty():
 		return
-	# guarantee every next slot has at least one incoming edge
-	var assigned := prev_ids.duplicate()
-	assigned.shuffle()
-	for i in next_ids.size():
-		_set_next(slots, assigned[i % assigned.size()], next_ids[i])
-	# assign the remainder randomly
-	for i in range(next_ids.size(), assigned.size()):
-		_set_next(slots, assigned[i], next_ids[rng.randi_range(0, next_ids.size() - 1)])
+	var prev_sorted := _ids_sorted_by_row(prev_ids, slots)
+	var next_sorted := _ids_sorted_by_row(next_ids, slots)
+	var n := prev_sorted.size()
+	var m := next_sorted.size()
+	for i in n:
+		_set_next(slots, prev_sorted[i], next_sorted[(i * m) / n])
+
+
+static func _ids_sorted_by_row(ids: Array[String], slots: Array[SpellSlotData]) -> Array[String]:
+	var result := ids.duplicate()
+	result.sort_custom(func(a, b): return _row_of(slots, a) < _row_of(slots, b))
+	return result
+
+
+static func _row_of(slots: Array[SpellSlotData], id: String) -> int:
+	for slot in slots:
+		if slot.id == id:
+			return slot.grid_row
+	return 0
 
 
 static func _set_next(slots: Array[SpellSlotData], slot_id: String, next_id: String) -> void:

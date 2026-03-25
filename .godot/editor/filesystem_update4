@@ -1,0 +1,3 @@
+res://tests/test_enemy_grid.gd
+res://scripts/loot/loot_screen.gd
+res://scripts/battle/wand_generator.gd

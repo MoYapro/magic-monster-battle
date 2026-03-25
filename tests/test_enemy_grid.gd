@@ -174,4 +174,3 @@ func test_pattern_deduplicates_overlapping_offsets() -> void:
 	var cells := grid.get_hit_cells(Vector2i(0, 0), pattern)
 	assert_eq(cells.size(), 1)
 	grid.free()
-

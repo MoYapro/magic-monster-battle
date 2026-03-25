@@ -93,7 +93,6 @@ func _draw() -> void:
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		var motion := event as InputEventMouseMotion
-		_cursor_pos = motion.position
 		if _dragging != null or _dragging_wand != null:
 			_drag_pos = motion.position
 			queue_redraw()
