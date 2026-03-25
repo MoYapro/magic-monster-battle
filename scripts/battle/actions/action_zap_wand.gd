@@ -20,6 +20,7 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 	var damage := 0
 	var fire_damage := 0
 	var water_damage := 0
+	var poison_damage := 0
 	var pattern: Array[Vector2i] = [Vector2i(0, 0)]
 
 	for slot: SpellSlotData in wand.slots:
@@ -36,6 +37,8 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 			fire_damage += slot.spell.damage
 		if slot.spell.tags.has("water"):
 			water_damage += slot.spell.damage
+		if slot.spell.tags.has("poison"):
+			poison_damage += slot.spell.damage
 		if slot.is_tip and not slot.spell.hit_pattern.is_empty():
 			pattern = slot.spell.hit_pattern
 
@@ -70,6 +73,12 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 				new_state.add_fire_stacks_to_enemy(eid, fire_stacks)
 			if wet_stacks > 0:
 				new_state.enemy_wet[eid] = (new_state.enemy_wet.get(eid, 0) as int) + wet_stacks
+			if poison_damage > 0:
+				var enemy := setup.get_enemy(eid)
+				var poison_immune := enemy != null and enemy.traits.any(
+						func(t: MonsterTraitData) -> bool: return t is MonsterTraitPoisonImmunity)
+				if not poison_immune:
+					new_state.enemy_poison[eid] = (new_state.enemy_poison.get(eid, 0) as int) + poison_damage
 
 	for slot: SpellSlotData in wand.slots:
 		new_state.slot_charges.erase("%d/%s" % [mage_index, slot.id])

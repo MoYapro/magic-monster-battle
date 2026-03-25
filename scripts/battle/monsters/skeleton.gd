@@ -5,6 +5,7 @@ func _init() -> void:
 	description = "An undead warrior animated by dark magic, relentless and tireless."
 	main_role = MonsterRole.Type.DAMAGE
 	difficulty_rating = 10
+	traits = [MonsterTraitPoisonImmunity.new()]
 	drop_pool = [SpellFrost.create(), SpellShield.create()]
 	action_pool = [
 		MonsterActionAttack.new("Strike", 4),

@@ -92,7 +92,17 @@ func roll_intents(state: BattleState, rng: RandomNumberGenerator) -> Dictionary:
 		var target_name := ""
 		var target_enemy_id := ""
 		if action.target_type == MonsterActionData.TargetType.MAGE:
-			target = rng.randi_range(0, mages.size() - 1)
+			var living: Array[int] = []
+			for i in mages.size():
+				if i < state.mage_hp.size() and state.mage_hp[i] > 0:
+					living.append(i)
+			if living.is_empty():
+				continue
+			if enemy is Banshee and state.monster_intents.has(enemy.id):
+				var locked: int = state.monster_intents[enemy.id].get("locked_target", -1)
+				target = locked if locked in living else living[rng.randi() % living.size()]
+			else:
+				target = living[rng.randi() % living.size()]
 			target_name = mages[target].name
 		elif action.target_type == MonsterActionData.TargetType.MONSTER:
 			var lowest_hp := INF
@@ -109,6 +119,8 @@ func roll_intents(state: BattleState, rng: RandomNumberGenerator) -> Dictionary:
 		}
 		if not target_enemy_id.is_empty():
 			intent["target_enemy_id"] = target_enemy_id
+		if enemy is Banshee and target >= 0:
+			intent["locked_target"] = target
 		if action is MonsterActionAttack and (action as MonsterActionAttack).applies_web \
 				and target >= 0 and target < wands.size():
 			var candidates: Array[SpellSlotData] = []

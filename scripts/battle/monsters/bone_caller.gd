@@ -5,6 +5,7 @@ func _init() -> void:
 	description = "A necromancer that raises bone spikes and calls the dead to do its bidding."
 	main_role = MonsterRole.Type.SUMMONER
 	difficulty_rating = 38
+	traits = [MonsterTraitPoisonImmunity.new()]
 	drop_pool = [SpellVenom.create(), SpellPierce.create()]
 	action_pool = [
 		MonsterActionAttack.new("Dark Bolt", 9),
