@@ -54,6 +54,7 @@ var _place_cls: Variant = null
 var _place_size: Vector2i = Vector2i(1, 1)
 var _place_id_counter: Dictionary = {}
 var _place_dropdown: OptionButton = null
+var _level_spinbox: SpinBox = null
 
 
 func _ready() -> void:
@@ -112,6 +113,24 @@ func _build_bottom_bar() -> void:
 	_place_dropdown.item_selected.connect(_on_place_item_selected)
 	layer.add_child(_place_dropdown)
 
+	var level_label := Label.new()
+	level_label.text = "Lvl"
+	level_label.position = Vector2(482, SCREEN_H - BOTTOM_BAR_H)
+	level_label.size = Vector2(28, BOTTOM_BAR_H)
+	level_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	level_label.add_theme_color_override("font_color", Color(0.55, 0.62, 0.70))
+	layer.add_child(level_label)
+
+	_level_spinbox = SpinBox.new()
+	_level_spinbox.min_value = 1
+	_level_spinbox.max_value = BattleComposer.MAX_LEVEL
+	_level_spinbox.step = 1
+	_level_spinbox.value = mini(_current_biome_level(), BattleComposer.MAX_LEVEL)
+	_level_spinbox.size = Vector2(66, BOTTOM_BAR_H - 10)
+	_level_spinbox.position = Vector2(510, SCREEN_H - BOTTOM_BAR_H + 5)
+	_level_spinbox.value_changed.connect(_on_level_changed)
+	layer.add_child(_level_spinbox)
+
 	var battle_label := Label.new()
 	battle_label.text = "Battle %d" % (GameState.battle_count + 1)
 	battle_label.position = Vector2(16, SCREEN_H - BOTTOM_BAR_H)
@@ -165,6 +184,15 @@ func _on_reroll_pressed() -> void:
 	_cancel_targeting()
 	_place_cls = null
 	_build_setup()
+
+
+func _on_level_changed(_value: float) -> void:
+	_build_setup()
+
+
+func _current_biome_level() -> int:
+	var biome := GameState.current_biome if GameState.current_biome != null else BiomesData.all()[0]
+	return GameState.battle_count_by_biome.get(biome.name, 0) + 1
 
 
 func _on_clear_pressed() -> void:
@@ -288,7 +316,8 @@ func _build_setup() -> void:
 	var biome: BiomeData = GameState.current_biome
 	if biome == null:
 		biome = BiomesData.all()[0]
-	var biome_level: int = GameState.battle_count_by_biome.get(biome.name, 0) + 1
+	var biome_level: int = int(_level_spinbox.value) if _level_spinbox != null \
+			else GameState.battle_count_by_biome.get(biome.name, 0) + 1
 	var composition := BattleComposer.compose(biome, biome_level, rng)
 	_battle_enemies = composition["enemies"]
 	_battle_positions = composition["positions"]

@@ -35,6 +35,17 @@ func _init(
 
 func make_initial_state() -> BattleState:
 	var state := BattleState.new()
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	_fill_obstacles(state)
+	_fill_monsters(state)
+	_copy_mages(state)
+	state.mana = max_mana
+	state.monster_intents = roll_intents(state, rng)
+	return state
+
+
+func _fill_monsters(state: BattleState) -> void:
 	for enemy: EnemyData in enemies:
 		state.enemy_hp[enemy.id] = enemy.max_hp
 		for t: MonsterTraitData in enemy.traits:
@@ -42,8 +53,14 @@ func make_initial_state() -> BattleState:
 				state.enemy_armor[enemy.id] = (t as MonsterTraitArmor).armor_amount
 			elif t is MonsterTraitBlock:
 				state.enemy_block[enemy.id] = (t as MonsterTraitBlock).block_charges
+
+
+func _fill_obstacles(state: BattleState) -> void:
 	for obstacle: ObstacleData in obstacles:
 		state.obstacle_hp[obstacle.id] = obstacle.max_hp
+
+
+func _copy_mages(state: BattleState) -> void:
 	for mage: MageData in mages:
 		state.mage_hp.append(mage.max_hp)
 		state.mage_mana_spent.append(0)
@@ -51,11 +68,6 @@ func make_initial_state() -> BattleState:
 		state.mage_fire.append(0)
 		state.mage_wet.append(0)
 		state.mage_frozen.append(false)
-	state.mana = max_mana
-	var rng := RandomNumberGenerator.new()
-	rng.randomize()
-	state.monster_intents = roll_intents(state, rng)
-	return state
 
 
 func get_enemy_id_at(cell: Vector2i) -> String:

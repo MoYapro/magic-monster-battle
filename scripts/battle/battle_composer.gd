@@ -3,13 +3,15 @@ class_name BattleComposer
 enum BattleType { HORDE, ELITE }
 
 const MIN_MONSTERS := 2
-const HORDE_BASE_COUNT := 5
-const ELITE_BASE_COUNT := 2
+const MAX_LEVEL    := 10
+const BUDGET_L1    := 25   # total difficulty budget at level 1  (~2 easy monsters)
+const BUDGET_L10   := 500  # total difficulty budget at level 10
 
 
 
 static func compose(biome: BiomeData, biome_level: int, rng: RandomNumberGenerator) -> Dictionary:
-	var battle_type: BattleType = BattleType.HORDE if rng.randi() % 2 == 0 else BattleType.ELITE
+	var elite_chance := 0.5 * clampf(float(biome_level - 1) / float(MAX_LEVEL - 1), 0.0, 1.0)
+	var battle_type: BattleType = BattleType.ELITE if rng.randf() < elite_chance else BattleType.HORDE
 	var enemies := _select_monsters(biome.monster_pool, battle_type, biome_level, rng)
 	var obstacles := _select_obstacles(rng)
 
@@ -47,22 +49,32 @@ static func _select_monsters(
 	rng: RandomNumberGenerator
 ) -> Array[EnemyData]:
 	var sorted_pool := _sort_by_difficulty(pool)
+	var ratings := _build_ratings(sorted_pool)
+	var budget := _difficulty_budget(biome_level)
 
-	var candidates: Array
-	var target_count: int
-	if battle_type == BattleType.HORDE:
-		candidates = _lower_half(sorted_pool)
-		target_count = HORDE_BASE_COUNT + (biome_level - 1)
-	else:
-		candidates = _upper_half(sorted_pool)
-		target_count = max(MIN_MONSTERS, ELITE_BASE_COUNT + (biome_level - 1) / 3)
-
-	target_count = max(target_count, MIN_MONSTERS)
+	var candidates: Array = _lower_half(sorted_pool) \
+		if battle_type == BattleType.HORDE else _upper_half(sorted_pool)
 
 	var enemies: Array[EnemyData] = []
 	var id_counts: Dictionary = {}
-	for _i in target_count:
-		var cls: GDScript = candidates[rng.randi() % candidates.size()]
+	var spent := 0
+
+	# Keep picking while something in the candidate pool is still affordable.
+	while true:
+		var affordable := candidates.filter(func(cls): return ratings[cls] <= budget - spent)
+		if affordable.is_empty():
+			break
+		var cls: GDScript = affordable[rng.randi() % affordable.size()]
+		var enemy: EnemyData = cls.new()
+		var base_id := enemy.display_name.to_lower().replace(" ", "_")
+		id_counts[base_id] = id_counts.get(base_id, 0) + 1
+		enemy.id = base_id + "_" + str(id_counts[base_id])
+		enemies.append(enemy)
+		spent += ratings[cls]
+
+	# Guarantee minimum even when budget was exhausted before reaching it.
+	while enemies.size() < MIN_MONSTERS:
+		var cls: GDScript = candidates[0]  # cheapest in sorted candidates
 		var enemy: EnemyData = cls.new()
 		var base_id := enemy.display_name.to_lower().replace(" ", "_")
 		id_counts[base_id] = id_counts.get(base_id, 0) + 1
@@ -108,6 +120,21 @@ static func _select_obstacles(rng: RandomNumberGenerator) -> Array[ObstacleData]
 		obstacles.append(obstacle)
 
 	return obstacles
+
+
+# Total difficulty budget for a given biome level, scaling linearly from
+# BUDGET_L1 at level 1 to BUDGET_L10 at MAX_LEVEL.
+static func _difficulty_budget(biome_level: int) -> int:
+	var t := clampf(float(biome_level - 1) / float(MAX_LEVEL - 1), 0.0, 1.0)
+	return int(lerpf(float(BUDGET_L1), float(BUDGET_L10), t))
+
+
+# Returns a difficulty_rating lookup keyed by GDScript class reference.
+static func _build_ratings(sorted_pool: Array) -> Dictionary:
+	var ratings := {}
+	for cls in sorted_pool:
+		ratings[cls] = (cls as GDScript).new().difficulty_rating
+	return ratings
 
 
 static func _sort_by_difficulty(pool: Array) -> Array:
