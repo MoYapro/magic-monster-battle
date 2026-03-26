@@ -72,16 +72,80 @@ The tip is the sink of the graph and holds a tip spell that defines the hit patt
 - Area patterns
 
 **Body Slots**
-All other slots hold effect spells. Their position in the graph determines how they combine when fired together:
+All other slots hold spells. Their position in the graph determines how they combine when fired together:
 - *Sequential (in-line)* — spells on the same path to the tip interact **multiplicatively**
 - *Parallel (branching)* — spells on separate branches merging toward the tip interact **additively**
 
 This makes the graph layout and mana placement the core strategic decisions.
 
-**Spell Interactions**
-Spells carry element tags (e.g. `fire`, `water`, `poison`, `amplify`). Interaction rules operate on tags, not specific spells — a new spell automatically participates in any interaction matching its tags. Examples:
-- *Synergy*: `poison` + `amplify` → multiply effect
-- *Cancellation*: `fire` + `water` → cancel each other out
+### Spell Types
+
+**Projectile Spells** deal damage and may apply on-hit effects (e.g. Fireball, Magic Missile, Lightning Bolt). These are the primary offensive units.
+
+**Spell Modifiers** alter the behaviour of the next projectile spell in the resolved cast sequence. They do not fire on their own. Effects include: extra on-hit effects, mana refund, damage multipliers.
+
+**Alchemy Spells** are secret result spells produced by successful alchemy fusions. They cannot be found as loot — they must be discovered through experimentation.
+
+### Wand Evaluation (Two-Pass at Cast Time)
+
+When a wand is zapped the spell sequence (root → tip) is evaluated in two passes:
+
+**Pass 1 — Alchemy Fusion (left-to-right)**
+
+Scan for catalyst trios: a **catalyst spell** immediately followed by two **projectile spells**.
+
+- The trio `(catalyst, reactant_1, reactant_2)` is looked up in the **Alchemy Table** (reactant order does not matter).
+- The trio is replaced by the outcome and scanning resumes from the next unprocessed spell.
+- If the catalyst is not in the leading position the three spells fire individually (no fusion).
+- If no entry exists in the Alchemy Table the trio produces a fizzle.
+
+Grouping rules:
+- Solo projectile → fires normally.
+- Two projectiles in sequence → both fire as separate projectiles in one cast.
+- Three with catalyst first → fusion attempted.
+- Three without catalyst first → all three fire individually.
+- Four projectiles in sequence → first three fuse (if valid catalyst), fourth fires normally.
+
+**Pass 2 — Modifier Application (left-to-right)**
+
+Each modifier applies its effect to the immediately next spell in the flattened post-fusion sequence.
+- Modifier before a fizzle: consumed silently (wasted).
+- Modifier before a backfire: **amplifies** the backfire.
+
+The final output is an ordered list of projectile spells that are zapped at the target simultaneously.
+
+### Alchemy Table
+
+A static lookup table mapping `(catalyst, reactant_1, reactant_2)` → outcome. Every entry has one of three outcome types:
+
+| Outcome | Effect |
+|---|---|
+| **Success** | A secret alchemy spell fires. On first creation it is marked as discovered in save data. |
+| **Fizzle** | Nothing fires; mana is wasted. A fizzle visual plays. |
+| **Backfire** | A negative effect triggers on the caster (e.g. self-damage, status effect). A backfire visual plays. |
+
+**Example entries:**
+- `fire, water, fire` → Steam *(blinds enemies in the area or conceals the caster)*
+- `force_push, water, frost` → Ice Cube *(high damage + freeze)*
+- `force_push, water, bone` → Soap *(cleanses poison)*
+- `fire, water, frost` → Fizzle *(fire cannot combine water and frost)*
+- `force_push, lightning, *` → Backfire *(hits the casting mage)*
+
+### Catalysts
+
+A small fixed set (~5–8). Each defines *how* reactants combine. A catalyst must be compatible with the chosen reactants — an incompatible pairing results in a fizzle or backfire (defined explicitly in the Alchemy Table).
+
+Examples:
+- **Fire** — heats reactants; works with combustible/thermal ingredients.
+- **Force Push** — smashes reactants together; works with physical/dense ingredients.
+
+### Visual Feedback
+
+Cast-time visuals signal all three outcomes (success, fizzle, backfire). Because battles support undo, players can experiment with combinations safely in real battles.
+
+### Discovery System *(planned)*
+
+A codex screen lists all spells (drops + alchemy), biomes, and monsters. Discovered entries show a full description; undiscovered entries show only a silhouette/outline.
 
 **Line of Sight**
 A target cannot be hit if a monster or obstacle (tree, stone, wall, etc.) occupies a cell in front of it.
