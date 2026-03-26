@@ -13,6 +13,13 @@ static func generate_starter(rng: RandomNumberGenerator) -> WandData:
 	for slot: SpellSlotData in wand.slots:
 		if slot.is_tip:
 			slot.spell = SpellSingle.create()
+	# Guarantee at least one body slot has a spell so the wand always deals damage
+	var empty_body := wand.slots.filter(func(s: SpellSlotData) -> bool:
+			return not s.is_tip and s.spell == null)
+	if empty_body.size() == wand.slots.filter(func(s: SpellSlotData) -> bool:
+			return not s.is_tip).size():
+		(empty_body[rng.randi_range(0, empty_body.size() - 1)] as SpellSlotData).spell = \
+				_pick_body_spell(rng)
 	return wand
 
 
@@ -53,6 +60,8 @@ static func _pick_body_spell(rng: RandomNumberGenerator) -> SpellData:
 	var spells: Array[SpellData] = [
 		SpellEmber.create(), SpellFrost.create(), SpellVenom.create(),
 		SpellAmplify.create(), SpellShield.create(),
+		SpellFireCatalyst.create(), SpellForcePush.create(),
+		SpellBone.create(), SpellLightning.create(),
 	]
 	return spells[rng.randi_range(0, spells.size() - 1)]
 

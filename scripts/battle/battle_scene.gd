@@ -46,6 +46,7 @@ var _monster_tooltip_traits: Label = null
 var _monster_tooltip_attacks: Label = null
 
 var _spell_tooltip: SpellTooltip = null
+var _floating_damage: FloatingDamage = null
 
 # debug placement
 var _battle_enemies: Array[EnemyData] = []
@@ -65,6 +66,8 @@ func _ready() -> void:
 	_build_monster_tooltip()
 	_spell_tooltip = SpellTooltip.new()
 	add_child(_spell_tooltip)
+	_floating_damage = FloatingDamage.new()
+	add_child(_floating_damage)
 
 
 func _build_monsters_list() -> void:
@@ -796,7 +799,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _fire_at_cell(cell: Vector2i) -> void:
 	var mage_index := _wand_displays.find(_targeting_wand)
-	_apply_state(_history.push(ActionZapWand.new(mage_index, cell)))
+	var new_state := _history.push(ActionZapWand.new(mage_index, cell))
+	if not new_state.cast_events.is_empty():
+		_floating_damage.spawn_events(new_state.cast_events, get_global_mouse_position())
+	_apply_state(new_state)
 
 
 # --- data factories ---

@@ -97,7 +97,7 @@ Scan for catalyst trios: a **catalyst spell** immediately followed by two **proj
 - The trio `(catalyst, reactant_1, reactant_2)` is looked up in the **Alchemy Table** (reactant order does not matter).
 - The trio is replaced by the outcome and scanning resumes from the next unprocessed spell.
 - If the catalyst is not in the leading position the three spells fire individually (no fusion).
-- If no entry exists in the Alchemy Table the trio produces a fizzle.
+- If no entry exists in the Alchemy Table the three spells act normally (they cast individual hits).
 
 Grouping rules:
 - Solo projectile → fires normally.

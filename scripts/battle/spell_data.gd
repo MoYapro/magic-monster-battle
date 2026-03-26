@@ -10,6 +10,16 @@ var damage: int
 var mana_cost: int
 var description: String
 
+# "projectile" — deals damage + on-hit effects
+# "catalyst"   — leads alchemy fusions; fires as projectile when not in a trio
+# "modifier"   — alters the next projectile; does not fire on its own
+# "tip"        — defines hit pattern only; no damage
+# "alchemy"    — produced by successful fusion; cannot be found as loot
+var spell_type: String = "projectile"
+var spell_id: String = ""
+var on_hit_effects: Array[Dictionary] = []  # [{type, ...}] applied on hit
+var modifier_effect: Dictionary = {}        # {type, ...} for spell_type == "modifier"
+
 
 func _init(p_name: String, p_abbrev: String, p_tags: Array[String], p_color: Color,
 		p_pattern: Array[Vector2i] = [], p_icon: String = "", p_damage: int = 0,

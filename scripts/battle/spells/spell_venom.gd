@@ -1,5 +1,9 @@
 class_name SpellVenom
 
 static func create() -> SpellData:
-	return SpellData.new("Venom", "Vn", ["poison"], Color(0.30, 0.85, 0.20), [], "", 2, 1,
+	var s := SpellData.new("Venom", "Vn", ["poison"], Color(0.30, 0.85, 0.20), [], "", 2, 1,
 			"Poisons enemies with toxic venom.")
+	s.spell_id = "venom"
+	s.spell_type = "projectile"
+	s.on_hit_effects = [{"type": "poison", "stacks": 2}]
+	return s

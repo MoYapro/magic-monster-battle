@@ -1,10 +1,12 @@
 extends GutTest
 
 
-func _make_setup(spell: SpellData, enemy: EnemyData) -> BattleSetup:
-	var tip := SpellSlotData.new("tip", 0, 0)
-	tip.spell = spell
-	var wand := WandData.new([tip])
+func _make_setup(body_spell: SpellData, enemy: EnemyData) -> BattleSetup:
+	var body := SpellSlotData.new("s0_0", 0, 0, "tip")
+	body.spell = body_spell
+	var tip := SpellSlotData.new("tip", 1, 0)
+	tip.spell = SpellSingle.create()
+	var wand := WandData.new([body, tip])
 	var mage := MageData.new("Mage", 30)
 	var mages: Array[MageData] = [mage]
 	var wands: Array[WandData] = [wand]
@@ -21,14 +23,19 @@ func _make_state(setup: BattleSetup) -> BattleState:
 	s.mage_mana_spent.append(0)
 	s.mage_fire.append(0)
 	s.mage_wet.append(0)
+	s.mage_poison.append(0)
 	s.mage_frozen.append(false)
-	s.slot_charges["0/tip"] = 1
+	s.slot_charges["0/s0_0"] = 99  # body slot always charged
+	s.slot_charges["0/tip"] = 1    # tip charged
 	s.mana = 10
 	return s
 
 
 func _strike_spell() -> SpellData:
-	return SpellData.new("Strike", "S", [], Color.WHITE, [Vector2i(0, 0)], "", 5, 1)
+	var s := SpellData.new("Strike", "S", [], Color.WHITE, [], "", 5, 1)
+	s.spell_id = "strike"
+	s.spell_type = "projectile"
+	return s
 
 
 # --- damage ---
@@ -97,20 +104,79 @@ func test_block_consumes_one_charge_per_hit() -> void:
 	assert_eq(result.enemy_block.get("e1", 0), 1)
 
 
-# --- fire / wet ---
+# --- on-hit effects ---
 
-func test_fire_spell_applies_fire_stacks_to_surviving_enemy() -> void:
-	# damage=4 with fire tag → fire_stacks = max(0, 4-1) = 3
-	var spell := SpellData.new("Ember", "E", ["fire"], Color.RED, [Vector2i(0, 0)], "", 4, 1)
+func test_fire_on_hit_applies_fire_stacks_to_surviving_enemy() -> void:
+	var spell := SpellEmber.create()
 	var enemy := EnemyData.new("e1", "Target", 20, Vector2i(1, 1), Color.RED)
 	var setup := _make_setup(spell, enemy)
 	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(_make_state(setup), setup)
-	assert_eq(result.enemy_fire.get("e1", 0), 3)
+	assert_gt(result.enemy_fire.get("e1", 0), 0)
 
 
-func test_water_spell_applies_wet_stacks_to_enemy() -> void:
-	var spell := SpellData.new("Frost", "F", ["water"], Color.BLUE, [Vector2i(0, 0)], "", 3, 1)
+func test_wet_on_hit_applies_wet_stacks_to_enemy() -> void:
+	var spell := SpellFrost.create()
 	var enemy := EnemyData.new("e1", "Target", 20, Vector2i(1, 1), Color.RED)
 	var setup := _make_setup(spell, enemy)
 	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(_make_state(setup), setup)
 	assert_gt(result.enemy_wet.get("e1", 0), 0)
+
+
+func test_poison_on_hit_applies_poison_stacks_to_enemy() -> void:
+	var spell := SpellVenom.create()
+	var enemy := EnemyData.new("e1", "Target", 20, Vector2i(1, 1), Color.RED)
+	var setup := _make_setup(spell, enemy)
+	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(_make_state(setup), setup)
+	assert_gt(result.enemy_poison.get("e1", 0), 0)
+
+
+func test_on_hit_effects_not_applied_when_enemy_is_killed() -> void:
+	var spell := SpellEmber.create()
+	var enemy := EnemyData.new("e1", "Target", 2, Vector2i(1, 1), Color.RED)  # low hp
+	var setup := _make_setup(spell, enemy)
+	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(_make_state(setup), setup)
+	assert_false(result.enemy_hp.has("e1"))
+	assert_false(result.enemy_fire.has("e1"))
+
+
+# --- backfire ---
+
+func test_backfire_deals_damage_to_caster() -> void:
+	# force_push + lightning + ember → backfire
+	var body := SpellSlotData.new("s0_0", 0, 0, "s1_0")
+	body.spell = SpellForcePush.create()
+	var r1_slot := SpellSlotData.new("s1_0", 1, 0, "s2_0")
+	r1_slot.spell = SpellLightning.create()
+	var r2_slot := SpellSlotData.new("s2_0", 2, 0, "tip")
+	r2_slot.spell = SpellEmber.create()
+	var tip := SpellSlotData.new("tip", 3, 0)
+	tip.spell = SpellSingle.create()
+	var wand := WandData.new([body, r1_slot, r2_slot, tip])
+	var mage := MageData.new("Mage", 30)
+	var enemy := EnemyData.new("e1", "Target", 20, Vector2i(1, 1), Color.RED)
+	var setup := BattleSetup.new([enemy], [Vector2i(0, 0)], [mage], [wand], 10)
+	var state := BattleState.new()
+	state.enemy_hp["e1"] = 20
+	state.mage_hp.append(30)
+	state.mage_mana_spent.append(0)
+	state.mage_fire.append(0)
+	state.mage_wet.append(0)
+	state.mage_poison.append(0)
+	state.mage_frozen.append(false)
+	state.slot_charges["0/s0_0"] = 99
+	state.slot_charges["0/s1_0"] = 99
+	state.slot_charges["0/s2_0"] = 99
+	state.slot_charges["0/tip"] = 1
+	state.mana = 10
+	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(state, setup)
+	assert_lt(result.mage_hp[0], 30)
+	assert_eq(result.enemy_hp["e1"], 20)  # enemy unharmed
+
+
+# --- cast events ---
+
+func test_cast_events_recorded_on_state() -> void:
+	var enemy := EnemyData.new("e1", "Target", 20, Vector2i(1, 1), Color.RED)
+	var setup := _make_setup(_strike_spell(), enemy)
+	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(_make_state(setup), setup)
+	assert_gt(result.cast_events.size(), 0)

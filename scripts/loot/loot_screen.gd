@@ -59,6 +59,7 @@ var _drag_pos: Vector2 = Vector2.ZERO
 var _continue_btn: Button = null
 var _auto_assign_btn: Button = null
 var _add_spell_btn: Button = null
+var _reroll_btn: Button = null
 var _catalog_layer: CanvasLayer = null
 var _catalog_pick: bool = false
 var _catalog_open: bool = false
@@ -508,14 +509,11 @@ func _build_equip_wands() -> void:
 # --- spell catalog ---
 
 func _all_body_spells() -> Array[SpellData]:
-	return [SpellEmber.create(), SpellFrost.create(), SpellVenom.create(),
-			SpellAmplify.create(), SpellShield.create()]
+	return SpellRegistry.all_body_spells()
 
 
 func _all_tip_spells() -> Array[SpellData]:
-	return [SpellSingle.create(), SpellLine.create(), SpellPierce.create(), SpellBomb.create(),
-			SpellBoltN.create(), SpellBoltNE.create(), SpellBoltE.create(), SpellBoltSE.create(),
-			SpellBoltS.create(), SpellBoltSW.create(), SpellBoltW.create(), SpellBoltNW.create()]
+	return SpellRegistry.all_tip_spells()
 
 
 func _build_catalog_layer() -> void:
@@ -619,6 +617,15 @@ func _on_catalog_spell_selected(spell: SpellData) -> void:
 	_close_catalog()
 
 
+func _on_reroll_pressed() -> void:
+	GameState.reroll_spell_loot()
+	for wd: WandDisplay in _loot_wand_displays:
+		wd.queue_free()
+	_loot_wand_displays.clear()
+	_build_loot_wands()
+	queue_redraw()
+
+
 func _on_add_spell_pressed() -> void:
 	_catalog_layer.visible = true
 	_catalog_open = true
@@ -671,6 +678,13 @@ func _build_bottom_bar() -> void:
 	_add_spell_btn.position = Vector2(8.0, SCREEN_H - BOTTOM_BAR_H + 5.0)
 	_add_spell_btn.pressed.connect(_on_add_spell_pressed)
 	layer.add_child(_add_spell_btn)
+	_reroll_btn = Button.new()
+	_reroll_btn.text = "↺ Reroll"
+	_reroll_btn.size = Vector2(90, BOTTOM_BAR_H - 10)
+	_reroll_btn.position = Vector2(106.0, SCREEN_H - BOTTOM_BAR_H + 5.0)
+	_reroll_btn.disabled = GameState.is_initial_setup
+	_reroll_btn.pressed.connect(_on_reroll_pressed)
+	layer.add_child(_reroll_btn)
 	_continue_btn = Button.new()
 	_continue_btn.text = "Continue →"
 	_continue_btn.size = Vector2(148, BOTTOM_BAR_H - 10)

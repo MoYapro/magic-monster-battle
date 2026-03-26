@@ -26,6 +26,9 @@ var mage_mana_spent: Array[int] = []
 # enemy_id -> { action_index, action_name, target, target_name }
 var monster_intents: Dictionary = {}
 var enemy_attack_mult: Dictionary = {}  # enemy_id -> float multiplier for this round
+var enemy_stunned: Dictionary = {}     # enemy_id -> turns remaining; skips attack
+var enemy_blind: Dictionary = {}       # enemy_id -> turns remaining; 50% miss / random target
+var cast_events: Array = []            # CastEvents from the most recent zap action
 
 
 func duplicate() -> BattleState:
@@ -82,6 +85,8 @@ func kill_enemy(enemy_id: String) -> void:
 	enemy_poison.erase(enemy_id)
 	enemy_wet.erase(enemy_id)
 	enemy_frozen.erase(enemy_id)
+	enemy_stunned.erase(enemy_id)
+	enemy_blind.erase(enemy_id)
 	enemy_attack_mult.erase(enemy_id)
 
 

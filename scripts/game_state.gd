@@ -33,6 +33,18 @@ func reset_to_new_game() -> void:
 	_init_new_game()
 
 
+func reroll_spell_loot() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	pending_loot.clear()
+	pending_loot_wands.clear()
+	pending_loot_wands.append(WandGenerator.generate(rng))
+	var all_body := SpellRegistry.all_body_spells()
+	for _i in 4:
+		pending_loot.append(all_body[rng.randi_range(0, all_body.size() - 1)])
+	pending_loot.append(WandGenerator._pick_tip_spell(rng))
+
+
 func _init_new_game() -> void:
 	mages = [
 		MageData.new("Lyra", 30),
