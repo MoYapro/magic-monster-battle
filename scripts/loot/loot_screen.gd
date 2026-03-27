@@ -43,6 +43,9 @@ const COLOR_WAND_CARD_BORDER := Color(0.38, 0.55, 0.78)
 const CATALOG_W := 900.0
 const CATALOG_H := 480.0
 
+const CODEX_W := 960.0
+const CODEX_H := 540.0
+
 # loot wand displays — parallel to GameState.pending_loot_wands
 var _loot_wand_displays: Array[WandDisplay] = []
 # equip wand displays — one per mage (null = no wand)
@@ -64,6 +67,9 @@ var _catalog_layer: CanvasLayer = null
 var _catalog_pick: bool = false
 var _catalog_open: bool = false
 
+var _codex_layer: CanvasLayer = null
+var _codex_open: bool = false
+
 var _spell_tooltip: SpellTooltip = null
 
 
@@ -72,6 +78,7 @@ func _ready() -> void:
 	_build_equip_wands()
 	_build_bottom_bar()
 	_build_catalog_layer()
+	_build_codex_layer()
 	_spell_tooltip = SpellTooltip.new()
 	add_child(_spell_tooltip)
 
@@ -658,7 +665,7 @@ func _spell_at(pos: Vector2) -> SpellData:
 
 
 func _update_hover(pos: Vector2) -> void:
-	_spell_tooltip.notify_hover(pos, null if _catalog_open else _spell_at(pos))
+	_spell_tooltip.notify_hover(pos, null if _catalog_open or _codex_open else _spell_at(pos))
 
 
 # --- bottom bar ---
@@ -685,6 +692,12 @@ func _build_bottom_bar() -> void:
 	_reroll_btn.disabled = GameState.is_initial_setup
 	_reroll_btn.pressed.connect(_on_reroll_pressed)
 	layer.add_child(_reroll_btn)
+	var codex_btn := Button.new()
+	codex_btn.text = "Codex"
+	codex_btn.size = Vector2(90, BOTTOM_BAR_H - 10)
+	codex_btn.position = Vector2(204.0, SCREEN_H - BOTTOM_BAR_H + 5.0)
+	codex_btn.pressed.connect(_on_codex_pressed)
+	layer.add_child(codex_btn)
 	_continue_btn = Button.new()
 	_continue_btn.text = "Continue →"
 	_continue_btn.size = Vector2(148, BOTTOM_BAR_H - 10)
@@ -737,3 +750,248 @@ func _on_continue_pressed() -> void:
 		get_tree().change_scene_to_file("res://scenes/battle/battle_scene.tscn")
 	else:
 		get_tree().change_scene_to_file("res://scenes/level_up/level_up_screen.tscn")
+
+
+# --- codex ---
+
+func _build_codex_layer() -> void:
+	_codex_layer = CanvasLayer.new()
+	_codex_layer.layer = 3
+	_codex_layer.visible = false
+	add_child(_codex_layer)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.0, 0.0, 0.0, 0.72)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	_codex_layer.add_child(dim)
+
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = COLOR_PANEL
+	panel_style.border_color = COLOR_BORDER
+	panel_style.set_border_width_all(1)
+
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", panel_style)
+	panel.size = Vector2(CODEX_W, CODEX_H)
+	panel.position = Vector2((SCREEN_W - CODEX_W) * 0.5, (SCREEN_H - CODEX_H) * 0.5)
+	_codex_layer.add_child(panel)
+
+	var outer := VBoxContainer.new()
+	outer.add_theme_constant_override("separation", 4)
+	panel.add_child(outer)
+
+	var title_row := HBoxContainer.new()
+	outer.add_child(title_row)
+	var title_lbl := Label.new()
+	title_lbl.text = "Codex"
+	title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_row.add_child(title_lbl)
+	var close_btn := Button.new()
+	close_btn.text = "×"
+	close_btn.custom_minimum_size = Vector2(28, 28)
+	close_btn.pressed.connect(_on_codex_close_pressed)
+	title_row.add_child(close_btn)
+
+	outer.add_child(HSeparator.new())
+
+	var tabs := TabContainer.new()
+	tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	outer.add_child(tabs)
+	tabs.add_child(_build_codex_spells_tab())
+	tabs.add_child(_build_codex_monsters_tab())
+	tabs.add_child(_build_codex_biomes_tab())
+
+
+func _build_codex_spells_tab() -> ScrollContainer:
+	var scroll := ScrollContainer.new()
+	scroll.name = "Spells"
+	var vbox := VBoxContainer.new()
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.add_theme_constant_override("separation", 8)
+	scroll.add_child(vbox)
+	var body_cards: Array[Control] = []
+	for spell in SpellRegistry.all_body_spells():
+		body_cards.append(_make_codex_spell_card(spell))
+	vbox.add_child(_codex_grid_section("Body Spells", body_cards))
+	var tip_cards: Array[Control] = []
+	for spell in SpellRegistry.all_tip_spells():
+		tip_cards.append(_make_codex_spell_card(spell))
+	vbox.add_child(_codex_grid_section("Tip Spells", tip_cards))
+	return scroll
+
+
+func _build_codex_monsters_tab() -> ScrollContainer:
+	var scroll := ScrollContainer.new()
+	scroll.name = "Monsters"
+	var cards: Array[Control] = []
+	for monster in _all_codex_monsters():
+		cards.append(_make_codex_monster_card(monster))
+	var section := _codex_grid_section("", cards)
+	section.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(section)
+	return scroll
+
+
+func _build_codex_biomes_tab() -> ScrollContainer:
+	var scroll := ScrollContainer.new()
+	scroll.name = "Biomes"
+	var vbox := VBoxContainer.new()
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.add_theme_constant_override("separation", CARD_GAP)
+	scroll.add_child(vbox)
+	for biome: BiomeData in BiomesData.all():
+		vbox.add_child(_make_codex_biome_row(biome))
+	return scroll
+
+
+func _codex_grid_section(title: String, cards: Array[Control]) -> VBoxContainer:
+	var section := VBoxContainer.new()
+	section.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	section.add_theme_constant_override("separation", 4)
+	if not title.is_empty():
+		var lbl := Label.new()
+		lbl.text = title
+		lbl.add_theme_color_override("font_color", COLOR_SECTION)
+		lbl.add_theme_font_size_override("font_size", 11)
+		section.add_child(lbl)
+	var grid := GridContainer.new()
+	grid.columns = 9
+	grid.add_theme_constant_override("h_separation", CARD_GAP)
+	grid.add_theme_constant_override("v_separation", CARD_GAP)
+	section.add_child(grid)
+	for card in cards:
+		grid.add_child(card)
+	return section
+
+
+func _make_codex_spell_card(spell: SpellData) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(CARD_SIZE, CARD_SIZE)
+	var style := StyleBoxFlat.new()
+	var tint := spell.element_color
+	tint.a = 0.22
+	style.bg_color = tint
+	style.border_color = COLOR_SLOT_BORDER
+	style.set_border_width_all(1)
+	card.add_theme_stylebox_override("panel", style)
+	card.tooltip_text = spell.display_name + "\n" + spell.description
+	var vbox := VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	card.add_child(vbox)
+	var abbr := Label.new()
+	abbr.text = spell.abbreviation if not spell.abbreviation.is_empty() else "?"
+	abbr.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	abbr.add_theme_color_override("font_color", spell.element_color)
+	abbr.add_theme_font_size_override("font_size", 20)
+	vbox.add_child(abbr)
+	var name_lbl := Label.new()
+	name_lbl.text = spell.display_name
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.add_theme_color_override("font_color", COLOR_SECTION)
+	name_lbl.add_theme_font_size_override("font_size", 9)
+	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(name_lbl)
+	return card
+
+
+func _make_codex_monster_card(monster: EnemyData) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(CARD_SIZE, CARD_SIZE)
+	var style := StyleBoxFlat.new()
+	var tint := monster.color
+	tint.a = 0.22
+	style.bg_color = tint
+	style.border_color = COLOR_SLOT_BORDER
+	style.set_border_width_all(1)
+	card.add_theme_stylebox_override("panel", style)
+	card.tooltip_text = monster.display_name + "\n" + monster.description
+	var vbox := VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	card.add_child(vbox)
+	var name_lbl := Label.new()
+	name_lbl.text = monster.display_name
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.add_theme_color_override("font_color", monster.color)
+	name_lbl.add_theme_font_size_override("font_size", 11)
+	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(name_lbl)
+	var hp_lbl := Label.new()
+	hp_lbl.text = "%d hp" % monster.max_hp
+	hp_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hp_lbl.add_theme_color_override("font_color", COLOR_SECTION)
+	hp_lbl.add_theme_font_size_override("font_size", 9)
+	vbox.add_child(hp_lbl)
+	return card
+
+
+func _make_codex_biome_row(biome: BiomeData) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var style := StyleBoxFlat.new()
+	var tint := biome.color
+	tint.a = 0.15
+	style.bg_color = tint
+	style.border_color = COLOR_SLOT_BORDER
+	style.set_border_width_all(1)
+	style.border_width_left = 4
+	card.add_theme_stylebox_override("panel", style)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_right", 8)
+	card.add_child(margin)
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 12)
+	margin.add_child(hbox)
+	var name_lbl := Label.new()
+	name_lbl.text = biome.name
+	name_lbl.custom_minimum_size = Vector2(90, 0)
+	name_lbl.add_theme_color_override("font_color", biome.color)
+	name_lbl.add_theme_font_size_override("font_size", 13)
+	hbox.add_child(name_lbl)
+	var tagline_lbl := Label.new()
+	tagline_lbl.text = biome.tagline
+	tagline_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tagline_lbl.add_theme_color_override("font_color", COLOR_SECTION)
+	tagline_lbl.add_theme_font_size_override("font_size", 11)
+	tagline_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	hbox.add_child(tagline_lbl)
+	var monster_names: Array[String] = []
+	for mc in biome.monster_pool:
+		var m: EnemyData = mc.new()
+		monster_names.append(m.display_name)
+	var monsters_lbl := Label.new()
+	monsters_lbl.text = ", ".join(monster_names)
+	monsters_lbl.custom_minimum_size = Vector2(300, 0)
+	monsters_lbl.add_theme_color_override("font_color", COLOR_SECTION)
+	monsters_lbl.add_theme_font_size_override("font_size", 9)
+	monsters_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	monsters_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hbox.add_child(monsters_lbl)
+	return card
+
+
+func _all_codex_monsters() -> Array[EnemyData]:
+	var seen := {}
+	var result: Array[EnemyData] = []
+	for biome: BiomeData in BiomesData.all():
+		for monster_class in biome.monster_pool:
+			var m: EnemyData = monster_class.new()
+			if not seen.has(m.id):
+				seen[m.id] = true
+				result.append(m)
+	result.sort_custom(func(a: EnemyData, b: EnemyData) -> bool: return a.display_name < b.display_name)
+	return result
+
+
+func _on_codex_pressed() -> void:
+	_codex_layer.visible = true
+	_codex_open = true
+
+
+func _on_codex_close_pressed() -> void:
+	_codex_layer.visible = false
+	_codex_open = false

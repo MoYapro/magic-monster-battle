@@ -6,6 +6,7 @@ var max_hp: int
 var current_hp: int
 var grid_size: Vector2i        # width x height in grid cells
 var color: Color               # placeholder until art exists
+var label_color: Color = Color.WHITE  # black or white — whichever contrasts with color
 var difficulty_rating: int = 10  # 1–100; used in encounter budget
 var main_role: MonsterRole.Type = MonsterRole.Type.NONE
 var off_role: MonsterRole.Type = MonsterRole.Type.NONE

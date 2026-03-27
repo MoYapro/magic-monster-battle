@@ -171,7 +171,7 @@ Each mage:
 - Max mana spend per round
 
 ### Enemies
-Placed on a 3x5 grid. Stationary during battle. Cleared when HP reaches zero.
+Placed on a 5x7 grid. Stationary during battle. Cleared when HP reaches zero.
 
 **Turn order (always telegraph → act → resolve, no interleaving):**
 1. Each enemy rolls one of their actions and telegraphs it (target mage visible to player)
@@ -235,7 +235,7 @@ All three mages share a single mana pool that persists between battles.
 ## Implemented Features
 
 ### Battle
-- [x] Enemy grid (3×5) with placement, bounds checking, multi-cell enemy support, removal, and damage
+- [x] Enemy grid (5×7) with placement, bounds checking, multi-cell enemy support, removal, and damage
 - [x] Enemy display with name and HP bar; enemies removed at 0 HP
 - [x] Three mages with HP bars (MageDisplay)
 - [x] Mana pool display — individual droplets that overlap when count is high

@@ -1,8 +1,8 @@
 class_name EnemyGrid
 extends Node2D
 
-const COLS: int = 3
-const ROWS: int = 5
+const COLS: int = 5
+const ROWS: int = 7
 var cell_size := Vector2(80.0, 80.0)
 
 const COLOR_CELL := Color(0.18, 0.20, 0.22)
@@ -190,7 +190,7 @@ func _draw_enemies() -> void:
 
 		var font := ThemeDB.fallback_font
 		draw_string(font, pixel_pos + Vector2(5, 16), enemy.display_name,
-				HORIZONTAL_ALIGNMENT_LEFT, -1, 13, COLOR_LABEL)
+				HORIZONTAL_ALIGNMENT_LEFT, -1, 13, enemy.label_color)
 		draw_string(font, pixel_pos + Vector2(5, 32),
 				"%d / %d" % [enemy.current_hp, enemy.max_hp],
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COLOR_HP)
