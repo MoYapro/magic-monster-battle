@@ -11,6 +11,7 @@ func _init() -> void:
 		MonsterActionDrumsOfWar.new(),
 		MonsterActionHeal.new("War Cry", 20),
 		MonsterActionSummonSkeleton.new(),
+		MonsterActionSummonGoblin.new(),
 	]
 
 
