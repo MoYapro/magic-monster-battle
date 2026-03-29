@@ -68,7 +68,7 @@ func _apply_projectile(
 		state: BattleState, setup: BattleSetup, ev: CastEvent, pattern: Array[Vector2i]) -> void:
 	var blocked_this_zap: Dictionary = {}
 	for cell: Vector2i in EnemyGrid.get_hit_cells(target_cell, pattern):
-		var eid: String = setup.get_enemy_id_at(cell)
+		var eid: String = setup.get_occupant_at(cell, state)
 		if eid.is_empty() or not state.enemy_hp.has(eid):
 			continue
 		if blocked_this_zap.has(eid):

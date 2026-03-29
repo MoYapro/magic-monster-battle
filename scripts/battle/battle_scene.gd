@@ -33,6 +33,7 @@ var _hovered_cells: Array[Vector2i] = []
 var _intent_hover_enemy: String = ""
 var _intent_hover_mage: int = -1
 var _intent_hover_all_mages: bool = false
+var _current_state: BattleState
 
 const TOOLTIP_DELAY := 1.0
 var _hover_enemy: EnemyData = null
@@ -351,6 +352,7 @@ func _rebuild_battle() -> void:
 
 
 func _apply_state(state: BattleState) -> void:
+	_current_state = state
 	_refresh_enemy_grid(state)
 	for i in _setup.mages.size():
 		_setup.mages[i].current_hp = state.mage_hp[i]
@@ -449,7 +451,7 @@ func _refresh_enemy_grid(state: BattleState) -> void:
 		if not state.enemy_hp.has(enemy.id):
 			continue
 		enemy.current_hp = state.enemy_hp[enemy.id]
-		enemy_grid.place_enemy(enemy, _setup.enemy_positions[i])
+		enemy_grid.place_enemy(enemy, _setup.get_enemy_pos(i, state))
 	enemy_grid.set_obstacles(_setup.obstacles, _setup.obstacle_positions, state.obstacle_hp)
 	enemy_grid.set_intents(state.monster_intents)
 	enemy_grid.set_armors(state.enemy_armor)
@@ -591,7 +593,8 @@ func _get_enemy_scene_center(enemy_id: String) -> Vector2:
 	for i in _setup.enemies.size():
 		if _setup.enemies[i].id == enemy_id:
 			var enemy := _setup.enemies[i]
-			var px := Vector2(_setup.enemy_positions[i]) * enemy_grid.cell_size
+			var pos := _setup.get_enemy_pos(i, _current_state)
+			var px := Vector2(pos) * enemy_grid.cell_size
 			var ps := Vector2(enemy.grid_size) * enemy_grid.cell_size
 			return enemy_grid.position + px + ps * 0.5
 	return Vector2.ZERO

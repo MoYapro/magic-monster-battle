@@ -26,42 +26,43 @@ func _make_state(extra_ids: Array = []) -> BattleState:
 
 
 func test_moves_behind_obstacle() -> void:
-	# obstacle at (2,2), behind = (2,3)
+	# obstacle at (2,2) size 1x1, behind = (3,2)
 	var setup := _make_setup_with_obstacle(Vector2i(0, 0), Vector2i(2, 2))
 	var state := _make_state()
 	state.obstacle_hp["rock_1"] = 30
 	MonsterActionTakeCover.new().execute(state, setup, "goblin_a", -1)
-	assert_eq(setup.enemy_positions[0], Vector2i(2, 3))
+	assert_eq(setup.enemy_positions[0], Vector2i(3, 2))
 
 
 func test_moves_behind_ally() -> void:
-	# ally at (1,1), behind = (1,2)
+	# ally at (1,1) size 1x1, behind = (2,1)
 	var setup := _make_setup_with_ally(Vector2i(0, 0), Vector2i(1, 1))
 	var state := _make_state(["goblin_b"])
 	MonsterActionTakeCover.new().execute(state, setup, "goblin_a", -1)
-	assert_eq(setup.enemy_positions[0], Vector2i(1, 2))
+	assert_eq(setup.enemy_positions[0], Vector2i(2, 1))
 
 
 func test_picks_closest_cover() -> void:
-	# Two obstacles: rock_1 at (0,1) closer, rock_2 at (4,1) far
+	# rock_1 at (1,0) is closer to goblin at (0,0), behind = (2,0)
+	# rock_2 at (3,0) is farther, behind = (4,0)
 	var enemies: Array[EnemyData] = [Goblin.new()]
 	enemies[0].id = "goblin_a"
 	var obs1 := ObstacleData.new("rock_1", "Rock", Vector2i(1, 1), Color.GRAY, 30)
 	var obs2 := ObstacleData.new("rock_2", "Rock", Vector2i(1, 1), Color.GRAY, 30)
 	var setup := BattleSetup.new(
 		enemies, [Vector2i(0, 0)], [], [], 10,
-		[obs1, obs2], [Vector2i(0, 1), Vector2i(4, 1)]
+		[obs1, obs2], [Vector2i(1, 0), Vector2i(3, 0)]
 	)
 	var state := _make_state()
 	state.obstacle_hp["rock_1"] = 30
 	state.obstacle_hp["rock_2"] = 30
 	MonsterActionTakeCover.new().execute(state, setup, "goblin_a", -1)
-	assert_eq(setup.enemy_positions[0], Vector2i(0, 2))
+	assert_eq(setup.enemy_positions[0], Vector2i(2, 0))
 
 
 func test_does_not_move_when_behind_is_out_of_bounds() -> void:
-	# obstacle at last row — no row behind it
-	var setup := _make_setup_with_obstacle(Vector2i(0, 0), Vector2i(2, EnemyGrid.ROWS - 1))
+	# obstacle flush against the right edge — no column behind it
+	var setup := _make_setup_with_obstacle(Vector2i(0, 0), Vector2i(EnemyGrid.COLS - 1, 0))
 	var state := _make_state()
 	state.obstacle_hp["rock_1"] = 30
 	MonsterActionTakeCover.new().execute(state, setup, "goblin_a", -1)
@@ -69,14 +70,14 @@ func test_does_not_move_when_behind_is_out_of_bounds() -> void:
 
 
 func test_does_not_move_when_behind_is_occupied() -> void:
-	# obstacle at (0,1), behind (0,2) is blocked by ally
+	# obstacle at (1,0), behind (2,0) is blocked by ally
 	var enemies: Array[EnemyData] = [Goblin.new(), Goblin.new()]
 	enemies[0].id = "goblin_a"
 	enemies[1].id = "goblin_b"
 	var obstacle := ObstacleData.new("rock_1", "Rock", Vector2i(1, 1), Color.GRAY, 30)
 	var setup := BattleSetup.new(
-		enemies, [Vector2i(0, 0), Vector2i(0, 2)], [], [], 10,
-		[obstacle], [Vector2i(0, 1)]
+		enemies, [Vector2i(0, 0), Vector2i(2, 0)], [], [], 10,
+		[obstacle], [Vector2i(1, 0)]
 	)
 	var state := _make_state(["goblin_b"])
 	state.obstacle_hp["rock_1"] = 30

@@ -70,8 +70,21 @@ func _copy_mages(state: BattleState) -> void:
 		state.mage_frozen.append(false)
 
 
-func get_enemy_id_at(cell: Vector2i) -> String:
-	return _cell_to_enemy.get(cell, "")
+func get_enemy_pos(index: int, state: BattleState) -> Vector2i:
+	return state.enemy_positions.get(enemies[index].id, enemy_positions[index])
+
+
+func get_occupant_at(cell: Vector2i, state: BattleState) -> String:
+	for i in enemies.size():
+		if not state.enemy_hp.has(enemies[i].id):
+			continue
+		for c: Vector2i in EnemyGrid.get_cells_for_enemy(get_enemy_pos(i, state), enemies[i].grid_size):
+			if c == cell:
+				return enemies[i].id
+	var id: String = _cell_to_enemy.get(cell, "")
+	if id != "" and state.obstacle_hp.has(id):
+		return id
+	return ""
 
 
 func get_enemy(p_id: String) -> EnemyData:
@@ -135,30 +148,6 @@ func roll_intents(state: BattleState, rng: RandomNumberGenerator) -> Dictionary:
 				intent["webbed_slot_id"] = candidates[rng.randi_range(0, candidates.size() - 1)].id
 		intents[enemy.id] = intent
 	return intents
-
-
-func move_enemy(enemy_id: String, new_pos: Vector2i) -> bool:
-	var idx := -1
-	for i in enemies.size():
-		if enemies[i].id == enemy_id:
-			idx = i
-			break
-	if idx == -1:
-		return false
-	var enemy := enemies[idx]
-	if not EnemyGrid.is_within_bounds(new_pos, enemy.grid_size):
-		return false
-	var old_cells := EnemyGrid.get_cells_for_enemy(enemy_positions[idx], enemy.grid_size)
-	var new_cells := EnemyGrid.get_cells_for_enemy(new_pos, enemy.grid_size)
-	for cell: Vector2i in new_cells:
-		if _cell_to_enemy.has(cell) and not old_cells.has(cell):
-			return false
-	for cell: Vector2i in old_cells:
-		_cell_to_enemy.erase(cell)
-	for cell: Vector2i in new_cells:
-		_cell_to_enemy[cell] = enemy_id
-	enemy_positions[idx] = new_pos
-	return true
 
 
 func spawn_enemy(enemy: EnemyData, pos: Vector2i) -> void:

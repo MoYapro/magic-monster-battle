@@ -40,7 +40,7 @@ func _find_free_cell(setup: BattleSetup, state: BattleState) -> Vector2i:
 	for i in setup.enemies.size():
 		if not state.enemy_hp.has(setup.enemies[i].id):
 			continue
-		for cell: Vector2i in EnemyGrid.get_cells_for_enemy(setup.enemy_positions[i], setup.enemies[i].grid_size):
+		for cell: Vector2i in EnemyGrid.get_cells_for_enemy(setup.get_enemy_pos(i, state), setup.enemies[i].grid_size):
 			occupied[cell] = true
 	var total := EnemyGrid.ROWS * EnemyGrid.COLS
 	var start := randi() % total
