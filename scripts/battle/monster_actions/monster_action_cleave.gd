@@ -5,7 +5,7 @@ var damage: int
 
 func _init(p_name: String, p_damage: int) -> void:
 	name = p_name
-	target_type = TargetType.MAGE
+	target_type = TargetType.ALL_MAGES
 	damage = p_damage
 
 

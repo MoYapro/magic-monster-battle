@@ -1,6 +1,6 @@
 class_name MonsterActionData
 
-enum TargetType { MAGE, SELF, MONSTER }
+enum TargetType { MAGE, SELF, MONSTER, ALL_MAGES }
 
 var name: String
 var target_type: TargetType

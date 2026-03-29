@@ -32,6 +32,7 @@ var _hovered_wand: WandDisplay = null
 var _hovered_cells: Array[Vector2i] = []
 var _intent_hover_enemy: String = ""
 var _intent_hover_mage: int = -1
+var _intent_hover_all_mages: bool = false
 
 const TOOLTIP_DELAY := 1.0
 var _hover_enemy: EnemyData = null
@@ -358,7 +359,8 @@ func _apply_state(state: BattleState) -> void:
 		var incoming_attack := 0
 		for enemy_id: String in state.monster_intents:
 			var intent: Dictionary = state.monster_intents[enemy_id]
-			if intent.get("target", -1) != i or not state.enemy_hp.has(enemy_id):
+			var targets_mage: bool = intent.get("target", -1) == i or intent.get("all_mages", false)
+			if not targets_mage or not state.enemy_hp.has(enemy_id):
 				continue
 			if state.enemy_frozen.has(enemy_id):
 				continue
@@ -371,6 +373,8 @@ func _apply_state(state: BattleState) -> void:
 			var action := enemy.action_pool[action_index]
 			if action is MonsterActionAttack:
 				incoming_attack += (action as MonsterActionAttack).damage
+			elif action is MonsterActionCleave:
+				incoming_attack += (action as MonsterActionCleave).damage
 		_mage_displays[i].set_status(poison, fire, incoming_attack)
 	_mana_display.setup(state.mana, _setup.max_mana, _panel_height)
 	_refresh_wand_charges(state)
@@ -536,14 +540,23 @@ func _update_intent_hover(mouse: Vector2) -> void:
 	_intent_hover_enemy = hovered_id
 	if hovered_id != "":
 		var intent: Dictionary = _history.current_state().monster_intents.get(hovered_id, {})
-		_intent_hover_mage = intent.get("target", -1)
-		if _intent_hover_mage >= 0 and _intent_hover_mage < _mage_displays.size():
-			_mage_displays[_intent_hover_mage].set_highlighted(true)
+		if intent.get("all_mages", false):
+			_intent_hover_all_mages = true
+			for d: MageDisplay in _mage_displays:
+				d.set_highlighted(true)
+		else:
+			_intent_hover_mage = intent.get("target", -1)
+			if _intent_hover_mage >= 0 and _intent_hover_mage < _mage_displays.size():
+				_mage_displays[_intent_hover_mage].set_highlighted(true)
 	queue_redraw()
 
 
 func _clear_intent_hover() -> void:
-	if _intent_hover_mage >= 0 and _intent_hover_mage < _mage_displays.size():
+	if _intent_hover_all_mages:
+		for d: MageDisplay in _mage_displays:
+			d.set_highlighted(false)
+		_intent_hover_all_mages = false
+	elif _intent_hover_mage >= 0 and _intent_hover_mage < _mage_displays.size():
 		_mage_displays[_intent_hover_mage].set_highlighted(false)
 	_intent_hover_enemy = ""
 	_intent_hover_mage = -1
@@ -551,18 +564,26 @@ func _clear_intent_hover() -> void:
 
 
 func _draw() -> void:
-	if _intent_hover_enemy == "" or _intent_hover_mage < 0:
+	if _intent_hover_enemy == "":
+		return
+	var targets: Array[int] = []
+	if _intent_hover_all_mages:
+		for i in _mage_displays.size():
+			targets.append(i)
+	elif _intent_hover_mage >= 0:
+		targets.append(_intent_hover_mage)
+	if targets.is_empty():
 		return
 	var from := _get_enemy_scene_center(_intent_hover_enemy)
-	var to := _mage_displays[_intent_hover_mage].position \
-			+ _mage_displays[_intent_hover_mage].get_rect().get_center()
 	var color := Color(1.0, 0.45, 0.1, 0.9)
-	draw_line(from, to, color, 2.5, true)
-	var dir := (to - from).normalized()
-	var perp := Vector2(-dir.y, dir.x)
-	var tip := to - dir * 4.0
-	draw_line(tip - dir * 10.0 + perp * 6.0, tip, color, 2.5, true)
-	draw_line(tip - dir * 10.0 - perp * 6.0, tip, color, 2.5, true)
+	for t in targets:
+		var to := _mage_displays[t].position + _mage_displays[t].get_rect().get_center()
+		draw_line(from, to, color, 2.5, true)
+		var dir := (to - from).normalized()
+		var perp := Vector2(-dir.y, dir.x)
+		var tip := to - dir * 4.0
+		draw_line(tip - dir * 10.0 + perp * 6.0, tip, color, 2.5, true)
+		draw_line(tip - dir * 10.0 - perp * 6.0, tip, color, 2.5, true)
 
 
 func _get_enemy_scene_center(enemy_id: String) -> Vector2:

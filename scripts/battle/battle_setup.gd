@@ -104,6 +104,8 @@ func roll_intents(state: BattleState, rng: RandomNumberGenerator) -> Dictionary:
 			else:
 				target = living[rng.randi() % living.size()]
 			target_name = mages[target].name
+		elif action.target_type == MonsterActionData.TargetType.ALL_MAGES:
+			target_name = "All"
 		elif action.target_type == MonsterActionData.TargetType.MONSTER:
 			var lowest_hp := INF
 			for e: EnemyData in enemies:
@@ -117,6 +119,8 @@ func roll_intents(state: BattleState, rng: RandomNumberGenerator) -> Dictionary:
 			"target": target,
 			"target_name": target_name,
 		}
+		if action.target_type == MonsterActionData.TargetType.ALL_MAGES:
+			intent["all_mages"] = true
 		if not target_enemy_id.is_empty():
 			intent["target_enemy_id"] = target_enemy_id
 		if enemy is Banshee and target >= 0:
