@@ -13,6 +13,15 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 	var new_state := state.duplicate()
 	if new_state.mage_frozen[mage_index]:
 		return new_state
+	if new_state.mage_vine_snare.has(mage_index):
+		var snarer_id: String = new_state.mage_vine_snare[mage_index]
+		var penalty := ceili(new_state.mage_hp[mage_index] / 2.0)
+		new_state.mage_hp[mage_index] = maxi(0, new_state.mage_hp[mage_index] - penalty)
+		if new_state.enemy_hp.has(snarer_id):
+			var snarer := setup.get_enemy(snarer_id)
+			if snarer != null:
+				new_state.enemy_hp[snarer_id] = mini(new_state.enemy_hp[snarer_id] + penalty, snarer.max_hp)
+		new_state.mage_vine_snare.erase(mage_index)
 	if new_state.mage_mana_spent[mage_index] >= setup.mages[mage_index].mana_allowance:
 		return new_state
 	var wand := setup.wands[mage_index]

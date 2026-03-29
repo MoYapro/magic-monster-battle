@@ -10,6 +10,9 @@ func _init(rng_seed: int) -> void:
 func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 	var new_state := state.duplicate()
 
+	# Clear snares from the previous round before monsters act
+	new_state.mage_vine_snare.clear()
+
 	# Resolve each monster's queued intent
 	for enemy_id: String in new_state.monster_intents:
 		if not new_state.enemy_hp.has(enemy_id):

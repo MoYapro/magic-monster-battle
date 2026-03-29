@@ -18,6 +18,7 @@ var enemy_wet: Dictionary = {}     # enemy_id -> wet stacks
 var mage_frozen: Array[bool] = []  # frozen per mage; immune to fire, removed by first fire hit
 var enemy_frozen: Dictionary = {}  # enemy_id -> true; skips attack, immune to fire, removed by first fire hit
 var webbed_slots: Dictionary = {}  # "mage_index/slot_id" -> true; slot unusable this turn
+var mage_vine_snare: Dictionary = {}  # mage_index -> enemy_id; attacking costs 50% HP, HP goes to snarer
 var mana: int = 0
 # "mage_index/slot_id" -> charges placed on that slot
 var slot_charges: Dictionary = {}

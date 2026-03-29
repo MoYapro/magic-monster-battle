@@ -377,7 +377,8 @@ func _apply_state(state: BattleState) -> void:
 				incoming_attack += (action as MonsterActionAttack).damage
 			elif action is MonsterActionCleave:
 				incoming_attack += (action as MonsterActionCleave).damage
-		_mage_displays[i].set_status(poison, fire, incoming_attack)
+		var vine_snare: bool = state.mage_vine_snare.has(i)
+		_mage_displays[i].set_status(poison, fire, incoming_attack, vine_snare)
 	_mana_display.setup(state.mana, _setup.max_mana, _panel_height)
 	_refresh_wand_charges(state)
 	_refresh_ui()
@@ -700,6 +701,8 @@ func _format_action(action: MonsterActionData) -> String:
 		return "%s  heals %d (lowest HP ally)" % [action.name, (action as MonsterActionHeal).amount]
 	if action is MonsterActionDrumsOfWar:
 		return "Drums of War  ×2 attack for adjacent allies"
+	if action is MonsterActionVineSnare:
+		return "Vine Snare  blocks attack; breaking costs 50% HP (heals caster)"
 	return action.name
 
 

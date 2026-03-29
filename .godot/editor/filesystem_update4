@@ -56,3 +56,4 @@ res://scripts/battle/monsters/bog_shambler.gd
 res://scripts/battle/monsters/grove_tender.gd
 res://scripts/battle/monsters/treant.gd
 res://scripts/battle/monster_traits/monster_trait_wet_healing.gd
+res://scripts/battle/mage_display.gd
