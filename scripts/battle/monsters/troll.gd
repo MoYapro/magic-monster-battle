@@ -12,4 +12,5 @@ func _init() -> void:
 		MonsterActionAttack.new("Smash", 11),
 		MonsterActionHeal.new("Regenerate", 30),
 		MonsterActionAttack.new("Throw", 7),
+		MonsterActionCleave.new("Cleave", 8),
 	]

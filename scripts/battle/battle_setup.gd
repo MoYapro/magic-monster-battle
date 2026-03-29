@@ -86,7 +86,7 @@ func roll_intents(state: BattleState, rng: RandomNumberGenerator) -> Dictionary:
 	for enemy: EnemyData in enemies:
 		if not state.enemy_hp.has(enemy.id) or enemy.action_pool.is_empty():
 			continue
-		var action_index := rng.randi_range(0, enemy.action_pool.size() - 1)
+		var action_index := enemy.pick_action_index(state, self, rng)
 		var action: MonsterActionData = enemy.action_pool[action_index]
 		var target := -1
 		var target_name := ""
@@ -131,6 +131,16 @@ func roll_intents(state: BattleState, rng: RandomNumberGenerator) -> Dictionary:
 				intent["webbed_slot_id"] = candidates[rng.randi_range(0, candidates.size() - 1)].id
 		intents[enemy.id] = intent
 	return intents
+
+
+func spawn_enemy(enemy: EnemyData, pos: Vector2i) -> void:
+	for existing: EnemyData in enemies:
+		if existing.id == enemy.id:
+			return
+	enemies.append(enemy)
+	enemy_positions.append(pos)
+	for cell: Vector2i in EnemyGrid.get_cells_for_enemy(pos, enemy.grid_size):
+		_cell_to_enemy[cell] = enemy.id
 
 
 func _build_cell_map() -> void:

@@ -757,8 +757,8 @@ func _on_continue_pressed() -> void:
 func _build_codex_layer() -> void:
 	_codex_layer = CanvasLayer.new()
 	_codex_layer.layer = 3
-	_codex_layer.visible = false
 	add_child(_codex_layer)
+	_codex_layer.visible = false
 
 	var dim := ColorRect.new()
 	dim.color = Color(0.0, 0.0, 0.0, 0.72)

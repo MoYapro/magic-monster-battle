@@ -1,1 +1,2 @@
-res://scripts/loot/loot_screen.gd
+res://scripts/battle/monster_actions/monster_action_summon_skeleton.gd
+res://tests/test_monster_action_summon_skeleton.gd

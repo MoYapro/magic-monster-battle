@@ -16,6 +16,10 @@ var traits: Array[MonsterTraitData] = []
 var description: String = ""
 
 
+func pick_action_index(state: BattleState, _setup: BattleSetup, rng: RandomNumberGenerator) -> int:
+	return rng.randi_range(0, action_pool.size() - 1) if not action_pool.is_empty() else 0
+
+
 func _init(
 	p_id: String,
 	p_name: String,

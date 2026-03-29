@@ -10,4 +10,20 @@ func _init() -> void:
 	action_pool = [
 		MonsterActionDrumsOfWar.new(),
 		MonsterActionHeal.new("War Cry", 20),
+		MonsterActionSummonSkeleton.new(),
 	]
+
+
+func pick_action_index(state: BattleState, setup: BattleSetup, rng: RandomNumberGenerator) -> int:
+	if not _any_skeleton_alive(state, setup):
+		for i in action_pool.size():
+			if action_pool[i] is MonsterActionSummonSkeleton:
+				return i
+	return rng.randi_range(0, action_pool.size() - 1)
+
+
+func _any_skeleton_alive(state: BattleState, setup: BattleSetup) -> bool:
+	for enemy: EnemyData in setup.enemies:
+		if enemy is Skeleton and state.enemy_hp.has(enemy.id):
+			return true
+	return false
