@@ -18,6 +18,9 @@ const COLOR_FIRE   := Color(0.95, 0.42, 0.05)
 var _cells: Dictionary = {}
 # enemy id -> top-left grid position
 var _enemy_positions: Dictionary = {}
+var _obstacles: Array[ObstacleData] = []
+var _obstacle_positions: Array[Vector2i] = []
+var _obstacle_hp: Dictionary = {}
 var _highlighted := false
 var _hovered_cells: Array[Vector2i] = []
 var _intents: Dictionary = {}
@@ -104,6 +107,13 @@ func clear_enemies() -> void:
 	queue_redraw()
 
 
+func set_obstacles(obstacles: Array[ObstacleData], positions: Array[Vector2i], hp: Dictionary) -> void:
+	_obstacles = obstacles
+	_obstacle_positions = positions
+	_obstacle_hp = hp
+	queue_redraw()
+
+
 # --- placement ---
 
 func can_place_enemy(grid_pos: Vector2i, grid_size: Vector2i) -> bool:
@@ -147,6 +157,7 @@ func get_enemy_at(grid_pos: Vector2i) -> EnemyData:
 
 func _draw() -> void:
 	_draw_grid()
+	_draw_obstacles()
 	_draw_enemies()
 
 
@@ -160,6 +171,24 @@ func _draw_grid() -> void:
 				draw_rect(rect, COLOR_TARGET_HOVER, false, 3.0)
 			elif _highlighted:
 				draw_rect(rect, COLOR_TARGET_AVAILABLE, false, 2.5)
+
+
+func _draw_obstacles() -> void:
+	var font := ThemeDB.fallback_font
+	for i in _obstacles.size():
+		var obs := _obstacles[i]
+		if not _obstacle_hp.has(obs.id):
+			continue
+		var grid_pos := _obstacle_positions[i]
+		var pixel_pos := Vector2(grid_pos) * cell_size
+		var pixel_size := Vector2(obs.grid_size) * cell_size
+		draw_rect(Rect2(pixel_pos, pixel_size), obs.color, true)
+		draw_rect(Rect2(pixel_pos, pixel_size), Color.WHITE, false, 2.0)
+		draw_string(font, pixel_pos + Vector2(5, 16), obs.display_name,
+				HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
+		draw_string(font, pixel_pos + Vector2(5, 32),
+				"%d / %d" % [_obstacle_hp[obs.id], obs.max_hp],
+				HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COLOR_HP)
 
 
 func _draw_enemies() -> void:

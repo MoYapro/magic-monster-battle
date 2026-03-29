@@ -6,3 +6,8 @@ res://scripts/battle/battle_scene.gd
 res://scripts/battle/battle_setup.gd
 res://scripts/battle/monster_actions/monster_action_cleave.gd
 res://scripts/battle/monster_actions/monster_action_data.gd
+res://scripts/battle/battle_composer.gd
+res://scripts/battle/enemy_grid.gd
+res://scripts/battle/obstacles/log.gd
+res://scripts/world/biomes_data.gd
+res://scripts/world/biome_data.gd

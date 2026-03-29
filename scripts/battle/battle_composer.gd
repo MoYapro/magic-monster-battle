@@ -13,7 +13,7 @@ static func compose(biome: BiomeData, biome_level: int, rng: RandomNumberGenerat
 	var elite_chance := 0.5 * clampf(float(biome_level - 1) / float(MAX_LEVEL - 1), 0.0, 1.0)
 	var battle_type: BattleType = BattleType.ELITE if rng.randf() < elite_chance else BattleType.HORDE
 	var enemies := _select_monsters(biome.monster_pool, battle_type, biome_level, rng)
-	var obstacles := _select_obstacles(rng)
+	var obstacles := _select_obstacles(biome.obstacle_pool, rng)
 
 	# Obstacles placed first — they claim front rows before enemies.
 	var occupied: Dictionary = {}
@@ -84,16 +84,7 @@ static func _select_monsters(
 	return enemies
 
 
-static func _select_obstacles(rng: RandomNumberGenerator) -> Array[ObstacleData]:
-	var pool: Array = [
-		preload("res://scripts/battle/obstacles/stone.gd"),
-		preload("res://scripts/battle/obstacles/barrel.gd"),
-		preload("res://scripts/battle/obstacles/log.gd"),
-		preload("res://scripts/battle/obstacles/tree.gd"),
-		preload("res://scripts/battle/obstacles/boulder.gd"),
-		preload("res://scripts/battle/obstacles/monolith.gd"),
-	]
-
+static func _select_obstacles(pool: Array, rng: RandomNumberGenerator) -> Array[ObstacleData]:
 	var weights: Array[int] = []
 	var total_weight := 0
 	for cls in pool:
@@ -101,7 +92,7 @@ static func _select_obstacles(rng: RandomNumberGenerator) -> Array[ObstacleData]
 		weights.append(w)
 		total_weight += w
 
-	var count := rng.randi_range(1, 3)
+	var count := rng.randi_range(2, 3)
 	var obstacles: Array[ObstacleData] = []
 	var id_counts: Dictionary = {}
 	for _i in count:

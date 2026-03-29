@@ -5,7 +5,8 @@ var name: String
 var tagline: String
 var color: Color
 var grid_pos: Vector2i
-var monster_pool: Array = []  # Array of EnemyData subclass scripts; call .new() to spawn
+var monster_pool: Array = []   # Array of EnemyData subclass scripts; call .new() to spawn
+var obstacle_pool: Array = []  # Array of ObstacleData subclass scripts; call .new() to spawn
 
 
 func _init(p_name: String, p_tagline: String, p_color: Color, p_grid_pos: Vector2i) -> void:

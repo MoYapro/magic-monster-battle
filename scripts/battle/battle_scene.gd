@@ -450,6 +450,7 @@ func _refresh_enemy_grid(state: BattleState) -> void:
 			continue
 		enemy.current_hp = state.enemy_hp[enemy.id]
 		enemy_grid.place_enemy(enemy, _setup.enemy_positions[i])
+	enemy_grid.set_obstacles(_setup.obstacles, _setup.obstacle_positions, state.obstacle_hp)
 	enemy_grid.set_intents(state.monster_intents)
 	enemy_grid.set_armors(state.enemy_armor)
 	enemy_grid.set_blocks(state.enemy_block)

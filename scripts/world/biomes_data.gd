@@ -63,4 +63,13 @@ static func _build() -> Array[BiomeData]:
 	cave.monster_pool     = [Goblin, Troll, ShieldOgre, CaveSpider, WraithBlade]
 	ruins.monster_pool    = [Skeleton, Witch, ShieldOgre, CursedKnight, Banshee, BoneCaller, WarDrummer, FallenPaladin]
 
+	desert.obstacle_pool   = [Stone, Boulder, Barrel, Cactus, SandDune, Obelisk]
+	volcano.obstacle_pool  = [Stone, Boulder, Barrel, LavaRock, ObsidianSpike, AshPile]
+	forest.obstacle_pool   = [ObstacleTree, Log, Stone, Thornbush, AncientStump, MushroomCircle]
+	mountain.obstacle_pool = [Boulder, Stone, Monolith, IceBlock, Stalagmite, SnowDrift]
+	tundra.obstacle_pool   = [Stone, Boulder, Log, IceWall, FrozenLog, GlacierChunk]
+	swamp.obstacle_pool    = [Log, ObstacleTree, Barrel, Mudpit, RottedStump, BogPillar]
+	cave.obstacle_pool     = [Stone, Boulder, Monolith, StalactitePillar, CrystalFormation, BonePile]
+	ruins.obstacle_pool    = [Monolith, Stone, Barrel, BrokenPillar, Altar, Sarcophagus]
+
 	return [desert, volcano, forest, mountain, tundra, swamp, cave, ruins]
