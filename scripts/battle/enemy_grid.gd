@@ -13,6 +13,8 @@ const COLOR_TARGET_AVAILABLE := Color(1.0, 0.85, 0.2)
 const COLOR_TARGET_HOVER := Color(0.95, 0.18, 0.18)
 const COLOR_POISON := Color(0.50, 0.20, 0.65)
 const COLOR_FIRE   := Color(0.95, 0.42, 0.05)
+const COLOR_PUDDLE := Color(0.20, 0.45, 0.75, 0.35)
+const COLOR_WET    := Color(0.25, 0.55, 0.90)
 
 # cell position -> EnemyData (one entry per occupied cell)
 var _cells: Dictionary = {}
@@ -21,6 +23,7 @@ var _enemy_positions: Dictionary = {}
 var _obstacles: Array[ObstacleData] = []
 var _obstacle_positions: Array[Vector2i] = []
 var _obstacle_hp: Dictionary = {}
+var _ground: Dictionary = {}  # Vector2i -> GroundType.Type
 var _highlighted := false
 var _hovered_cells: Array[Vector2i] = []
 var _intents: Dictionary = {}
@@ -28,6 +31,7 @@ var _armors: Dictionary = {}
 var _blocks: Dictionary = {}
 var _poisons: Dictionary = {}
 var _fires: Dictionary = {}
+var _wets: Dictionary = {}
 
 
 func set_armors(armors: Dictionary) -> void:
@@ -40,9 +44,15 @@ func set_blocks(blocks: Dictionary) -> void:
 	queue_redraw()
 
 
-func set_statuses(poisons: Dictionary, fires: Dictionary) -> void:
+func set_statuses(poisons: Dictionary, fires: Dictionary, wets: Dictionary) -> void:
 	_poisons = poisons
 	_fires = fires
+	_wets = wets
+	queue_redraw()
+
+
+func set_ground(ground: Dictionary) -> void:
+	_ground = ground
 	queue_redraw()
 
 
@@ -166,6 +176,8 @@ func _draw_grid() -> void:
 		for col in COLS:
 			var rect := Rect2(Vector2(col, row) * cell_size, cell_size)
 			draw_rect(rect, COLOR_CELL, true)
+			if _ground.get(Vector2i(col, row), GroundType.Type.SOIL) == GroundType.Type.PUDDLE:
+				draw_rect(rect, COLOR_PUDDLE, true)
 			draw_rect(rect, COLOR_BORDER, false)
 			if _hovered_cells.has(Vector2i(col, row)):
 				draw_rect(rect, COLOR_TARGET_HOVER, false, 3.0)
@@ -233,11 +245,12 @@ func _draw_enemies() -> void:
 					HORIZONTAL_ALIGNMENT_RIGHT, -1, 11, Color(0.5, 0.8, 1.0))
 		var has_poison: bool = _poisons.has(enemy.id) and _poisons[enemy.id] > 0
 		var has_fire: bool = _fires.has(enemy.id) and _fires[enemy.id] > 0
-		if has_poison or has_fire:
+		var has_wet: bool = _wets.has(enemy.id) and _wets[enemy.id] > 0
+		if has_poison or has_fire or has_wet:
 			var pill_h := 12.0
 			var pill_gap := 3.0
 			var pill_w := pixel_size.x - 10.0
-			var pill_count := int(has_poison) + int(has_fire)
+			var pill_count := int(has_poison) + int(has_fire) + int(has_wet)
 			var intent_reserve := 16.0 if _intents.has(enemy.id) else 4.0
 			var pills_bottom := pixel_size.y - intent_reserve
 			var pill_y := maxf(34.0, pills_bottom - pill_count * pill_h - (pill_count - 1) * pill_gap)
@@ -250,6 +263,11 @@ func _draw_enemies() -> void:
 				draw_rect(Rect2(pixel_pos + Vector2(5.0, pill_y), Vector2(pill_w, pill_h)), COLOR_FIRE, true)
 				draw_string(font, pixel_pos + Vector2(5.0, pill_y + 10.0),
 						"FIRE %d" % _fires[enemy.id], HORIZONTAL_ALIGNMENT_CENTER, pill_w, 9, Color.WHITE)
+				pill_y += pill_h + pill_gap
+			if has_wet:
+				draw_rect(Rect2(pixel_pos + Vector2(5.0, pill_y), Vector2(pill_w, pill_h)), COLOR_WET, true)
+				draw_string(font, pixel_pos + Vector2(5.0, pill_y + 10.0),
+						"WET %d" % _wets[enemy.id], HORIZONTAL_ALIGNMENT_CENTER, pill_w, 9, Color.WHITE)
 		if _intents.has(enemy.id):
 			var intent: Dictionary = _intents[enemy.id]
 			var action_name: String = intent.get("action_name", "")

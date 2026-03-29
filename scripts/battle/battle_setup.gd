@@ -40,7 +40,9 @@ func make_initial_state() -> BattleState:
 	_fill_obstacles(state)
 	_fill_monsters(state)
 	_copy_mages(state)
+	_fill_ground(state, rng)
 	state.mana = max_mana
+	apply_puddle_wet(state)
 	state.monster_intents = roll_intents(state, rng)
 	return state
 
@@ -53,6 +55,13 @@ func _fill_monsters(state: BattleState) -> void:
 				state.enemy_armor[enemy.id] = (t as MonsterTraitArmor).armor_amount
 			elif t is MonsterTraitBlock:
 				state.enemy_block[enemy.id] = (t as MonsterTraitBlock).block_charges
+
+
+func _fill_ground(state: BattleState, rng: RandomNumberGenerator) -> void:
+	for row in EnemyGrid.ROWS:
+		for col in EnemyGrid.COLS:
+			var type := GroundType.Type.PUDDLE if rng.randf() < 0.5 else GroundType.Type.SOIL
+			state.ground[Vector2i(col, row)] = type
 
 
 func _fill_obstacles(state: BattleState) -> void:
@@ -148,6 +157,17 @@ func roll_intents(state: BattleState, rng: RandomNumberGenerator) -> Dictionary:
 				intent["webbed_slot_id"] = candidates[rng.randi_range(0, candidates.size() - 1)].id
 		intents[enemy.id] = intent
 	return intents
+
+
+func apply_puddle_wet(state: BattleState) -> void:
+	for i in enemies.size():
+		var enemy := enemies[i]
+		if not state.enemy_hp.has(enemy.id):
+			continue
+		var pos := get_enemy_pos(i, state)
+		for cell in EnemyGrid.get_cells_for_enemy(pos, enemy.grid_size):
+			if state.ground.get(cell, GroundType.Type.SOIL) == GroundType.Type.PUDDLE:
+				state.enemy_wet[enemy.id] = (state.enemy_wet.get(enemy.id, 0) as int) + 2
 
 
 func spawn_enemy(enemy: EnemyData, pos: Vector2i) -> void:

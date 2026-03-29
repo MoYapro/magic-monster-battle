@@ -36,6 +36,9 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 		for t: MonsterTraitData in enemy.traits:
 			new_state = t.apply_end_of_round(new_state, setup, enemy.id) as BattleState
 
+	# Puddle cells apply wet(2) to any monster standing on them
+	setup.apply_puddle_wet(new_state)
+
 	# Status effects: poison, fire, wet
 	new_state.tick_poison()
 	new_state.tick_fire()

@@ -30,6 +30,7 @@ var enemy_positions: Dictionary = {}   # enemy_id -> Vector2i; overrides setup p
 var enemy_stunned: Dictionary = {}     # enemy_id -> turns remaining; skips attack
 var enemy_blind: Dictionary = {}       # enemy_id -> turns remaining; 50% miss / random target
 var cast_events: Array = []            # CastEvents from the most recent zap action
+var ground: Dictionary = {}           # Vector2i -> GroundType.Type
 
 
 func duplicate() -> BattleState:

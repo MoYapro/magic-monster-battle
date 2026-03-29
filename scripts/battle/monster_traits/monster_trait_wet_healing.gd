@@ -1,8 +1,11 @@
 class_name MonsterTraitWetHealing extends MonsterTraitData
 
+var amount: int
 
-func _init() -> void:
-	super("Wet Heal", 2)
+
+func _init(p_amount: int) -> void:
+	super("Wet Heal %d" % p_amount, 2)
+	amount = p_amount
 
 
 func apply_end_of_round(state: BattleState, setup: BattleSetup, enemy_id: String) -> BattleState:
@@ -13,5 +16,6 @@ func apply_end_of_round(state: BattleState, setup: BattleSetup, enemy_id: String
 	var enemy := setup.get_enemy(enemy_id)
 	if enemy == null:
 		return new_state
-	new_state.enemy_hp[enemy_id] = mini(new_state.enemy_hp[enemy_id] + wet, enemy.max_hp)
+	new_state.enemy_hp[enemy_id] = mini(new_state.enemy_hp[enemy_id] + amount, enemy.max_hp)
+	new_state.enemy_wet[enemy_id] = ceili(wet / 2.0)
 	return new_state

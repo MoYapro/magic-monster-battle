@@ -6,7 +6,7 @@ func _init() -> void:
 	description = "A forest spirit that keeps its allies alive with restorative nature magic."
 	main_role = MonsterRole.Type.HEALER
 	difficulty_rating = 28
-	traits = [MonsterTraitRegen.new(5)]
+	traits = [MonsterTraitRegen.new(5), MonsterTraitWetHealing.new(10)]
 	drop_pool = [SpellAmplify.create(), SpellShield.create()]
 	action_pool = [
 		MonsterActionAttack.new("Root Lash", 5),

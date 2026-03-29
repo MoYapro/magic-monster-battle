@@ -456,7 +456,8 @@ func _refresh_enemy_grid(state: BattleState) -> void:
 	enemy_grid.set_intents(state.monster_intents)
 	enemy_grid.set_armors(state.enemy_armor)
 	enemy_grid.set_blocks(state.enemy_block)
-	enemy_grid.set_statuses(state.enemy_poison, state.enemy_fire)
+	enemy_grid.set_statuses(state.enemy_poison, state.enemy_fire, state.enemy_wet)
+	enemy_grid.set_ground(state.ground)
 
 
 # --- targeting ---
@@ -642,11 +643,28 @@ func _update_enemy_hover(pos: Vector2) -> void:
 		_monster_tooltip_layer.visible = false
 
 
+func _get_ground_labels_for_enemy(enemy: EnemyData) -> Array[String]:
+	var idx := _setup.enemies.find(enemy)
+	if idx < 0:
+		return []
+	var grid_pos := _setup.get_enemy_pos(idx, _current_state)
+	var cells := EnemyGrid.get_cells_for_enemy(grid_pos, enemy.grid_size)
+	var puddles := cells.filter(
+		func(c: Vector2i) -> bool:
+			return _current_state.ground.get(c, GroundType.Type.SOIL) == GroundType.Type.PUDDLE)
+	var labels: Array[String] = []
+	if puddles.size() > 0:
+		labels.append("Puddle (%d cells) — Wet +%d/round" % [puddles.size(), puddles.size() * 2])
+	return labels
+
+
 func _show_monster_tooltip(enemy: EnemyData, pos: Vector2) -> void:
 	_monster_tooltip_name.text = enemy.display_name
 	_monster_tooltip_desc.text = enemy.description
 	_monster_tooltip_desc.visible = not enemy.description.is_empty()
-	_monster_tooltip_stats.text = "HP: %d / %d" % [enemy.current_hp, enemy.max_hp]
+	var stats_lines: Array[String] = ["HP: %d / %d" % [enemy.current_hp, enemy.max_hp]]
+	stats_lines.append_array(_get_ground_labels_for_enemy(enemy))
+	_monster_tooltip_stats.text = "\n".join(stats_lines)
 	if not enemy.traits.is_empty():
 		var labels: Array = enemy.traits.map(func(t: MonsterTraitData) -> String: return t.label)
 		_monster_tooltip_traits.text = "Traits: " + ", ".join(labels)

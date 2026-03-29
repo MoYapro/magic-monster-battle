@@ -51,3 +51,8 @@ res://scripts/battle/actions/action_zap_wand.gd
 res://scripts/battle/monster_actions/monster_action_drums_of_war.gd
 res://scripts/battle/monster_actions/monster_action_summon_enemy.gd
 res://scripts/battle/enemy_data.gd
+res://scripts/battle/actions/action_end_turn.gd
+res://scripts/battle/monsters/bog_shambler.gd
+res://scripts/battle/monsters/grove_tender.gd
+res://scripts/battle/monsters/treant.gd
+res://scripts/battle/monster_traits/monster_trait_wet_healing.gd
