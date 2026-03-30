@@ -1,3 +1,9 @@
+# Action ideas:
+# - Toxic Brew: apply poison stacks to a mage (fits "brews potions" + SpellVenom drop)
+# - Jinx: next spell the mage casts backfires onto themselves (needs on_spell_cast hook)
+# - Curse of Fragility: mage takes double damage for one round
+# - Counterspell: webs all of a mage's wand slots for the round
+# - Mana Sap: remove N mana from the shared pool directly
 class_name Witch extends EnemyData
 
 func _init() -> void:
@@ -11,4 +17,5 @@ func _init() -> void:
 		MonsterActionAttack.new("Curse", 4),
 		MonsterActionAttack.new("Hex", 9),
 		MonsterActionHeal.new("Brew", 18),
+		MonsterActionLeech.new(),
 	]

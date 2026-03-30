@@ -73,10 +73,7 @@ func _copy_mages(state: BattleState) -> void:
 	for mage: MageData in mages:
 		state.mage_hp.append(mage.max_hp)
 		state.mage_mana_spent.append(0)
-		state.mage_poison.append(0)
-		state.mage_fire.append(0)
-		state.mage_wet.append(0)
-		state.mage_frozen.append(false)
+		state.mage_statuses.append([])
 
 
 func get_enemy_pos(index: int, state: BattleState) -> Vector2i:

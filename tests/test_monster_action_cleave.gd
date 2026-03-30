@@ -7,10 +7,7 @@ func _make_state(mage_hps: Array) -> BattleState:
 	for hp in mage_hps:
 		s.mage_hp.append(hp)
 		s.mage_mana_spent.append(0)
-		s.mage_fire.append(0)
-		s.mage_wet.append(0)
-		s.mage_poison.append(0)
-		s.mage_frozen.append(false)
+		s.mage_statuses.append([])
 	return s
 
 

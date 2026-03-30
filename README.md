@@ -242,6 +242,18 @@ All three mages share a single mana pool that persists between battles.
 - [x] Targeting mode: click wand tip → all valid targets highlight yellow
 - [x] Hover during targeting: hovered cells/enemies/mages/wands highlight red, hit pattern applied
 - [x] Wand firing: deals summed spell damage to all cells in the tip's hit pattern
+- [x] Turn-based combat loop — mages act, then all enemy actions resolve simultaneously
+- [x] Mana slot mechanics — place mana from pool onto slots; slots charge when cost met; discharge returns mana to pool
+- [x] Enemy status effects: poison (1 dmg/turn), fire (stacks dmg, halves each turn), wet (decay, interacts with fire); fire + wet cancel each other
+- [x] Enemy armor (absorbs damage before HP) and block (prevents hit, consumes one charge per hit)
+- [x] Mage status system — statuses are typed objects with stacks; cross-type interactions handled at add time
+  - [x] Fire: damages mage each turn by stack count, stacks halve after each tick, cancelled by wet
+  - [x] Wet: decays by 1/turn, no damage, cancels incoming fire
+  - [x] Poison: deals 1 damage/turn regardless of stacks, stacks decay by 1/turn
+  - [x] Frozen: blocks the mage's zap action; melts completely when hit by fire
+  - [x] Vine Snare: penalises the mage on zap (HP cost + heals the snarer); self-removes after zap or at turn end
+  - [x] Leech: heals the source enemy by 1 per mana the mage spends; self-removes at turn end
+- [x] Line-of-sight blocking — obstacles and enemies block hits to cells behind them
 
 ### Wand System
 - [x] Directed spell-graph wand (SpellSlotData with next_id chain toward tip)
@@ -250,3 +262,14 @@ All three mages share a single mana pool that persists between battles.
 - [x] Tip spells: Single (1 cell), Line (3 vertical), Pierce (3 horizontal), Bomb (3×3 area)
 - [x] Bomb has a hand-drawn icon; other spells show element-tinted abbreviation
 - [x] Spell damage: each slot contributes damage summed at fire time
+- [x] Two-pass wand evaluation: alchemy fusion pass (catalyst + two projectiles → lookup) then modifier application pass
+- [x] Alchemy table: catalyst trios resolve to success (secret spell), fizzle (wasted), or backfire (damages caster)
+- [x] Spell modifiers: apply to the next projectile — damage multipliers, extra on-hit effects
+- [x] Backfire: resolves against the casting mage; amplified if a modifier precedes it
+
+### Monsters
+- [x] Cleave: damages all mages equally; respects attack multiplier
+- [x] Take Cover: monster moves behind the nearest unoccupied obstacle or ally; rejects out-of-bounds and occupied cells
+- [x] Summon Skeleton: spawn count scales with drummer HP (1 at full health, up to 3 at low HP); respects grid capacity; blocks respawn of already-alive skeletons
+- [x] War Drummer (boss): forces Raise Fallen when no skeletons are alive or dead; otherwise selects randomly from action pool
+- [x] Wet Healing trait: heals the monster each round by its current wet stack count; does not consume wet stacks

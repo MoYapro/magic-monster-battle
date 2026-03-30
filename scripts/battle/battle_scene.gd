@@ -356,8 +356,6 @@ func _apply_state(state: BattleState) -> void:
 	_refresh_enemy_grid(state)
 	for i in _setup.mages.size():
 		_setup.mages[i].current_hp = state.mage_hp[i]
-		var poison := state.mage_poison[i] if i < state.mage_poison.size() else 0
-		var fire := state.mage_fire[i] if i < state.mage_fire.size() else 0
 		var incoming_attack := 0
 		for enemy_id: String in state.monster_intents:
 			var intent: Dictionary = state.monster_intents[enemy_id]
@@ -377,8 +375,7 @@ func _apply_state(state: BattleState) -> void:
 				incoming_attack += (action as MonsterActionAttack).damage
 			elif action is MonsterActionCleave:
 				incoming_attack += (action as MonsterActionCleave).damage
-		var vine_snare: bool = state.mage_vine_snare.has(i)
-		_mage_displays[i].set_status(poison, fire, incoming_attack, vine_snare)
+		_mage_displays[i].set_status(incoming_attack, state.mage_statuses[i])
 	_mana_display.setup(state.mana, _setup.max_mana, _panel_height)
 	_refresh_wand_charges(state)
 	_refresh_ui()
@@ -703,6 +700,8 @@ func _format_action(action: MonsterActionData) -> String:
 		return "Drums of War  ×2 attack for adjacent allies"
 	if action is MonsterActionVineSnare:
 		return "Vine Snare  blocks attack; breaking costs 50% HP (heals caster)"
+	if action is MonsterActionLeech:
+		return "Leech  each mana you spend heals caster by 1"
 	return action.name
 
 

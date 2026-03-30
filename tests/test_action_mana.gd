@@ -17,9 +17,7 @@ func _make_state() -> BattleState:
 	var s := BattleState.new()
 	s.mage_hp.append(30)
 	s.mage_mana_spent.append(0)
-	s.mage_fire.append(0)
-	s.mage_wet.append(0)
-	s.mage_frozen.append(false)
+	s.mage_statuses.append([])
 	s.mana = 10
 	return s
 

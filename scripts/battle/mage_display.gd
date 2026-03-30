@@ -15,9 +15,6 @@ const COLOR_TARGET_AVAILABLE := Color(1.0, 0.85, 0.2)
 const COLOR_TARGET_HOVER     := Color(0.95, 0.18, 0.18)
 const COLOR_MANA             := Color(0.35, 0.70, 1.00)
 const COLOR_MANA_LABEL       := Color(0.40, 0.50, 0.65)
-const COLOR_POISON           := Color(0.50, 0.20, 0.65)
-const COLOR_FIRE             := Color(0.95, 0.42, 0.05)
-const COLOR_VINE_SNARE       := Color(0.20, 0.55, 0.15)
 
 var _mage: MageData = null
 var _height: float = 70.0
@@ -25,10 +22,8 @@ var _highlighted := false
 var _hovered := false
 var _mana_committed: int = 0
 var _mana_max: int = 0
-var _poison: int = 0
-var _fire: int = 0
 var _incoming_attack: int = 0
-var _vine_snare: bool = false
+var _statuses: Array = []
 
 
 func setup(mage: MageData, height: float) -> void:
@@ -53,11 +48,9 @@ func set_mana(committed: int, max_mana: int) -> void:
 	queue_redraw()
 
 
-func set_status(poison: int, fire: int, incoming_attack: int = 0, vine_snare: bool = false) -> void:
-	_poison = poison
-	_fire = fire
+func set_status(incoming_attack: int = 0, statuses: Array = []) -> void:
 	_incoming_attack = incoming_attack
-	_vine_snare = vine_snare
+	_statuses = statuses
 	queue_redraw()
 
 
@@ -73,8 +66,8 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, Vector2(WIDTH, _height)), COLOR_BORDER, false, 1.0)
 
 	# vertically centre the content block
-	var has_status := _poison > 0 or _fire > 0 or _vine_snare
-	var status_count := int(_poison > 0) + int(_fire > 0) + int(_vine_snare)
+	var has_status := not _statuses.is_empty()
+	var status_count := _statuses.size()
 	var content_h := 16.0 + 6.0 + BAR_HEIGHT + 5.0 + 13.0 + 6.0 + 12.0
 	if has_status:
 		content_h += status_count * (5.0 + 12.0)
@@ -89,7 +82,10 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2(PAD, bar_y), Vector2(bar_w, BAR_HEIGHT)), COLOR_HP_BG, true)
 
 	var hp_frac := float(_mage.current_hp) / float(_mage.max_hp)
-	var total_dmg := _incoming_attack + _fire + _poison
+	var status_dmg := 0
+	for status: MageStatusData in _statuses:
+		status_dmg += status.get_turn_damage()
+	var total_dmg := _incoming_attack + status_dmg
 	var hp_after := maxi(0, _mage.current_hp - total_dmg)
 	var hp_after_frac := float(hp_after) / float(_mage.max_hp)
 	var hp_color := COLOR_HP_FULL.lerp(COLOR_HP_LOW, 1.0 - hp_frac)
@@ -101,13 +97,15 @@ func _draw() -> void:
 	if atk_w > 0.5:
 		draw_rect(Rect2(Vector2(dx, bar_y), Vector2(atk_w, BAR_HEIGHT)), Color(0.85, 0.15, 0.12, 0.88), true)
 		dx += atk_w
-	var fire_w := minf(bar_w * float(_fire) / float(_mage.max_hp), max_x - dx)
-	if fire_w > 0.5:
-		draw_rect(Rect2(Vector2(dx, bar_y), Vector2(fire_w, BAR_HEIGHT)), Color(0.95, 0.45, 0.05, 0.88), true)
-		dx += fire_w
-	var poison_w := minf(bar_w * float(_poison) / float(_mage.max_hp), max_x - dx)
-	if poison_w > 0.5:
-		draw_rect(Rect2(Vector2(dx, bar_y), Vector2(poison_w, BAR_HEIGHT)), Color(0.55, 0.22, 0.70, 0.88), true)
+	for status: MageStatusData in _statuses:
+		var dmg := status.get_turn_damage()
+		if dmg <= 0:
+			continue
+		var seg_w := minf(bar_w * float(dmg) / float(_mage.max_hp), max_x - dx)
+		if seg_w > 0.5:
+			var c := status.display_color
+			draw_rect(Rect2(Vector2(dx, bar_y), Vector2(seg_w, BAR_HEIGHT)), Color(c.r, c.g, c.b, 0.88), true)
+			dx += seg_w
 
 	var hp_text_y := bar_y + BAR_HEIGHT + 13.0
 	draw_string(font, Vector2(PAD, hp_text_y),
@@ -124,22 +122,11 @@ func _draw() -> void:
 		var pill_y := hp_text_y + 18.0 + 5.0
 		var pill_h := 12.0
 		var pill_w := WIDTH - PAD * 2.0
-		if _poison > 0:
-			var label := "POI %d" % _poison
-			draw_rect(Rect2(Vector2(PAD, pill_y), Vector2(pill_w, pill_h)), COLOR_POISON, true)
+		for status: MageStatusData in _statuses:
+			draw_rect(Rect2(Vector2(PAD, pill_y), Vector2(pill_w, pill_h)), status.display_color, true)
 			draw_string(font, Vector2(PAD + pill_w * 0.5, pill_y + 10.0),
-					label, HORIZONTAL_ALIGNMENT_CENTER, pill_w, 9, Color.WHITE)
+					status.get_label(), HORIZONTAL_ALIGNMENT_CENTER, pill_w, 9, Color.WHITE)
 			pill_y += pill_h + 5.0
-		if _fire > 0:
-			var label := "FIRE %d" % _fire
-			draw_rect(Rect2(Vector2(PAD, pill_y), Vector2(pill_w, pill_h)), COLOR_FIRE, true)
-			draw_string(font, Vector2(PAD + pill_w * 0.5, pill_y + 10.0),
-					label, HORIZONTAL_ALIGNMENT_CENTER, pill_w, 9, Color.WHITE)
-			pill_y += pill_h + 5.0
-		if _vine_snare:
-			draw_rect(Rect2(Vector2(PAD, pill_y), Vector2(pill_w, pill_h)), COLOR_VINE_SNARE, true)
-			draw_string(font, Vector2(PAD + pill_w * 0.5, pill_y + 10.0),
-					"VINE SNARE", HORIZONTAL_ALIGNMENT_CENTER, pill_w, 9, Color.WHITE)
 
 	var r := get_rect()
 	if _hovered:

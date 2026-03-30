@@ -9,16 +9,12 @@ var enemy_block: Dictionary = {}
 # obstacle_id -> current_hp (absent = destroyed)
 var obstacle_hp: Dictionary = {}
 var mage_hp: Array[int] = []
-var mage_poison: Array[int] = []   # stacks per mage; each stack deals 1 dmg then decrements
 var enemy_poison: Dictionary = {}  # enemy_id -> stacks
-var mage_fire: Array[int] = []     # fire stacks per mage; deal stacks dmg then halve each round
 var enemy_fire: Dictionary = {}    # enemy_id -> fire stacks
-var mage_wet: Array[int] = []      # wet stacks per mage; absorb incoming fire, decay 1/turn
 var enemy_wet: Dictionary = {}     # enemy_id -> wet stacks
-var mage_frozen: Array[bool] = []  # frozen per mage; immune to fire, removed by first fire hit
 var enemy_frozen: Dictionary = {}  # enemy_id -> true; skips attack, immune to fire, removed by first fire hit
 var webbed_slots: Dictionary = {}  # "mage_index/slot_id" -> true; slot unusable this turn
-var mage_vine_snare: Dictionary = {}  # mage_index -> enemy_id; attacking costs 50% HP, HP goes to snarer
+var mage_statuses: Array = []          # index = mage_index, value = Array[MageStatusData]
 var mana: int = 0
 # "mage_index/slot_id" -> charges placed on that slot
 var slot_charges: Dictionary = {}
@@ -66,18 +62,11 @@ func add_fire_stacks_to_enemy(enemy_id: String, stacks: int) -> void:
 		enemy_fire[enemy_id] = (enemy_fire.get(enemy_id, 0) as int) + remaining
 
 
-func add_fire_stacks_to_mage(mage_idx: int, stacks: int) -> void:
-	if stacks <= 0 or mage_idx < 0 or mage_idx >= mage_fire.size():
-		return
-	if mage_frozen[mage_idx]:
-		mage_frozen[mage_idx] = false
-		return
-	var wet := mage_wet[mage_idx]
-	var remaining := stacks - wet
-	if wet > 0:
-		mage_wet[mage_idx] = maxi(0, wet - stacks)
-	if remaining > 0:
-		mage_fire[mage_idx] += remaining
+func add_mage_status(mage_index: int, new_status: MageStatusData) -> void:
+	for status: MageStatusData in mage_statuses[mage_index].duplicate():
+		status.on_add_status(self, mage_index, new_status)
+	if new_status.stacks != 0:
+		mage_statuses[mage_index].append(new_status)
 
 
 func kill_enemy(enemy_id: String) -> void:
@@ -92,13 +81,12 @@ func kill_enemy(enemy_id: String) -> void:
 	enemy_blind.erase(enemy_id)
 	enemy_attack_mult.erase(enemy_id)
 	enemy_positions.erase(enemy_id)
+	for statuses: Array in mage_statuses:
+		statuses.assign(statuses.filter(
+				func(s: MageStatusData) -> bool: return s.source_enemy_id != enemy_id))
 
 
 func tick_poison() -> void:
-	for i in mage_poison.size():
-		if mage_poison[i] > 0:
-			mage_hp[i] = max(0, mage_hp[i] - 1)
-			mage_poison[i] -= 1
 	var to_kill: Array[String] = []
 	for enemy_id: String in enemy_poison:
 		if enemy_poison[enemy_id] > 0 and enemy_hp.has(enemy_id):
@@ -111,10 +99,6 @@ func tick_poison() -> void:
 
 
 func tick_fire() -> void:
-	for i in mage_fire.size():
-		if mage_fire[i] > 0:
-			mage_hp[i] = max(0, mage_hp[i] - mage_fire[i])
-			mage_fire[i] /= 2
 	var to_kill: Array[String] = []
 	for enemy_id: String in enemy_fire:
 		if enemy_fire[enemy_id] > 0 and enemy_hp.has(enemy_id):
@@ -127,8 +111,6 @@ func tick_fire() -> void:
 
 
 func tick_wet() -> void:
-	for i in mage_wet.size():
-		mage_wet[i] = maxi(0, mage_wet[i] - 1)
 	var to_erase: Array[String] = []
 	for enemy_id: String in enemy_wet:
 		enemy_wet[enemy_id] -= 1

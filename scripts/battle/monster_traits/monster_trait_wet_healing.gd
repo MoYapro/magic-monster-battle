@@ -16,6 +16,5 @@ func apply_end_of_round(state: BattleState, setup: BattleSetup, enemy_id: String
 	var enemy := setup.get_enemy(enemy_id)
 	if enemy == null:
 		return new_state
-	new_state.enemy_hp[enemy_id] = mini(new_state.enemy_hp[enemy_id] + amount, enemy.max_hp)
-	new_state.enemy_wet[enemy_id] = ceili(wet / 2.0)
+	new_state.enemy_hp[enemy_id] = mini(new_state.enemy_hp[enemy_id] + wet * amount, enemy.max_hp)
 	return new_state

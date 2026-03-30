@@ -1,8 +1,8 @@
-class_name MonsterActionVineSnare extends MonsterActionData
+class_name MonsterActionLeech extends MonsterActionData
 
 
 func _init() -> void:
-	name = "Vine Snare"
+	name = "Leech"
 	target_type = TargetType.MAGE
 
 
@@ -10,5 +10,5 @@ func execute(state: BattleState, _setup: BattleSetup, enemy_id: String, target: 
 	if target < 0:
 		return state
 	var new_state := state.duplicate()
-	new_state.mage_statuses[target].append(MageStatusVineSnare.new(enemy_id))
+	new_state.mage_statuses[target].append(MageStatusLeech.new(enemy_id))
 	return new_state

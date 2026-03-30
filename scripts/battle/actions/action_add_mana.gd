@@ -23,4 +23,6 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 	new_state.slot_charges[key] = current + 1
 	new_state.mana -= 1
 	new_state.mage_mana_spent[mage_index] += 1
+	for status: MageStatusData in new_state.mage_statuses[mage_index].duplicate():
+		new_state = status.on_mana_spent(new_state, setup, mage_index)
 	return new_state

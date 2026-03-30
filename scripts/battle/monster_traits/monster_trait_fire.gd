@@ -6,11 +6,11 @@ func _init() -> void:
 
 
 func apply_on_hit(state: BattleState, _setup: BattleSetup, _enemy_id: String, target_mage: int, damage: int) -> BattleState:
-	if target_mage < 0 or target_mage >= state.mage_fire.size():
+	if target_mage < 0 or target_mage >= state.mage_statuses.size():
 		return state
 	var fire_to_apply := maxi(0, damage - 1)
 	if fire_to_apply == 0:
 		return state
 	var new_state := state.duplicate()
-	new_state.add_fire_stacks_to_mage(target_mage, fire_to_apply)
+	new_state.add_mage_status(target_mage, MageStatusFire.new(fire_to_apply))
 	return new_state

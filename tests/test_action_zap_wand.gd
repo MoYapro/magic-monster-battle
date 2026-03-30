@@ -21,10 +21,7 @@ func _make_state(setup: BattleSetup) -> BattleState:
 		s.enemy_hp[e.id] = e.max_hp
 	s.mage_hp.append(30)
 	s.mage_mana_spent.append(0)
-	s.mage_fire.append(0)
-	s.mage_wet.append(0)
-	s.mage_poison.append(0)
-	s.mage_frozen.append(false)
+	s.mage_statuses.append([])
 	s.slot_charges["0/s0_0"] = 99  # body slot always charged
 	s.slot_charges["0/tip"] = 1    # tip charged
 	s.mana = 10
@@ -58,7 +55,7 @@ func test_zap_does_nothing_when_mage_is_frozen() -> void:
 	var enemy := EnemyData.new("e1", "Target", 20, Vector2i(1, 1), Color.RED)
 	var setup := _make_setup(_strike_spell(), enemy)
 	var state := _make_state(setup)
-	state.mage_frozen[0] = true
+	state.mage_statuses[0].append(MageStatusFrozen.new())
 	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(state, setup)
 	assert_eq(result.enemy_hp["e1"], 20)
 
@@ -159,10 +156,7 @@ func test_backfire_deals_damage_to_caster() -> void:
 	state.enemy_hp["e1"] = 20
 	state.mage_hp.append(30)
 	state.mage_mana_spent.append(0)
-	state.mage_fire.append(0)
-	state.mage_wet.append(0)
-	state.mage_poison.append(0)
-	state.mage_frozen.append(false)
+	state.mage_statuses.append([])
 	state.slot_charges["0/s0_0"] = 99
 	state.slot_charges["0/s1_0"] = 99
 	state.slot_charges["0/s2_0"] = 99

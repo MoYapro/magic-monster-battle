@@ -10,9 +10,6 @@ func _init(rng_seed: int) -> void:
 func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 	var new_state := state.duplicate()
 
-	# Clear snares from the previous round before monsters act
-	new_state.mage_vine_snare.clear()
-
 	# Resolve each monster's queued intent
 	for enemy_id: String in new_state.monster_intents:
 		if not new_state.enemy_hp.has(enemy_id):
@@ -42,7 +39,11 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 	# Puddle cells apply wet(2) to any monster standing on them
 	setup.apply_puddle_wet(new_state)
 
-	# Status effects: poison, fire, wet
+	# Mage status turn-end effects (fire damage, poison tick, wet decay, etc.)
+	for i in new_state.mage_statuses.size():
+		for status: MageStatusData in new_state.mage_statuses[i].duplicate():
+			new_state = status.on_turn_end(new_state, setup, i)
+	# Enemy status ticks
 	new_state.tick_poison()
 	new_state.tick_fire()
 	new_state.tick_wet()

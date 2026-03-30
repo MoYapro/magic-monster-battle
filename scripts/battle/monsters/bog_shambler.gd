@@ -11,4 +11,5 @@ func _init() -> void:
 		MonsterActionAttack.new("Mudslap", 6),
 		MonsterActionAttack.new("Entangle", 5, 2),
 		MonsterActionAttack.new("Bog Slam", 9),
+		MonsterActionLeech.new(),
 	]

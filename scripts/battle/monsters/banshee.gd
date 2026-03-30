@@ -12,4 +12,5 @@ func _init() -> void:
 	action_pool = [
 		MonsterActionAttack.new("Wail", 9),
 		MonsterActionAttack.new("Soul Drain", 12),
+		MonsterActionLeech.new(),
 	]
