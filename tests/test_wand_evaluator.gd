@@ -53,7 +53,7 @@ func test_catalyst_with_reactants_fires_all_individually() -> void:
 	# Fusion happens at loot-screen time, not at cast time.
 	# A catalyst sitting next to reactants in the wand fires as three separate projectiles.
 	var events := WandEvaluator.evaluate([
-		_catalyst("force_push", 3), _projectile("frost", 2), _projectile("frost", 2)
+		_catalyst("force_push", 3), _projectile("frost", 2), _projectile("fire", 2)
 	])
 	assert_eq(events.size(), 3)
 	for ev in events:
@@ -96,3 +96,48 @@ func test_modifier_applies_to_catalyst_firing_as_projectile() -> void:
 	])
 	assert_eq(events.size(), 1)
 	assert_eq((events[0] as CastEvent).total_damage, 6)
+
+
+# --- multi-cast (consecutive identical spells) ---
+
+func test_two_identical_spells_merge_into_one_event() -> void:
+	# 5^2 = 25
+	var events := WandEvaluator.evaluate([_projectile("frost", 5), _projectile("frost", 5)])
+	assert_eq(events.size(), 1)
+	assert_eq((events[0] as CastEvent).total_damage, 25)
+
+
+func test_three_identical_spells_cube_damage() -> void:
+	# 3^3 = 27
+	var events := WandEvaluator.evaluate([
+		_projectile("frost", 3), _projectile("frost", 3), _projectile("frost", 3)
+	])
+	assert_eq(events.size(), 1)
+	assert_eq((events[0] as CastEvent).total_damage, 27)
+
+
+func test_different_spells_do_not_merge() -> void:
+	var events := WandEvaluator.evaluate([_projectile("frost", 5), _projectile("fire", 5)])
+	assert_eq(events.size(), 2)
+
+
+func test_modifier_applies_once_to_merged_multi_cast() -> void:
+	# 3^3 = 27, then damage_mult x2 → 54
+	var events := WandEvaluator.evaluate([
+		_modifier({"type": "damage_mult", "factor": 2}),
+		_projectile("frost", 3), _projectile("frost", 3), _projectile("frost", 3),
+	])
+	assert_eq(events.size(), 1)
+	assert_eq((events[0] as CastEvent).total_damage, 54)
+
+
+func test_modifier_between_identical_spells_breaks_merge() -> void:
+	# frost, modifier, frost → two separate events; modifier applies only to second frost
+	var events := WandEvaluator.evaluate([
+		_projectile("frost", 5),
+		_modifier({"type": "damage_mult", "factor": 3}),
+		_projectile("frost", 5),
+	])
+	assert_eq(events.size(), 2)
+	assert_eq((events[0] as CastEvent).total_damage, 5)
+	assert_eq((events[1] as CastEvent).total_damage, 15)

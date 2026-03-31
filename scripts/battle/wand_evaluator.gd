@@ -14,20 +14,30 @@ class_name WandEvaluator
 static func evaluate(spells: Array[SpellData]) -> Array[CastEvent]:
 	var events: Array[CastEvent] = []
 	var pending_mods: Array[Dictionary] = []
-	for spell: SpellData in spells:
+	var i := 0
+	while i < spells.size():
+		var spell: SpellData = spells[i]
 		if spell.spell_type == "modifier":
 			pending_mods.append(spell.modifier_effect)
+			i += 1
 		else:
-			events.append(_make_projectile(spell, pending_mods))
+			var count := 1
+			while i + count < spells.size() and spells[i + count].spell_id == spell.spell_id:
+				count += 1
+			events.append(_make_projectile(spell, pending_mods, count))
 			pending_mods = []
+			i += count
 	return events
 
 
-static func _make_projectile(spell: SpellData, mods: Array[Dictionary]) -> CastEvent:
+static func _make_projectile(spell: SpellData, mods: Array[Dictionary], count: int = 1) -> CastEvent:
 	var ev := CastEvent.new()
 	ev.type = CastEvent.Type.PROJECTILE
 	ev.spell = spell
-	ev.total_damage = spell.damage
+	var total := 1
+	for _k in count:
+		total *= spell.damage
+	ev.total_damage = total
 	ev.on_hit_effects = spell.on_hit_effects.duplicate()
 	ev.mana_refund = 0
 	for mod in mods:
