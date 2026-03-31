@@ -71,9 +71,11 @@ func _fill_obstacles(state: BattleState) -> void:
 
 func _copy_mages(state: BattleState) -> void:
 	for mage: MageData in mages:
-		state.mage_hp.append(mage.max_hp)
-		state.mage_mana_spent.append(0)
+		state.mage_hp.append(maxi(1, mage.max_hp - mage.hp_penalty))
+		state.mage_mana_spent.append(mage.mana_debt)
 		state.mage_statuses.append([])
+		mage.hp_penalty = 0
+		mage.mana_debt = 0
 
 
 func get_enemy_pos(index: int, state: BattleState) -> Vector2i:
