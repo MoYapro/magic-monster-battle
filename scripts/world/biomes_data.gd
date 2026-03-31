@@ -1,18 +1,23 @@
 class_name BiomesData
 
-# Biome grid axes:
-#   x = 0 (hot / dry)  <------>  10 (wet / cold)
-#   y = 0 (real)       <------>  10 (fantasy)
+# Layer 1 — starters (always available):
+#   Desert, Tundra, Forest, Swamp, Mountain
 #
-#        0    1    2    3    4    5    6    7    8    9   10
-#  0         Desert              Forest       Mountain Tundra
-#  1         Volcano                               ...
-#  2
-#  3                   Swamp
-#  4
-#  5                        Cave
-#  6                                  Ruins
-#  ...
+# RPS cycle: Fire(Desert) > Ice(Tundra) > Nature(Forest) > Poison(Swamp) > Earth(Mountain) > Fire
+#
+# Layer 2 — unlocked by layer 1 boss:
+#   Desert     → Pyramids, Coast
+#   Tundra     → Glacial Temple, Frozen Shipwreck
+#   Forest     → Jungle, Graveyard
+#   Swamp      → Ruins, Coast (shared)
+#   Mountain   → Cave, Volcano
+#
+# Layer 3 — unlocked by layer 2 boss (any one suffices):
+#   Hell        ← Graveyard | Ruins | Volcano
+#   Astral Plane← Glacial Temple | Pyramids | Jungle
+#   Underwater  ← Coast | Frozen Shipwreck | Cave
+#
+# The Source — unlocked after all three layer 3 bosses
 
 static var _all: Array[BiomeData] = []
 
@@ -21,6 +26,10 @@ static func all() -> Array[BiomeData]:
 	if _all.is_empty():
 		_all = _build()
 	return _all
+
+
+static func by_layer(layer: int) -> Array[BiomeData]:
+	return all().filter(func(b: BiomeData) -> bool: return b.layer == layer)
 
 
 static func get_by_name(biome_name: String) -> BiomeData:
@@ -45,31 +54,83 @@ static func stray_pool(biome: BiomeData) -> Array[BiomeData]:
 
 
 static func _build() -> Array[BiomeData]:
-	var desert   := BiomeData.new("Desert",   "The heat breaks minds before bodies.",  Color(0.85, 0.60, 0.15), Vector2i(1, 0))
-	var volcano  := BiomeData.new("Volcano",  "The earth itself is your enemy.",       Color(0.85, 0.25, 0.10), Vector2i(1, 1))
-	var forest   := BiomeData.new("Forest",   "Ancient trees hide ancient dangers.",   Color(0.15, 0.55, 0.20), Vector2i(4, 1))
-	var mountain := BiomeData.new("Mountain", "The summit demands a toll.",            Color(0.55, 0.55, 0.60), Vector2i(7, 1))
-	var tundra   := BiomeData.new("Tundra",   "Cold enough to numb courage.",          Color(0.45, 0.65, 0.85), Vector2i(9, 0))
-	var swamp    := BiomeData.new("Swamp",    "Nothing enters here and leaves clean.", Color(0.25, 0.50, 0.30), Vector2i(3, 3))
-	var cave     := BiomeData.new("Cave",     "Darkness is the least of your fears.",  Color(0.30, 0.25, 0.40), Vector2i(5, 5))
-	var ruins    := BiomeData.new("Ruins",    "Something still walks these halls.",    Color(0.55, 0.45, 0.35), Vector2i(7, 6))
+	# --- Layer 1 ---
+	var desert   := BiomeData.new("Desert",   "The heat breaks minds before bodies.",  Color(0.85, 0.60, 0.15), Vector2i(1, 0), 1, [])
+	var tundra   := BiomeData.new("Tundra",   "Cold enough to numb courage.",          Color(0.45, 0.65, 0.85), Vector2i(9, 0), 1, [])
+	var forest   := BiomeData.new("Forest",   "Ancient trees hide ancient dangers.",   Color(0.15, 0.55, 0.20), Vector2i(4, 1), 1, [])
+	var swamp    := BiomeData.new("Swamp",    "Nothing enters here and leaves clean.", Color(0.25, 0.50, 0.30), Vector2i(3, 3), 1, [])
+	var mountain := BiomeData.new("Mountain", "The summit demands a toll.",            Color(0.55, 0.55, 0.60), Vector2i(7, 1), 1, [])
 
-	desert.monster_pool   = [Goblin, Skeleton, Scorpion]
-	volcano.monster_pool  = [Goblin, ShieldOgre, FireElemental, WarDrummer]
-	forest.monster_pool   = [Goblin, Troll, Treant, WraithBlade, ShadowPanther, GroveTender]
-	mountain.monster_pool = [Troll, ShieldOgre, StoneGiant, WarDrummer]
-	tundra.monster_pool   = [Skeleton, Troll, FrostMage, Banshee]
-	swamp.monster_pool    = [Goblin, Witch, Troll, BogShambler, ShadowPanther, GroveTender]
-	cave.monster_pool     = [Goblin, Troll, ShieldOgre, CaveSpider, WraithBlade]
-	ruins.monster_pool    = [Skeleton, Witch, ShieldOgre, CursedKnight, Banshee, BoneCaller, WarDrummer, FallenPaladin]
+	# --- Layer 2 ---
+	var pyramids         := BiomeData.new("Pyramids",          "The dead do not sleep here.",               Color(0.80, 0.70, 0.30), Vector2i(1, 2), 2, ["Desert"])
+	var coast            := BiomeData.new("Coast",             "The sea takes what it wants.",              Color(0.20, 0.55, 0.75), Vector2i(3, 1), 2, ["Desert", "Swamp"])
+	var glacial_temple   := BiomeData.new("Glacial Temple",    "Faith, frozen solid.",                      Color(0.60, 0.80, 0.95), Vector2i(9, 2), 2, ["Tundra"])
+	var frozen_shipwreck := BiomeData.new("Frozen Shipwreck",  "No one remembers what they were carrying.", Color(0.40, 0.55, 0.75), Vector2i(8, 1), 2, ["Tundra"])
+	var jungle           := BiomeData.new("Jungle",            "Life here does not ask permission.",        Color(0.10, 0.45, 0.15), Vector2i(4, 3), 2, ["Forest"])
+	var graveyard        := BiomeData.new("Graveyard",         "The names on the stones are warnings.",     Color(0.35, 0.35, 0.40), Vector2i(3, 4), 2, ["Forest", "Swamp"])
+	var ruins            := BiomeData.new("Ruins",             "Something still walks these halls.",        Color(0.55, 0.45, 0.35), Vector2i(7, 6), 2, ["Swamp"])
+	var cave             := BiomeData.new("Cave",              "Darkness is the least of your fears.",      Color(0.30, 0.25, 0.40), Vector2i(5, 5), 2, ["Mountain"])
+	var volcano          := BiomeData.new("Volcano",           "The earth itself is your enemy.",           Color(0.85, 0.25, 0.10), Vector2i(1, 1), 2, ["Mountain"])
 
-	desert.obstacle_pool   = [Stone, Boulder, Barrel, Cactus, SandDune, Obelisk]
-	volcano.obstacle_pool  = [Stone, Boulder, Barrel, LavaRock, ObsidianSpike, AshPile]
-	forest.obstacle_pool   = [ObstacleTree, Log, Stone, Thornbush, AncientStump, MushroomCircle]
-	mountain.obstacle_pool = [Boulder, Stone, Monolith, IceBlock, Stalagmite, SnowDrift]
-	tundra.obstacle_pool   = [Stone, Boulder, Log, IceWall, FrozenLog, GlacierChunk]
-	swamp.obstacle_pool    = [Log, ObstacleTree, Barrel, Mudpit, RottedStump, BogPillar]
-	cave.obstacle_pool     = [Stone, Boulder, Monolith, StalactitePillar, CrystalFormation, BonePile]
-	ruins.obstacle_pool    = [Monolith, Stone, Barrel, BrokenPillar, Altar, Sarcophagus]
+	# --- Layer 3 ---
+	var hell       := BiomeData.new("Hell",         "Everything here was once alive.",          Color(0.70, 0.10, 0.05), Vector2i(2, 8), 3, ["Graveyard", "Ruins", "Volcano"])
+	var astral     := BiomeData.new("Astral Plane", "Even light casts a shadow here.",          Color(0.85, 0.85, 1.00), Vector2i(6, 8), 3, ["Glacial Temple", "Pyramids", "Jungle"])
+	var underwater := BiomeData.new("Underwater",   "Pressure is the least of your problems.", Color(0.05, 0.25, 0.60), Vector2i(5, 7), 3, ["Coast", "Frozen Shipwreck", "Cave"])
 
-	return [desert, volcano, forest, mountain, tundra, swamp, cave, ruins]
+	# --- The Source ---
+	var the_source := BiomeData.new("The Source", "All things come from here. All things end here.", Color(0.50, 0.00, 0.50), Vector2i(5, 10), 4, ["Hell", "Astral Plane", "Underwater"])
+
+	# --- Monster pools ---
+	desert.monster_pool          = [Goblin, Scorpion, ShieldOgre]
+	tundra.monster_pool          = [Skeleton, FrostMage, Troll]
+	forest.monster_pool          = [Goblin, Treant, ShadowPanther]
+	swamp.monster_pool           = [BogShambler, Witch, Troll]
+	mountain.monster_pool        = [ShieldOgre, StoneGiant, WarDrummer]
+
+	pyramids.monster_pool        = [Skeleton, Scorpion, CursedKnight, BoneCaller]
+	coast.monster_pool           = [Goblin, Witch, ShadowPanther, WraithBlade]
+	glacial_temple.monster_pool  = [FrostMage, Skeleton, WraithBlade, Troll]
+	frozen_shipwreck.monster_pool = [Skeleton, FrostMage, Troll, BogShambler]
+	jungle.monster_pool          = [Treant, GroveTender, ShadowPanther, BogShambler]
+	graveyard.monster_pool       = [Skeleton, WraithBlade, Banshee, CursedKnight, BoneCaller]
+	ruins.monster_pool           = [CursedKnight, BoneCaller, Banshee, FallenPaladin, WarDrummer]
+	cave.monster_pool            = [CaveSpider, Troll, ShieldOgre, WraithBlade, StoneGiant]
+	volcano.monster_pool         = [FireElemental, StoneGiant, WarDrummer, ShieldOgre, Troll]
+
+	hell.monster_pool            = [CursedKnight, FallenPaladin, FireElemental, BoneCaller, Banshee]
+	astral.monster_pool          = [FallenPaladin, FrostMage, GroveTender, Treant, Banshee]
+	underwater.monster_pool      = [BogShambler, CaveSpider, Witch, ShadowPanther, StoneGiant]
+
+	the_source.monster_pool      = [Goblin, Skeleton, Scorpion, Troll, ShieldOgre, FireElemental,
+									WarDrummer, Treant, WraithBlade, ShadowPanther, GroveTender,
+									StoneGiant, FrostMage, Banshee, Witch, BogShambler, CaveSpider,
+									CursedKnight, BoneCaller, FallenPaladin]
+
+	# --- Obstacle pools ---
+	desert.obstacle_pool         = [Stone, Boulder, Barrel, Cactus, SandDune, Obelisk]
+	tundra.obstacle_pool         = [Stone, Boulder, Log, IceWall, FrozenLog, GlacierChunk]
+	forest.obstacle_pool         = [ObstacleTree, Log, Stone, Thornbush, AncientStump, MushroomCircle]
+	swamp.obstacle_pool          = [Log, ObstacleTree, Barrel, Mudpit, RottedStump, BogPillar]
+	mountain.obstacle_pool       = [Boulder, Stone, Monolith, IceBlock, Stalagmite, SnowDrift]
+
+	pyramids.obstacle_pool       = [Stone, Boulder, Obelisk, Sarcophagus, Monolith, Altar]
+	coast.obstacle_pool          = [Log, Barrel, Stone, Boulder, RottedStump, Mudpit]
+	glacial_temple.obstacle_pool = [IceBlock, IceWall, GlacierChunk, Stone, Monolith, Altar]
+	frozen_shipwreck.obstacle_pool = [FrozenLog, IceBlock, Barrel, Log, BonePile, GlacierChunk]
+	jungle.obstacle_pool         = [ObstacleTree, Log, Thornbush, AncientStump, MushroomCircle, Mudpit]
+	graveyard.obstacle_pool      = [Stone, Monolith, BonePile, Sarcophagus, BrokenPillar, Altar]
+	ruins.obstacle_pool          = [Monolith, Stone, Barrel, BrokenPillar, Altar, Sarcophagus]
+	cave.obstacle_pool           = [Stone, Boulder, Monolith, StalactitePillar, CrystalFormation, BonePile]
+	volcano.obstacle_pool        = [Stone, Boulder, LavaRock, ObsidianSpike, AshPile, Barrel]
+
+	hell.obstacle_pool           = [LavaRock, ObsidianSpike, AshPile, BonePile, Altar, Sarcophagus]
+	astral.obstacle_pool         = [Stone, Monolith, CrystalFormation, IceBlock, Altar, Obelisk]
+	underwater.obstacle_pool     = [Stone, Boulder, CrystalFormation, StalactitePillar, BonePile, Mudpit]
+
+	the_source.obstacle_pool     = [Stone, Boulder, Monolith, CrystalFormation, Altar, Sarcophagus,
+									LavaRock, IceBlock, BonePile, ObstacleTree]
+
+	return [desert, tundra, forest, swamp, mountain,
+			pyramids, coast, glacial_temple, frozen_shipwreck, jungle, graveyard, ruins, cave, volcano,
+			hell, astral, underwater,
+			the_source]
