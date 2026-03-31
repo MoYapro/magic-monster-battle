@@ -18,7 +18,7 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 		if enemy == null or enemy.action_pool.is_empty():
 			continue
 		var _es: Array = new_state.enemy_statuses.get(enemy_id, [])
-		if _es.any(func(s: MonsterStatusData) -> bool: return s.blocks_action()):
+		if _es.any(func(s: StatusData) -> bool: return s.blocks_action()):
 			continue
 		var intent: Dictionary = new_state.monster_intents[enemy_id]
 		var action_index: int = intent.get("action_index", 0)
@@ -40,16 +40,19 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 	# Puddle cells apply wet(2) to any monster standing on them
 	setup.apply_puddle_wet(new_state)
 
-	# Mage status turn-end effects (fire damage, poison tick, wet decay, etc.)
+	# Mage status turn-end effects
 	for i in new_state.mage_statuses.size():
-		for status: MageStatusData in new_state.mage_statuses[i].duplicate():
-			new_state = status.on_turn_end(new_state, setup, i)
-	# Enemy status turn-end effects (fire damage, poison tick, wet decay, etc.)
+		var target := StatusTarget.for_mage(new_state, i)
+		for status: StatusData in target.get_statuses().duplicate():
+			status.on_turn_end(target, setup)
+
+	# Enemy status turn-end effects
 	for enemy_id: String in new_state.enemy_statuses.keys():
 		if not new_state.enemy_hp.has(enemy_id):
 			continue
-		for status: MonsterStatusData in (new_state.enemy_statuses[enemy_id] as Array).duplicate():
-			new_state = status.on_turn_end(new_state, setup, enemy_id)
+		var target := StatusTarget.for_enemy(new_state, enemy_id)
+		for status: StatusData in target.get_statuses().duplicate():
+			status.on_turn_end(target, setup)
 
 	# Reset turn resources
 	new_state.enemy_attack_mult.clear()

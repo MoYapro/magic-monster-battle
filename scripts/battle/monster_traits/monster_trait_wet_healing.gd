@@ -9,9 +9,9 @@ func _init(p_amount: int) -> void:
 
 
 func apply_end_of_round(state: BattleState, setup: BattleSetup, enemy_id: String) -> BattleState:
-	var wet_status: MonsterStatusWet = null
-	for s: MonsterStatusData in (state.enemy_statuses.get(enemy_id, []) as Array):
-		if s is MonsterStatusWet:
+	var wet_status: StatusWet = null
+	for s: StatusData in (state.enemy_statuses.get(enemy_id, []) as Array):
+		if s is StatusWet:
 			wet_status = s
 			break
 	if wet_status == null or wet_status.stacks <= 0:

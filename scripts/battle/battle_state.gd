@@ -9,9 +9,9 @@ var enemy_block: Dictionary = {}
 # obstacle_id -> current_hp (absent = destroyed)
 var obstacle_hp: Dictionary = {}
 var mage_hp: Array[int] = []
-var enemy_statuses: Dictionary = {}  # enemy_id -> Array[MonsterStatusData]
+var enemy_statuses: Dictionary = {}  # enemy_id -> Array[StatusData]
 var webbed_slots: Dictionary = {}  # "mage_index/slot_id" -> true; slot unusable this turn
-var mage_statuses: Array = []          # index = mage_index, value = Array[MageStatusData]
+var mage_statuses: Array = []          # index = mage_index, value = Array[StatusData]
 var mana: int = 0
 # "mage_index/slot_id" -> charges placed on that slot
 var slot_charges: Dictionary = {}
@@ -43,22 +43,23 @@ func duplicate() -> BattleState:
 	return s
 
 
-func add_enemy_status(enemy_id: String, new_status: MonsterStatusData) -> void:
+func add_enemy_status(enemy_id: String, new_status: StatusData) -> void:
 	if not enemy_hp.has(enemy_id):
 		return
 	if not enemy_statuses.has(enemy_id):
 		enemy_statuses[enemy_id] = []
-	for status: MonsterStatusData in (enemy_statuses[enemy_id] as Array).duplicate():
-		status.on_add_status(self, enemy_id, new_status)
-	if new_status.stacks != 0:
-		(enemy_statuses[enemy_id] as Array).append(new_status)
+	_add_status(StatusTarget.for_enemy(self, enemy_id), new_status)
 
 
-func add_mage_status(mage_index: int, new_status: MageStatusData) -> void:
-	for status: MageStatusData in mage_statuses[mage_index].duplicate():
-		status.on_add_status(self, mage_index, new_status)
+func add_mage_status(mage_index: int, new_status: StatusData) -> void:
+	_add_status(StatusTarget.for_mage(self, mage_index), new_status)
+
+
+func _add_status(target: StatusTarget, new_status: StatusData) -> void:
+	for status: StatusData in target.get_statuses().duplicate():
+		status.on_add_status(target, new_status)
 	if new_status.stacks != 0:
-		mage_statuses[mage_index].append(new_status)
+		target.get_statuses().append(new_status)
 
 
 func kill_enemy(enemy_id: String) -> void:
@@ -72,6 +73,4 @@ func kill_enemy(enemy_id: String) -> void:
 	enemy_positions.erase(enemy_id)
 	for statuses: Array in mage_statuses:
 		statuses.assign(statuses.filter(
-				func(s: MageStatusData) -> bool: return s.source_enemy_id != enemy_id))
-
-
+				func(s: StatusData) -> bool: return s.source_enemy_id != enemy_id))

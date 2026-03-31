@@ -1,4 +1,4 @@
-class_name MageStatusLeech extends MageStatusData
+class_name StatusLeech extends StatusData
 
 
 func _init(enemy_id: String) -> void:
@@ -7,16 +7,15 @@ func _init(enemy_id: String) -> void:
 	display_color = Color(0.55, 0.10, 0.30)
 
 
-func on_turn_end(state: BattleState, _setup: BattleSetup, mage_index: int) -> BattleState:
-	state.mage_statuses[mage_index].erase(self)
-	return state
+func on_turn_end(target: StatusTarget, _setup: BattleSetup) -> void:
+	target.remove_status(self)
 
 
-func on_mana_spent(state: BattleState, setup: BattleSetup, _mage_index: int) -> BattleState:
+func on_mana_spent(target: StatusTarget, setup: BattleSetup) -> void:
+	var state := target.get_state()
 	if not state.enemy_hp.has(source_enemy_id):
-		return state
+		return
 	var leecher := setup.get_enemy(source_enemy_id)
 	if leecher != null:
 		state.enemy_hp[source_enemy_id] = mini(
 				state.enemy_hp[source_enemy_id] + 1, leecher.max_hp)
-	return state

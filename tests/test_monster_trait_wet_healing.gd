@@ -13,7 +13,7 @@ func _make_state(hp: int, wet: int) -> BattleState:
 	var s := BattleState.new()
 	s.enemy_hp["treant_1"] = hp
 	if wet > 0:
-		s.add_enemy_status("treant_1", MonsterStatusWet.new(wet))
+		s.add_enemy_status("treant_1", StatusWet.new(wet))
 	return s
 
 
@@ -46,6 +46,6 @@ func test_does_not_consume_wet_stacks() -> void:
 	var state := _make_state(500, 3)
 	var wet_healing := MonsterTraitWetHealing.new(1)
 	var result := wet_healing.apply_end_of_round(state, setup, "treant_1")
-	var wet_status: MonsterStatusWet = (result.enemy_statuses.get("treant_1", []) as Array).filter(
-			func(s: MonsterStatusData) -> bool: return s is MonsterStatusWet)[0]
+	var wet_status: StatusWet = (result.enemy_statuses.get("treant_1", []) as Array).filter(
+			func(s: StatusData) -> bool: return s is StatusWet)[0]
 	assert_eq(wet_status.stacks, 3)

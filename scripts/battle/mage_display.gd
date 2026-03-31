@@ -83,7 +83,7 @@ func _draw() -> void:
 
 	var hp_frac := float(_mage.current_hp) / float(_mage.max_hp)
 	var status_dmg := 0
-	for status: MageStatusData in _statuses:
+	for status: StatusData in _statuses:
 		status_dmg += status.get_turn_damage()
 	var total_dmg := _incoming_attack + status_dmg
 	var hp_after := maxi(0, _mage.current_hp - total_dmg)
@@ -97,7 +97,7 @@ func _draw() -> void:
 	if atk_w > 0.5:
 		draw_rect(Rect2(Vector2(dx, bar_y), Vector2(atk_w, BAR_HEIGHT)), Color(0.85, 0.15, 0.12, 0.88), true)
 		dx += atk_w
-	for status: MageStatusData in _statuses:
+	for status: StatusData in _statuses:
 		var dmg := status.get_turn_damage()
 		if dmg <= 0:
 			continue
@@ -122,7 +122,7 @@ func _draw() -> void:
 		var pill_y := hp_text_y + 18.0 + 5.0
 		var pill_h := 12.0
 		var pill_w := WIDTH - PAD * 2.0
-		for status: MageStatusData in _statuses:
+		for status: StatusData in _statuses:
 			draw_rect(Rect2(Vector2(PAD, pill_y), Vector2(pill_w, pill_h)), status.display_color, true)
 			draw_string(font, Vector2(PAD + pill_w * 0.5, pill_y + 10.0),
 					status.get_label(), HORIZONTAL_ALIGNMENT_CENTER, pill_w, 9, Color.WHITE)

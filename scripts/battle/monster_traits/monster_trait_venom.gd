@@ -12,5 +12,5 @@ func apply_on_hit(state: BattleState, _setup: BattleSetup, _enemy_id: String, ta
 	if target_mage < 0 or target_mage >= state.mage_statuses.size():
 		return state
 	var new_state := state.duplicate()
-	new_state.add_mage_status(target_mage, MageStatusPoison.new(stacks))
+	new_state.add_mage_status(target_mage, StatusPoison.new(stacks))
 	return new_state

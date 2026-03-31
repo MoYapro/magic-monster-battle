@@ -11,10 +11,11 @@ func _init(p_mage_index: int, p_target_cell: Vector2i) -> void:
 
 func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 	var new_state := state.duplicate()
-	if new_state.mage_statuses[mage_index].any(func(s: MageStatusData) -> bool: return s.blocks_zap()):
+	if new_state.mage_statuses[mage_index].any(func(s: StatusData) -> bool: return s.blocks_action()):
 		return new_state
-	for status: MageStatusData in new_state.mage_statuses[mage_index].duplicate():
-		new_state = status.on_zap(new_state, setup, mage_index)
+	var zap_target := StatusTarget.for_mage(new_state, mage_index)
+	for status: StatusData in new_state.mage_statuses[mage_index].duplicate():
+		status.on_zap(zap_target, setup)
 	if new_state.mage_mana_spent[mage_index] >= setup.mages[mage_index].mana_allowance:
 		return new_state
 	var wand := setup.wands[mage_index]
@@ -100,17 +101,17 @@ func _apply_on_hit_effects(
 	for effect: Dictionary in effects:
 		match effect.get("type", ""):
 			"fire":
-				state.add_enemy_status(eid, MonsterStatusFire.new(effect.get("stacks", 1)))
+				state.add_enemy_status(eid, StatusFire.new(effect.get("stacks", 1)))
 			"wet":
-				state.add_enemy_status(eid, MonsterStatusWet.new(effect.get("stacks", 1)))
+				state.add_enemy_status(eid, StatusWet.new(effect.get("stacks", 1)))
 			"poison":
 				var enemy := setup.get_enemy(eid)
 				var immune := enemy != null and enemy.traits.any(
 						func(t: MonsterTraitData) -> bool: return t is MonsterTraitPoisonImmunity)
 				if not immune:
-					state.add_enemy_status(eid, MonsterStatusPoison.new(effect.get("stacks", 1)))
+					state.add_enemy_status(eid, StatusPoison.new(effect.get("stacks", 1)))
 			"freeze":
-				state.add_enemy_status(eid, MonsterStatusFrozen.new())
+				state.add_enemy_status(eid, StatusFrozen.new())
 			"stun":
 				state.enemy_stunned[eid] = effect.get("turns", 1)
 			"blind":
@@ -119,7 +120,7 @@ func _apply_on_hit_effects(
 				if state.enemy_statuses.has(eid):
 					(state.enemy_statuses[eid] as Array).assign(
 						(state.enemy_statuses[eid] as Array).filter(
-							func(s: MonsterStatusData) -> bool: return not (s is MonsterStatusPoison)))
+							func(s: StatusData) -> bool: return not (s is StatusPoison)))
 
 
 func _apply_backfire(state: BattleState, mage_idx: int, ev: CastEvent) -> void:
@@ -127,8 +128,8 @@ func _apply_backfire(state: BattleState, mage_idx: int, ev: CastEvent) -> void:
 	for effect: Dictionary in ev.backfire_effects:
 		match effect.get("type", ""):
 			"stun":
-				state.mage_statuses[mage_idx].append(MageStatusFrozen.new())
+				state.add_mage_status(mage_idx, StatusFrozen.new())
 			"fire":
-				state.add_mage_status(mage_idx, MageStatusFire.new(effect.get("stacks", 1)))
+				state.add_mage_status(mage_idx, StatusFire.new(effect.get("stacks", 1)))
 			"poison":
-				state.add_mage_status(mage_idx, MageStatusPoison.new(effect.get("stacks", 1)))
+				state.add_mage_status(mage_idx, StatusPoison.new(effect.get("stacks", 1)))

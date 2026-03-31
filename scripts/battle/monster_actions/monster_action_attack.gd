@@ -28,7 +28,7 @@ func execute(state: BattleState, setup: BattleSetup,
 			for t: MonsterTraitData in enemy.traits:
 				new_state = t.apply_on_hit(new_state, setup, enemy_id, target, actual_damage) as BattleState
 		if wet_stacks > 0:
-			new_state.add_mage_status(target, MageStatusWet.new(wet_stacks))
+			new_state.add_mage_status(target, StatusWet.new(wet_stacks))
 		if applies_frozen:
-			new_state.mage_statuses[target].append(MageStatusFrozen.new())
+			new_state.add_mage_status(target, StatusFrozen.new())
 	return new_state

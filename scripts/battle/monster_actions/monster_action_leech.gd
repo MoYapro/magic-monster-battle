@@ -10,5 +10,5 @@ func execute(state: BattleState, _setup: BattleSetup, enemy_id: String, target: 
 	if target < 0:
 		return state
 	var new_state := state.duplicate()
-	new_state.mage_statuses[target].append(MageStatusLeech.new(enemy_id))
+	new_state.add_mage_status(target, StatusLeech.new(enemy_id))
 	return new_state

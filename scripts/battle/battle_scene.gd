@@ -363,7 +363,7 @@ func _apply_state(state: BattleState) -> void:
 			if not targets_mage or not state.enemy_hp.has(enemy_id):
 				continue
 			var _es: Array = state.enemy_statuses.get(enemy_id, [])
-			if _es.any(func(s: MonsterStatusData) -> bool: return s.blocks_action()):
+			if _es.any(func(s: StatusData) -> bool: return s.blocks_action()):
 				continue
 			var enemy := _setup.get_enemy(enemy_id)
 			if enemy == null:

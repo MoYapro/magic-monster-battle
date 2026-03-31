@@ -29,7 +29,7 @@ var _hovered_cells: Array[Vector2i] = []
 var _intents: Dictionary = {}
 var _armors: Dictionary = {}
 var _blocks: Dictionary = {}
-var _enemy_statuses: Dictionary = {}  # enemy_id -> Array[MonsterStatusData]
+var _enemy_statuses: Dictionary = {}  # enemy_id -> Array[StatusData]
 
 
 func set_armors(armors: Dictionary) -> void:
@@ -240,7 +240,7 @@ func _draw_enemies() -> void:
 					"🔲 %d" % _blocks[enemy.id],
 					HORIZONTAL_ALIGNMENT_RIGHT, -1, 11, Color(0.5, 0.8, 1.0))
 		var pills: Array = (_enemy_statuses.get(enemy.id, []) as Array).filter(
-				func(s: MonsterStatusData) -> bool: return s.display_name != "")
+				func(s: StatusData) -> bool: return s.display_name != "")
 		if not pills.is_empty():
 			var pill_h := 12.0
 			var pill_gap := 3.0
@@ -249,7 +249,7 @@ func _draw_enemies() -> void:
 			var intent_reserve := 16.0 if _intents.has(enemy.id) else 4.0
 			var pills_bottom := pixel_size.y - intent_reserve
 			var pill_y := maxf(34.0, pills_bottom - pill_count * pill_h - (pill_count - 1) * pill_gap)
-			for pill: MonsterStatusData in pills:
+			for pill: StatusData in pills:
 				draw_rect(Rect2(pixel_pos + Vector2(5.0, pill_y), Vector2(pill_w, pill_h)), pill.display_color, true)
 				draw_string(font, pixel_pos + Vector2(5.0, pill_y + 10.0),
 						pill.get_label(), HORIZONTAL_ALIGNMENT_CENTER, pill_w, 9, Color.WHITE)

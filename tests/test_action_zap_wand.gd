@@ -55,7 +55,7 @@ func test_zap_does_nothing_when_mage_is_frozen() -> void:
 	var enemy := EnemyData.new("e1", "Target", 20, Vector2i(1, 1), Color.RED)
 	var setup := _make_setup(_strike_spell(), enemy)
 	var state := _make_state(setup)
-	state.mage_statuses[0].append(MageStatusFrozen.new())
+	state.mage_statuses[0].append(StatusFrozen.new())
 	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(state, setup)
 	assert_eq(result.enemy_hp["e1"], 20)
 
@@ -109,7 +109,7 @@ func test_fire_on_hit_applies_fire_stacks_to_surviving_enemy() -> void:
 	var setup := _make_setup(spell, enemy)
 	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(_make_state(setup), setup)
 	var fires: Array = (result.enemy_statuses.get("e1", []) as Array).filter(
-			func(s: MonsterStatusData) -> bool: return s is MonsterStatusFire)
+			func(s: StatusData) -> bool: return s is StatusFire)
 	assert_gt(fires.size(), 0)
 
 
@@ -119,7 +119,7 @@ func test_wet_on_hit_applies_wet_stacks_to_enemy() -> void:
 	var setup := _make_setup(spell, enemy)
 	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(_make_state(setup), setup)
 	var wets: Array = (result.enemy_statuses.get("e1", []) as Array).filter(
-			func(s: MonsterStatusData) -> bool: return s is MonsterStatusWet)
+			func(s: StatusData) -> bool: return s is StatusWet)
 	assert_gt(wets.size(), 0)
 
 
@@ -129,7 +129,7 @@ func test_poison_on_hit_applies_poison_stacks_to_enemy() -> void:
 	var setup := _make_setup(spell, enemy)
 	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(_make_state(setup), setup)
 	var poisons: Array = (result.enemy_statuses.get("e1", []) as Array).filter(
-			func(s: MonsterStatusData) -> bool: return s is MonsterStatusPoison)
+			func(s: StatusData) -> bool: return s is StatusPoison)
 	assert_gt(poisons.size(), 0)
 
 
