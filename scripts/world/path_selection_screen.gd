@@ -97,8 +97,5 @@ func _input(event: InputEvent) -> void:
 		if _card_rect(i).has_point(pos):
 			get_viewport().set_input_as_handled()
 			GameState.current_biome = _choices[i]
-			if GameState.is_initial_setup:
-				get_tree().change_scene_to_file("res://scenes/loot/loot_screen.tscn")
-			else:
-				get_tree().change_scene_to_file("res://scenes/battle/battle_scene.tscn")
+			get_tree().change_scene_to_file("res://scenes/loot/loot_screen.tscn")
 			return

@@ -100,24 +100,26 @@ func _apply_on_hit_effects(
 	for effect: Dictionary in effects:
 		match effect.get("type", ""):
 			"fire":
-				state.add_fire_stacks_to_enemy(eid, effect.get("stacks", 1))
+				state.add_enemy_status(eid, MonsterStatusFire.new(effect.get("stacks", 1)))
 			"wet":
-				state.enemy_wet[eid] = (state.enemy_wet.get(eid, 0) as int) + effect.get("stacks", 1)
+				state.add_enemy_status(eid, MonsterStatusWet.new(effect.get("stacks", 1)))
 			"poison":
 				var enemy := setup.get_enemy(eid)
 				var immune := enemy != null and enemy.traits.any(
 						func(t: MonsterTraitData) -> bool: return t is MonsterTraitPoisonImmunity)
 				if not immune:
-					state.enemy_poison[eid] = (state.enemy_poison.get(eid, 0) as int) \
-							+ effect.get("stacks", 1)
+					state.add_enemy_status(eid, MonsterStatusPoison.new(effect.get("stacks", 1)))
 			"freeze":
-				state.enemy_frozen[eid] = true
+				state.add_enemy_status(eid, MonsterStatusFrozen.new())
 			"stun":
 				state.enemy_stunned[eid] = effect.get("turns", 1)
 			"blind":
 				state.enemy_blind[eid] = effect.get("turns", 1)
 			"cleanse_poison":
-				state.enemy_poison.erase(eid)
+				if state.enemy_statuses.has(eid):
+					(state.enemy_statuses[eid] as Array).assign(
+						(state.enemy_statuses[eid] as Array).filter(
+							func(s: MonsterStatusData) -> bool: return not (s is MonsterStatusPoison)))
 
 
 func _apply_backfire(state: BattleState, mage_idx: int, ev: CastEvent) -> void:

@@ -17,7 +17,8 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 		var enemy := setup.get_enemy(enemy_id)
 		if enemy == null or enemy.action_pool.is_empty():
 			continue
-		if new_state.enemy_frozen.has(enemy_id):
+		var _es: Array = new_state.enemy_statuses.get(enemy_id, [])
+		if _es.any(func(s: MonsterStatusData) -> bool: return s.blocks_action()):
 			continue
 		var intent: Dictionary = new_state.monster_intents[enemy_id]
 		var action_index: int = intent.get("action_index", 0)
@@ -43,10 +44,12 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 	for i in new_state.mage_statuses.size():
 		for status: MageStatusData in new_state.mage_statuses[i].duplicate():
 			new_state = status.on_turn_end(new_state, setup, i)
-	# Enemy status ticks
-	new_state.tick_poison()
-	new_state.tick_fire()
-	new_state.tick_wet()
+	# Enemy status turn-end effects (fire damage, poison tick, wet decay, etc.)
+	for enemy_id: String in new_state.enemy_statuses.keys():
+		if not new_state.enemy_hp.has(enemy_id):
+			continue
+		for status: MonsterStatusData in (new_state.enemy_statuses[enemy_id] as Array).duplicate():
+			new_state = status.on_turn_end(new_state, setup, enemy_id)
 
 	# Reset turn resources
 	new_state.enemy_attack_mult.clear()

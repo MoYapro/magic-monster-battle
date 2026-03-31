@@ -9,10 +9,7 @@ var enemy_block: Dictionary = {}
 # obstacle_id -> current_hp (absent = destroyed)
 var obstacle_hp: Dictionary = {}
 var mage_hp: Array[int] = []
-var enemy_poison: Dictionary = {}  # enemy_id -> stacks
-var enemy_fire: Dictionary = {}    # enemy_id -> fire stacks
-var enemy_wet: Dictionary = {}     # enemy_id -> wet stacks
-var enemy_frozen: Dictionary = {}  # enemy_id -> true; skips attack, immune to fire, removed by first fire hit
+var enemy_statuses: Dictionary = {}  # enemy_id -> Array[MonsterStatusData]
 var webbed_slots: Dictionary = {}  # "mage_index/slot_id" -> true; slot unusable this turn
 var mage_statuses: Array = []          # index = mage_index, value = Array[MageStatusData]
 var mana: int = 0
@@ -46,20 +43,15 @@ func duplicate() -> BattleState:
 	return s
 
 
-func add_fire_stacks_to_enemy(enemy_id: String, stacks: int) -> void:
-	if stacks <= 0 or not enemy_hp.has(enemy_id):
+func add_enemy_status(enemy_id: String, new_status: MonsterStatusData) -> void:
+	if not enemy_hp.has(enemy_id):
 		return
-	if enemy_frozen.has(enemy_id):
-		enemy_frozen.erase(enemy_id)
-		return
-	var wet: int = enemy_wet.get(enemy_id, 0)
-	var remaining := stacks - wet
-	if wet > 0:
-		enemy_wet[enemy_id] = maxi(0, wet - stacks)
-		if enemy_wet[enemy_id] == 0:
-			enemy_wet.erase(enemy_id)
-	if remaining > 0:
-		enemy_fire[enemy_id] = (enemy_fire.get(enemy_id, 0) as int) + remaining
+	if not enemy_statuses.has(enemy_id):
+		enemy_statuses[enemy_id] = []
+	for status: MonsterStatusData in (enemy_statuses[enemy_id] as Array).duplicate():
+		status.on_add_status(self, enemy_id, new_status)
+	if new_status.stacks != 0:
+		(enemy_statuses[enemy_id] as Array).append(new_status)
 
 
 func add_mage_status(mage_index: int, new_status: MageStatusData) -> void:
@@ -73,10 +65,7 @@ func kill_enemy(enemy_id: String) -> void:
 	enemy_hp.erase(enemy_id)
 	enemy_armor.erase(enemy_id)
 	enemy_block.erase(enemy_id)
-	enemy_fire.erase(enemy_id)
-	enemy_poison.erase(enemy_id)
-	enemy_wet.erase(enemy_id)
-	enemy_frozen.erase(enemy_id)
+	enemy_statuses.erase(enemy_id)
 	enemy_stunned.erase(enemy_id)
 	enemy_blind.erase(enemy_id)
 	enemy_attack_mult.erase(enemy_id)
@@ -86,35 +75,3 @@ func kill_enemy(enemy_id: String) -> void:
 				func(s: MageStatusData) -> bool: return s.source_enemy_id != enemy_id))
 
 
-func tick_poison() -> void:
-	var to_kill: Array[String] = []
-	for enemy_id: String in enemy_poison:
-		if enemy_poison[enemy_id] > 0 and enemy_hp.has(enemy_id):
-			enemy_hp[enemy_id] = max(0, enemy_hp[enemy_id] - 1)
-			enemy_poison[enemy_id] -= 1
-			if enemy_hp[enemy_id] <= 0:
-				to_kill.append(enemy_id)
-	for enemy_id: String in to_kill:
-		kill_enemy(enemy_id)
-
-
-func tick_fire() -> void:
-	var to_kill: Array[String] = []
-	for enemy_id: String in enemy_fire:
-		if enemy_fire[enemy_id] > 0 and enemy_hp.has(enemy_id):
-			enemy_hp[enemy_id] = max(0, enemy_hp[enemy_id] - enemy_fire[enemy_id])
-			enemy_fire[enemy_id] /= 2
-			if enemy_hp[enemy_id] <= 0:
-				to_kill.append(enemy_id)
-	for enemy_id: String in to_kill:
-		kill_enemy(enemy_id)
-
-
-func tick_wet() -> void:
-	var to_erase: Array[String] = []
-	for enemy_id: String in enemy_wet:
-		enemy_wet[enemy_id] -= 1
-		if enemy_wet[enemy_id] <= 0:
-			to_erase.append(enemy_id)
-	for enemy_id: String in to_erase:
-		enemy_wet.erase(enemy_id)

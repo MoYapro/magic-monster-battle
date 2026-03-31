@@ -108,7 +108,9 @@ func test_fire_on_hit_applies_fire_stacks_to_surviving_enemy() -> void:
 	var enemy := EnemyData.new("e1", "Target", 20, Vector2i(1, 1), Color.RED)
 	var setup := _make_setup(spell, enemy)
 	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(_make_state(setup), setup)
-	assert_gt(result.enemy_fire.get("e1", 0), 0)
+	var fires: Array = (result.enemy_statuses.get("e1", []) as Array).filter(
+			func(s: MonsterStatusData) -> bool: return s is MonsterStatusFire)
+	assert_gt(fires.size(), 0)
 
 
 func test_wet_on_hit_applies_wet_stacks_to_enemy() -> void:
@@ -116,7 +118,9 @@ func test_wet_on_hit_applies_wet_stacks_to_enemy() -> void:
 	var enemy := EnemyData.new("e1", "Target", 20, Vector2i(1, 1), Color.RED)
 	var setup := _make_setup(spell, enemy)
 	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(_make_state(setup), setup)
-	assert_gt(result.enemy_wet.get("e1", 0), 0)
+	var wets: Array = (result.enemy_statuses.get("e1", []) as Array).filter(
+			func(s: MonsterStatusData) -> bool: return s is MonsterStatusWet)
+	assert_gt(wets.size(), 0)
 
 
 func test_poison_on_hit_applies_poison_stacks_to_enemy() -> void:
@@ -124,7 +128,9 @@ func test_poison_on_hit_applies_poison_stacks_to_enemy() -> void:
 	var enemy := EnemyData.new("e1", "Target", 20, Vector2i(1, 1), Color.RED)
 	var setup := _make_setup(spell, enemy)
 	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(_make_state(setup), setup)
-	assert_gt(result.enemy_poison.get("e1", 0), 0)
+	var poisons: Array = (result.enemy_statuses.get("e1", []) as Array).filter(
+			func(s: MonsterStatusData) -> bool: return s is MonsterStatusPoison)
+	assert_gt(poisons.size(), 0)
 
 
 func test_on_hit_effects_not_applied_when_enemy_is_killed() -> void:
@@ -133,7 +139,7 @@ func test_on_hit_effects_not_applied_when_enemy_is_killed() -> void:
 	var setup := _make_setup(spell, enemy)
 	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(_make_state(setup), setup)
 	assert_false(result.enemy_hp.has("e1"))
-	assert_false(result.enemy_fire.has("e1"))
+	assert_false(result.enemy_statuses.has("e1"))
 
 
 # --- backfire ---

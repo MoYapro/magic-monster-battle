@@ -362,7 +362,8 @@ func _apply_state(state: BattleState) -> void:
 			var targets_mage: bool = intent.get("target", -1) == i or intent.get("all_mages", false)
 			if not targets_mage or not state.enemy_hp.has(enemy_id):
 				continue
-			if state.enemy_frozen.has(enemy_id):
+			var _es: Array = state.enemy_statuses.get(enemy_id, [])
+			if _es.any(func(s: MonsterStatusData) -> bool: return s.blocks_action()):
 				continue
 			var enemy := _setup.get_enemy(enemy_id)
 			if enemy == null:
@@ -426,7 +427,7 @@ func _on_battle_won() -> void:
 	GameState.mages = _mages
 	GameState.wands = wands
 	_generate_loot()
-	get_tree().change_scene_to_file("res://scenes/loot/loot_screen.tscn")
+	get_tree().change_scene_to_file("res://scenes/level_up/level_up_screen.tscn")
 
 
 func _generate_loot() -> void:
@@ -454,7 +455,7 @@ func _refresh_enemy_grid(state: BattleState) -> void:
 	enemy_grid.set_intents(state.monster_intents)
 	enemy_grid.set_armors(state.enemy_armor)
 	enemy_grid.set_blocks(state.enemy_block)
-	enemy_grid.set_statuses(state.enemy_poison, state.enemy_fire, state.enemy_wet)
+	enemy_grid.set_statuses(state.enemy_statuses)
 	enemy_grid.set_ground(state.ground)
 
 

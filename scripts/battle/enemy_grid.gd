@@ -29,9 +29,7 @@ var _hovered_cells: Array[Vector2i] = []
 var _intents: Dictionary = {}
 var _armors: Dictionary = {}
 var _blocks: Dictionary = {}
-var _poisons: Dictionary = {}
-var _fires: Dictionary = {}
-var _wets: Dictionary = {}
+var _enemy_statuses: Dictionary = {}  # enemy_id -> Array[MonsterStatusData]
 
 
 func set_armors(armors: Dictionary) -> void:
@@ -44,10 +42,8 @@ func set_blocks(blocks: Dictionary) -> void:
 	queue_redraw()
 
 
-func set_statuses(poisons: Dictionary, fires: Dictionary, wets: Dictionary) -> void:
-	_poisons = poisons
-	_fires = fires
-	_wets = wets
+func set_statuses(enemy_statuses: Dictionary) -> void:
+	_enemy_statuses = enemy_statuses
 	queue_redraw()
 
 
@@ -243,31 +239,21 @@ func _draw_enemies() -> void:
 			draw_string(font, pixel_pos + Vector2(pixel_size.x - 5, 44),
 					"🔲 %d" % _blocks[enemy.id],
 					HORIZONTAL_ALIGNMENT_RIGHT, -1, 11, Color(0.5, 0.8, 1.0))
-		var has_poison: bool = _poisons.has(enemy.id) and _poisons[enemy.id] > 0
-		var has_fire: bool = _fires.has(enemy.id) and _fires[enemy.id] > 0
-		var has_wet: bool = _wets.has(enemy.id) and _wets[enemy.id] > 0
-		if has_poison or has_fire or has_wet:
+		var pills: Array = (_enemy_statuses.get(enemy.id, []) as Array).filter(
+				func(s: MonsterStatusData) -> bool: return s.display_name != "")
+		if not pills.is_empty():
 			var pill_h := 12.0
 			var pill_gap := 3.0
 			var pill_w := pixel_size.x - 10.0
-			var pill_count := int(has_poison) + int(has_fire) + int(has_wet)
+			var pill_count := pills.size()
 			var intent_reserve := 16.0 if _intents.has(enemy.id) else 4.0
 			var pills_bottom := pixel_size.y - intent_reserve
 			var pill_y := maxf(34.0, pills_bottom - pill_count * pill_h - (pill_count - 1) * pill_gap)
-			if has_poison:
-				draw_rect(Rect2(pixel_pos + Vector2(5.0, pill_y), Vector2(pill_w, pill_h)), COLOR_POISON, true)
+			for pill: MonsterStatusData in pills:
+				draw_rect(Rect2(pixel_pos + Vector2(5.0, pill_y), Vector2(pill_w, pill_h)), pill.display_color, true)
 				draw_string(font, pixel_pos + Vector2(5.0, pill_y + 10.0),
-						"POI %d" % _poisons[enemy.id], HORIZONTAL_ALIGNMENT_CENTER, pill_w, 9, Color.WHITE)
+						pill.get_label(), HORIZONTAL_ALIGNMENT_CENTER, pill_w, 9, Color.WHITE)
 				pill_y += pill_h + pill_gap
-			if has_fire:
-				draw_rect(Rect2(pixel_pos + Vector2(5.0, pill_y), Vector2(pill_w, pill_h)), COLOR_FIRE, true)
-				draw_string(font, pixel_pos + Vector2(5.0, pill_y + 10.0),
-						"FIRE %d" % _fires[enemy.id], HORIZONTAL_ALIGNMENT_CENTER, pill_w, 9, Color.WHITE)
-				pill_y += pill_h + pill_gap
-			if has_wet:
-				draw_rect(Rect2(pixel_pos + Vector2(5.0, pill_y), Vector2(pill_w, pill_h)), COLOR_WET, true)
-				draw_string(font, pixel_pos + Vector2(5.0, pill_y + 10.0),
-						"WET %d" % _wets[enemy.id], HORIZONTAL_ALIGNMENT_CENTER, pill_w, 9, Color.WHITE)
 		if _intents.has(enemy.id):
 			var intent: Dictionary = _intents[enemy.id]
 			var action_name: String = intent.get("action_name", "")

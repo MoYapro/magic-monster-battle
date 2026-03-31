@@ -164,7 +164,7 @@ func apply_puddle_wet(state: BattleState) -> void:
 		var pos := get_enemy_pos(i, state)
 		for cell in EnemyGrid.get_cells_for_enemy(pos, enemy.grid_size):
 			if state.ground.get(cell, GroundType.Type.SOIL) == GroundType.Type.PUDDLE:
-				state.enemy_wet[enemy.id] = (state.enemy_wet.get(enemy.id, 0) as int) + 2
+				state.add_enemy_status(enemy.id, MonsterStatusWet.new(2))
 
 
 func spawn_enemy(enemy: EnemyData, pos: Vector2i) -> void:

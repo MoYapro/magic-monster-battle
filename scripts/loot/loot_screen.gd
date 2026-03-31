@@ -746,10 +746,7 @@ func _on_continue_pressed() -> void:
 	GameState.pending_loot.clear()
 	GameState.pending_loot_wands.clear()
 	GameState.is_initial_setup = false
-	if was_initial:
-		get_tree().change_scene_to_file("res://scenes/battle/battle_scene.tscn")
-	else:
-		get_tree().change_scene_to_file("res://scenes/level_up/level_up_screen.tscn")
+	get_tree().change_scene_to_file("res://scenes/battle/battle_scene.tscn")
 
 
 # --- codex ---
