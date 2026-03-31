@@ -376,7 +376,7 @@ func _apply_state(state: BattleState) -> void:
 				incoming_attack += (action as MonsterActionAttack).damage
 			elif action is MonsterActionCleave:
 				incoming_attack += (action as MonsterActionCleave).damage
-		_mage_displays[i].set_status(incoming_attack, state.mage_statuses[i])
+		_mage_displays[i].set_status(incoming_attack, state.mage_statuses[i], state.mage_shield[i])
 	_mana_display.setup(state.mana, _setup.max_mana, _panel_height)
 	_refresh_wand_charges(state)
 	_refresh_ui()
@@ -830,8 +830,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	for mage in _mage_displays:
 		if mage.get_rect().has_point(mage.to_local(mouse)):
-			_cancel_targeting()
 			get_viewport().set_input_as_handled()
+			_fire_at_mage(_mage_displays.find(mage))
+			_cancel_targeting()
 			return
 
 	for wand in _wand_displays:
@@ -846,6 +847,14 @@ func _unhandled_input(event: InputEvent) -> void:
 func _fire_at_cell(cell: Vector2i) -> void:
 	var mage_index := _wand_displays.find(_targeting_wand)
 	var new_state := _history.push(ActionZapWand.new(mage_index, cell))
+	if not new_state.cast_events.is_empty():
+		_floating_damage.spawn_events(new_state.cast_events, get_global_mouse_position())
+	_apply_state(new_state)
+
+
+func _fire_at_mage(target_mage_index: int) -> void:
+	var mage_index := _wand_displays.find(_targeting_wand)
+	var new_state := _history.push(ActionZapWand.new(mage_index, Vector2i(-1, -1), target_mage_index))
 	if not new_state.cast_events.is_empty():
 		_floating_damage.spawn_events(new_state.cast_events, get_global_mouse_position())
 	_apply_state(new_state)

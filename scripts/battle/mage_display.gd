@@ -24,6 +24,7 @@ var _mana_committed: int = 0
 var _mana_max: int = 0
 var _incoming_attack: int = 0
 var _statuses: Array = []
+var _shield: int = 0
 
 
 func setup(mage: MageData, height: float) -> void:
@@ -48,9 +49,10 @@ func set_mana(committed: int, max_mana: int) -> void:
 	queue_redraw()
 
 
-func set_status(incoming_attack: int = 0, statuses: Array = []) -> void:
+func set_status(incoming_attack: int = 0, statuses: Array = [], shield: int = 0) -> void:
 	_incoming_attack = incoming_attack
 	_statuses = statuses
+	_shield = shield
 	queue_redraw()
 
 
@@ -107,9 +109,20 @@ func _draw() -> void:
 			draw_rect(Rect2(Vector2(dx, bar_y), Vector2(seg_w, BAR_HEIGHT)), Color(c.r, c.g, c.b, 0.88), true)
 			dx += seg_w
 
+	if _shield > 0:
+		var shield_w := minf(bar_w * float(_shield) / float(_mage.max_hp), bar_w)
+		var shield_x := PAD + bar_w - shield_w
+		draw_rect(Rect2(Vector2(shield_x, bar_y), Vector2(shield_w, BAR_HEIGHT)),
+				Color(0.40, 0.65, 1.00, 0.70), true)
+		draw_rect(Rect2(Vector2(shield_x, bar_y), Vector2(shield_w, BAR_HEIGHT)),
+				Color(0.55, 0.80, 1.00), false, 1.0)
+
 	var hp_text_y := bar_y + BAR_HEIGHT + 13.0
+	var hp_label := "%d/%d" % [_mage.current_hp, _mage.max_hp]
+	if _shield > 0:
+		hp_label += " +%d" % _shield
 	draw_string(font, Vector2(PAD, hp_text_y),
-			"%d/%d" % [_mage.current_hp, _mage.max_hp],
+			hp_label,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.65, 0.80, 0.65))
 
 	if _mana_max > 0:

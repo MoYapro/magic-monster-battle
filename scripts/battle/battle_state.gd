@@ -9,6 +9,7 @@ var enemy_block: Dictionary = {}
 # obstacle_id -> current_hp (absent = destroyed)
 var obstacle_hp: Dictionary = {}
 var mage_hp: Array[int] = []
+var mage_shield: Array[int] = []  # extra HP buffer depleted before mage_hp
 var enemy_statuses: Dictionary = {}  # enemy_id -> Array[StatusData]
 var webbed_slots: Dictionary = {}  # "mage_index/slot_id" -> true; slot unusable this turn
 var mage_statuses: Array = []          # index = mage_index, value = Array[StatusData]

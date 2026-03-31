@@ -2,11 +2,13 @@ class_name ActionZapWand extends BattleAction
 
 var mage_index: int
 var target_cell: Vector2i
+var target_mage_index: int = -1  # >= 0 when targeting a mage instead of an enemy cell
 
 
-func _init(p_mage_index: int, p_target_cell: Vector2i) -> void:
+func _init(p_mage_index: int, p_target_cell: Vector2i, p_target_mage: int = -1) -> void:
 	mage_index = p_mage_index
 	target_cell = p_target_cell
+	target_mage_index = p_target_mage
 
 
 func apply(state: BattleState, setup: BattleSetup) -> BattleState:
@@ -53,7 +55,10 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 	for ev: CastEvent in cast_events:
 		match ev.type:
 			CastEvent.Type.PROJECTILE:
-				_apply_projectile(new_state, setup, ev, pattern)
+				if target_mage_index >= 0:
+					_apply_projectile_to_mage(new_state, ev, target_mage_index)
+				else:
+					_apply_projectile(new_state, setup, ev, pattern)
 			CastEvent.Type.BACKFIRE:
 				_apply_backfire(new_state, mage_index, ev)
 			CastEvent.Type.FIZZLE:
@@ -121,6 +126,44 @@ func _apply_on_hit_effects(
 					(state.enemy_statuses[eid] as Array).assign(
 						(state.enemy_statuses[eid] as Array).filter(
 							func(s: StatusData) -> bool: return not (s is StatusPoison)))
+
+
+func _apply_projectile_to_mage(state: BattleState, ev: CastEvent, target_idx: int) -> void:
+	if state.mage_hp[target_idx] <= 0:
+		return
+	var remaining := ev.total_damage
+	if remaining > 0 and state.mage_shield[target_idx] > 0:
+		var absorbed := mini(state.mage_shield[target_idx], remaining)
+		state.mage_shield[target_idx] -= absorbed
+		remaining -= absorbed
+	if remaining > 0:
+		state.mage_hp[target_idx] = max(0, state.mage_hp[target_idx] - remaining)
+	if state.mage_hp[target_idx] > 0:
+		_apply_on_hit_effects_to_mage(state, target_idx, ev.on_hit_effects)
+
+
+func _apply_on_hit_effects_to_mage(
+		state: BattleState, target_idx: int, effects: Array[Dictionary]) -> void:
+	for effect: Dictionary in effects:
+		match effect.get("type", ""):
+			"fire":
+				state.add_mage_status(target_idx, StatusFire.new(effect.get("stacks", 1)))
+			"wet":
+				state.add_mage_status(target_idx, StatusWet.new(effect.get("stacks", 1)))
+			"poison":
+				state.add_mage_status(target_idx, StatusPoison.new(effect.get("stacks", 1)))
+			"freeze":
+				state.add_mage_status(target_idx, StatusFrozen.new())
+			"stun":
+				state.add_mage_status(target_idx, StatusFrozen.new())
+			"shield":
+				state.mage_shield[target_idx] += effect.get("amount", 10)
+			"blind":
+				pass  # blind has no mage equivalent
+			"cleanse_poison":
+				state.mage_statuses[target_idx].assign(
+					(state.mage_statuses[target_idx] as Array).filter(
+						func(s: StatusData) -> bool: return not (s is StatusPoison)))
 
 
 func _apply_backfire(state: BattleState, mage_idx: int, ev: CastEvent) -> void:
