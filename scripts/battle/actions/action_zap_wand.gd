@@ -56,7 +56,7 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 		match ev.type:
 			CastEvent.Type.PROJECTILE:
 				if target_mage_index >= 0:
-					_apply_projectile_to_mage(new_state, ev, target_mage_index)
+					_apply_projectile_to_mage(new_state, ev, target_mage_index, pattern)
 				else:
 					_apply_projectile(new_state, setup, ev, pattern)
 			CastEvent.Type.BACKFIRE:
@@ -128,18 +128,24 @@ func _apply_on_hit_effects(
 							func(s: StatusData) -> bool: return not (s is StatusPoison)))
 
 
-func _apply_projectile_to_mage(state: BattleState, ev: CastEvent, target_idx: int) -> void:
-	if state.mage_hp[target_idx] <= 0:
-		return
-	var remaining := ev.total_damage
-	if remaining > 0 and state.mage_shield[target_idx] > 0:
-		var absorbed := mini(state.mage_shield[target_idx], remaining)
-		state.mage_shield[target_idx] -= absorbed
-		remaining -= absorbed
-	if remaining > 0:
-		state.mage_hp[target_idx] = max(0, state.mage_hp[target_idx] - remaining)
-	if state.mage_hp[target_idx] > 0:
-		_apply_on_hit_effects_to_mage(state, target_idx, ev.on_hit_effects)
+func _apply_projectile_to_mage(
+		state: BattleState, ev: CastEvent, target_idx: int,
+		pattern: Array[Vector2i] = [Vector2i(0, 0)]) -> void:
+	var hit_indices: Dictionary = {}
+	for offset: Vector2i in pattern:
+		hit_indices[target_idx + offset.y] = true
+	for idx: int in hit_indices:
+		if idx < 0 or idx >= state.mage_hp.size() or state.mage_hp[idx] <= 0:
+			continue
+		var remaining := ev.total_damage
+		if remaining > 0 and state.mage_shield[idx] > 0:
+			var absorbed := mini(state.mage_shield[idx], remaining)
+			state.mage_shield[idx] -= absorbed
+			remaining -= absorbed
+		if remaining > 0:
+			state.mage_hp[idx] = max(0, state.mage_hp[idx] - remaining)
+		if state.mage_hp[idx] > 0:
+			_apply_on_hit_effects_to_mage(state, idx, ev.on_hit_effects)
 
 
 func _apply_on_hit_effects_to_mage(
