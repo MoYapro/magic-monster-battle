@@ -32,6 +32,17 @@ static func by_layer(layer: int) -> Array[BiomeData]:
 	return all().filter(func(b: BiomeData) -> bool: return b.layer == layer)
 
 
+static func unlocked(battle_counts: Dictionary) -> Array[BiomeData]:
+	return all().filter(func(b: BiomeData) -> bool:
+		if b.layer == 1:
+			return true
+		var beaten := func(n: String) -> bool: return battle_counts.get(n, 0) >= 10
+		if b.name == "The Source":
+			return b.unlocked_by.all(beaten)
+		return b.unlocked_by.any(beaten)
+	)
+
+
 static func get_by_name(biome_name: String) -> BiomeData:
 	for biome: BiomeData in all():
 		if biome.name == biome_name:

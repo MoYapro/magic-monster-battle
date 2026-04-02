@@ -27,7 +27,7 @@ func _ready() -> void:
 
 
 func _pick_choices() -> void:
-	var pool := BiomesData.all()
+	var pool := BiomesData.unlocked(GameState.battle_count_by_biome)
 	pool.shuffle()
 	_choices = [pool[0], pool[1]]
 
