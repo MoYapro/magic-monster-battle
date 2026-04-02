@@ -98,29 +98,35 @@ func _apply_projectile(
 		if state.enemy_hp[eid] <= 0:
 			state.kill_enemy(eid)
 		else:
-			_apply_on_hit_effects(state, setup, eid, ev.on_hit_effects)
+			_apply_on_hit_effects(state, setup, eid, ev.on_hit_effects, ev.total_damage)
 
 
 func _apply_on_hit_effects(
-		state: BattleState, setup: BattleSetup, eid: String, effects: Array[Dictionary]) -> void:
+		state: BattleState, setup: BattleSetup, eid: String,
+		effects: Array[Dictionary], total_damage: int) -> void:
 	for effect: Dictionary in effects:
+		var stacks := total_damage if effect.get("stacks_from_damage", false) \
+				else effect.get("stacks", 1)
 		match effect.get("type", ""):
 			"fire":
-				state.add_enemy_status(eid, StatusFire.new(effect.get("stacks", 1)))
+				state.add_enemy_status(eid, StatusFire.new(stacks))
 			"wet":
-				state.add_enemy_status(eid, StatusWet.new(effect.get("stacks", 1)))
+				state.add_enemy_status(eid, StatusWet.new(stacks))
 			"poison":
 				var enemy := setup.get_enemy(eid)
 				var immune := enemy != null and enemy.traits.any(
 						func(t: MonsterTraitData) -> bool: return t is MonsterTraitPoisonImmunity)
 				if not immune:
-					state.add_enemy_status(eid, StatusPoison.new(effect.get("stacks", 1)))
+					state.add_enemy_status(eid, StatusPoison.new(stacks))
 			"freeze":
 				state.add_enemy_status(eid, StatusFrozen.new())
 			"stun":
 				state.enemy_stunned[eid] = effect.get("turns", 1)
 			"blind":
 				state.enemy_blind[eid] = effect.get("turns", 1)
+			"push":
+				_push_enemy(state, setup, eid,
+						effect.get("distance", 1), effect.get("damage", 0))
 			"cleanse_poison":
 				if state.enemy_statuses.has(eid):
 					(state.enemy_statuses[eid] as Array).assign(
@@ -145,19 +151,22 @@ func _apply_projectile_to_mage(
 		if remaining > 0:
 			state.mage_hp[idx] = max(0, state.mage_hp[idx] - remaining)
 		if state.mage_hp[idx] > 0:
-			_apply_on_hit_effects_to_mage(state, idx, ev.on_hit_effects)
+			_apply_on_hit_effects_to_mage(state, idx, ev.on_hit_effects, ev.total_damage)
 
 
 func _apply_on_hit_effects_to_mage(
-		state: BattleState, target_idx: int, effects: Array[Dictionary]) -> void:
+		state: BattleState, target_idx: int,
+		effects: Array[Dictionary], total_damage: int) -> void:
 	for effect: Dictionary in effects:
+		var stacks := total_damage if effect.get("stacks_from_damage", false) \
+				else effect.get("stacks", 1)
 		match effect.get("type", ""):
 			"fire":
-				state.add_mage_status(target_idx, StatusFire.new(effect.get("stacks", 1)))
+				state.add_mage_status(target_idx, StatusFire.new(stacks))
 			"wet":
-				state.add_mage_status(target_idx, StatusWet.new(effect.get("stacks", 1)))
+				state.add_mage_status(target_idx, StatusWet.new(stacks))
 			"poison":
-				state.add_mage_status(target_idx, StatusPoison.new(effect.get("stacks", 1)))
+				state.add_mage_status(target_idx, StatusPoison.new(stacks))
 			"freeze":
 				state.add_mage_status(target_idx, StatusFrozen.new())
 			"stun":
@@ -170,6 +179,50 @@ func _apply_on_hit_effects_to_mage(
 				state.mage_statuses[target_idx].assign(
 					(state.mage_statuses[target_idx] as Array).filter(
 						func(s: StatusData) -> bool: return not (s is StatusPoison)))
+
+
+func _push_enemy(
+		state: BattleState, setup: BattleSetup, eid: String,
+		distance: int, collision_damage: int) -> void:
+	var enemy := setup.get_enemy(eid)
+	if enemy == null:
+		return
+	var idx := -1
+	for i in setup.enemies.size():
+		if setup.enemies[i].id == eid:
+			idx = i
+			break
+	if idx < 0:
+		return
+	var pos := setup.get_enemy_pos(idx, state)
+	var push_dir := Vector2i(1, 0)  # back = increasing column (away from mages)
+	for _step in distance:
+		var new_pos := pos + push_dir
+		if not EnemyGrid.is_within_bounds(new_pos, enemy.grid_size):
+			break
+		var blocker_id := ""
+		for cell: Vector2i in EnemyGrid.get_cells_for_enemy(new_pos, enemy.grid_size):
+			var occupant := setup.get_occupant_at(cell, state)
+			if occupant != "" and occupant != eid:
+				blocker_id = occupant
+				break
+		if blocker_id != "":
+			_deal_collision_damage(state, eid, collision_damage)
+			_deal_collision_damage(state, blocker_id, collision_damage)
+			break
+		pos = new_pos
+		state.enemy_positions[eid] = pos
+
+
+func _deal_collision_damage(state: BattleState, target_id: String, damage: int) -> void:
+	if state.enemy_hp.has(target_id):
+		state.enemy_hp[target_id] -= damage
+		if state.enemy_hp[target_id] <= 0:
+			state.kill_enemy(target_id)
+	elif state.obstacle_hp.has(target_id):
+		state.obstacle_hp[target_id] -= damage
+		if state.obstacle_hp[target_id] <= 0:
+			state.obstacle_hp.erase(target_id)
 
 
 func _apply_backfire(state: BattleState, mage_idx: int, ev: CastEvent) -> void:

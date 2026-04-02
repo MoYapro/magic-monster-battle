@@ -5,5 +5,5 @@ static func create() -> SpellData:
 			"Poisons enemies with toxic venom.")
 	s.spell_id = "venom"
 	s.spell_type = "projectile"
-	s.on_hit_effects = [{"type": "poison", "stacks": 2}]
+	s.on_hit_effects = [{"type": "poison", "stacks_from_damage": true}]
 	return s

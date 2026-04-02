@@ -1,7 +1,7 @@
 class_name SpellLightning
 
 static func create() -> SpellData:
-	var s := SpellData.new("Lightning", "Lt", ["lightning"], Color(0.95, 0.95, 0.20), [], "", 4, 1,
+	var s := SpellData.new("Lightning", "Lt", ["lightning"], Color(0.95, 0.95, 0.20), [], "", 2, 1,
 			"Strikes with electric force, stunning the target.")
 	s.spell_id = "lightning"
 	s.spell_type = "projectile"

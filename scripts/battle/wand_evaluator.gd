@@ -38,10 +38,15 @@ static func _make_projectile(spell: SpellData, mods: Array[Dictionary], count: i
 	for _k in count:
 		total *= spell.damage
 	ev.total_damage = total
-	ev.on_hit_effects = spell.on_hit_effects.duplicate()
+	ev.on_hit_effects = spell.on_hit_effects.duplicate(true)
 	ev.mana_refund = 0
 	for mod in mods:
 		_apply_mod(ev, mod)
+	for effect: Dictionary in ev.on_hit_effects:
+		if effect.has("distance_per_cast"):
+			effect["distance"] = count * effect.get("distance_per_cast", 1)
+			effect["damage"] = ev.total_damage
+			effect.erase("distance_per_cast")
 	return ev
 
 

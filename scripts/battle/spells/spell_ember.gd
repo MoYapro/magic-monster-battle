@@ -5,5 +5,5 @@ static func create() -> SpellData:
 			"Burns enemies with scorching fire.")
 	s.spell_id = "ember"
 	s.spell_type = "projectile"
-	s.on_hit_effects = [{"type": "fire", "stacks": 2}]
+	s.on_hit_effects = [{"type": "fire", "stacks_from_damage": true}]
 	return s

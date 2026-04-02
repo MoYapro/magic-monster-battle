@@ -5,5 +5,5 @@ static func create() -> SpellData:
 			"Channels fire to catalyze reactions, or burns on its own.")
 	s.spell_id = "fire_catalyst"
 	s.spell_type = "catalyst"
-	s.on_hit_effects = [{"type": "fire", "stacks": 1}]
+	s.on_hit_effects = [{"type": "fire", "stacks": 3}]
 	return s
