@@ -105,7 +105,7 @@ func _apply_on_hit_effects(
 		state: BattleState, setup: BattleSetup, eid: String,
 		effects: Array[Dictionary], total_damage: int) -> void:
 	for effect: Dictionary in effects:
-		var stacks := total_damage if effect.get("stacks_from_damage", false) \
+		var stacks: int = total_damage if effect.get("stacks_from_damage", false) \
 				else effect.get("stacks", 1)
 		match effect.get("type", ""):
 			"fire":
@@ -158,7 +158,7 @@ func _apply_on_hit_effects_to_mage(
 		state: BattleState, target_idx: int,
 		effects: Array[Dictionary], total_damage: int) -> void:
 	for effect: Dictionary in effects:
-		var stacks := total_damage if effect.get("stacks_from_damage", false) \
+		var stacks: int = total_damage if effect.get("stacks_from_damage", false) \
 				else effect.get("stacks", 1)
 		match effect.get("type", ""):
 			"fire":
