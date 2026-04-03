@@ -1,3 +1,4 @@
 res://scripts/battle/actions/action_zap_wand.gd
 res://scripts/battle/wand_evaluator.gd
 res://tests/test_action_zap_wand.gd
+res://tests/test_battle_state.gd

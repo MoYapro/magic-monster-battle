@@ -133,6 +133,22 @@ func test_poison_on_hit_applies_poison_stacks_to_enemy() -> void:
 	assert_gt(poisons.size(), 0)
 
 
+func test_poison_stacks_accumulate_across_two_zaps() -> void:
+	var spell := SpellVenom.create()
+	var enemy := EnemyData.new("e1", "Target", 20, Vector2i(1, 1), Color.RED)
+	var setup := _make_setup(spell, enemy)
+	var state1 := ActionZapWand.new(0, Vector2i(0, 0)).apply(_make_state(setup), setup)
+	# re-charge the slot so second zap fires
+	state1.slot_charges["0/s0_0"] = 99
+	state1.slot_charges["0/tip"] = 1
+	state1.mage_mana_spent[0] = 0
+	var state2 := ActionZapWand.new(0, Vector2i(0, 0)).apply(state1, setup)
+	var poisons: Array = (state2.enemy_statuses.get("e1", []) as Array).filter(
+			func(s: StatusData) -> bool: return s is StatusPoison)
+	assert_eq(poisons.size(), 1, "should have one merged poison entry")
+	assert_eq((poisons[0] as StatusPoison).stacks, 4, "poison stacks should accumulate (2+2=4)")
+
+
 func test_on_hit_effects_not_applied_when_enemy_is_killed() -> void:
 	var spell := SpellEmber.create()
 	var enemy := EnemyData.new("e1", "Target", 2, Vector2i(1, 1), Color.RED)  # low hp

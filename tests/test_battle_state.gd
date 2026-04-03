@@ -20,6 +20,27 @@ func test_fire_stacks_applied_to_enemy() -> void:
 	assert_eq(fire.stacks, 3)
 
 
+func test_poison_stacks_accumulate_when_applied_twice() -> void:
+	var s := _make_state()
+	s.add_enemy_status("e1", StatusPoison.new(3))
+	s.add_enemy_status("e1", StatusPoison.new(2))
+	var poisons: Array = (s.enemy_statuses["e1"] as Array).filter(
+			func(x: StatusData) -> bool: return x is StatusPoison)
+	assert_eq(poisons.size(), 1, "should merge into one poison entry")
+	assert_eq((poisons[0] as StatusPoison).stacks, 5, "stacks should accumulate (3+2=5)")
+
+
+func test_poison_stacks_accumulate_on_duplicate_state() -> void:
+	var s := _make_state()
+	s.add_enemy_status("e1", StatusPoison.new(3))
+	var d := s.duplicate()
+	d.add_enemy_status("e1", StatusPoison.new(2))
+	var poisons: Array = (d.enemy_statuses["e1"] as Array).filter(
+			func(x: StatusData) -> bool: return x is StatusPoison)
+	assert_eq(poisons.size(), 1, "should merge into one poison entry after duplicate")
+	assert_eq((poisons[0] as StatusPoison).stacks, 5, "stacks should accumulate on duplicate (3+2=5)")
+
+
 func test_wet_absorbs_incoming_fire_on_enemy() -> void:
 	var s := _make_state()
 	s.add_enemy_status("e1", StatusWet.new(2))
