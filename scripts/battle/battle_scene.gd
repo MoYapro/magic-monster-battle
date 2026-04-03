@@ -44,8 +44,18 @@ var _monster_tooltip_panel: PanelContainer = null
 var _monster_tooltip_name: Label = null
 var _monster_tooltip_desc: Label = null
 var _monster_tooltip_stats: Label = null
+var _monster_tooltip_statuses: Label = null
 var _monster_tooltip_traits: Label = null
 var _monster_tooltip_attacks: Label = null
+
+var _hover_mage_idx: int = -1
+var _mage_cursor_pos: Vector2 = Vector2.ZERO
+var _mage_hover_timer: float = 0.0
+var _mage_tooltip_layer: CanvasLayer = null
+var _mage_tooltip_panel: PanelContainer = null
+var _mage_tooltip_name: Label = null
+var _mage_tooltip_stats: Label = null
+var _mage_tooltip_statuses: Label = null
 
 var _spell_tooltip: SpellTooltip = null
 var _floating_damage: FloatingDamage = null
@@ -66,6 +76,7 @@ func _ready() -> void:
 	_setup_mage_wand_rows()
 	_build_setup()
 	_build_monster_tooltip()
+	_build_mage_tooltip()
 	_spell_tooltip = SpellTooltip.new()
 	add_child(_spell_tooltip)
 	_floating_damage = FloatingDamage.new()
@@ -632,6 +643,10 @@ func _process(delta: float) -> void:
 		_hover_timer += delta
 		if _hover_timer >= TOOLTIP_DELAY:
 			_show_monster_tooltip(_hover_enemy, _enemy_cursor_pos)
+	if _hover_mage_idx >= 0 and not _mage_tooltip_layer.visible:
+		_mage_hover_timer += delta
+		if _mage_hover_timer >= TOOLTIP_DELAY:
+			_show_mage_tooltip(_hover_mage_idx, _mage_cursor_pos)
 
 
 func _update_enemy_hover(pos: Vector2) -> void:
@@ -644,6 +659,74 @@ func _update_enemy_hover(pos: Vector2) -> void:
 		_hover_enemy = enemy
 		_hover_timer = 0.0
 		_monster_tooltip_layer.visible = false
+
+
+func _update_mage_hover(pos: Vector2) -> void:
+	_mage_cursor_pos = pos
+	var idx := -1
+	for i in _mage_displays.size():
+		var mage: MageDisplay = _mage_displays[i]
+		if mage.get_rect().has_point(mage.to_local(pos)):
+			idx = i
+			break
+	if idx != _hover_mage_idx:
+		_hover_mage_idx = idx
+		_mage_hover_timer = 0.0
+		_mage_tooltip_layer.visible = false
+
+
+func _show_mage_tooltip(idx: int, pos: Vector2) -> void:
+	var mage := _setup.mages[idx]
+	_mage_tooltip_name.text = mage.name
+	var stats_lines: Array[String] = ["HP: %d / %d" % [_current_state.mage_hp[idx], mage.max_hp]]
+	if idx < _current_state.mage_shield.size() and _current_state.mage_shield[idx] > 0:
+		stats_lines.append("Shield: %d" % _current_state.mage_shield[idx])
+	_mage_tooltip_stats.text = "\n".join(stats_lines)
+	var active_statuses: Array = (_current_state.mage_statuses[idx] as Array).filter(
+			func(s: StatusData) -> bool: return s.display_name != "")
+	if not active_statuses.is_empty():
+		var status_lines: Array = active_statuses.map(func(s: StatusData) -> String: return s.get_label())
+		_mage_tooltip_statuses.text = "\n".join(status_lines)
+		_mage_tooltip_statuses.visible = true
+	else:
+		_mage_tooltip_statuses.visible = false
+	var tp := pos + Vector2(18.0, 18.0)
+	tp.x = clampf(tp.x, 0.0, SCREEN_W - 200.0)
+	tp.y = clampf(tp.y, 0.0, SCREEN_H - 120.0)
+	_mage_tooltip_panel.position = tp
+	_mage_tooltip_layer.visible = true
+
+
+func _build_mage_tooltip() -> void:
+	_mage_tooltip_layer = CanvasLayer.new()
+	_mage_tooltip_layer.layer = 10
+	_mage_tooltip_layer.visible = false
+	add_child(_mage_tooltip_layer)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.07, 0.09, 0.11, 0.97)
+	style.border_color = Color(0.25, 0.30, 0.35)
+	style.set_border_width_all(1)
+	style.set_content_margin_all(10)
+	_mage_tooltip_panel = PanelContainer.new()
+	_mage_tooltip_panel.custom_minimum_size = Vector2(180, 0)
+	_mage_tooltip_panel.add_theme_stylebox_override("panel", style)
+	_mage_tooltip_layer.add_child(_mage_tooltip_panel)
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 5)
+	_mage_tooltip_panel.add_child(vbox)
+	_mage_tooltip_name = Label.new()
+	_mage_tooltip_name.add_theme_font_size_override("font_size", 14)
+	_mage_tooltip_name.modulate = Color(0.92, 0.92, 0.88)
+	vbox.add_child(_mage_tooltip_name)
+	vbox.add_child(HSeparator.new())
+	_mage_tooltip_stats = Label.new()
+	_mage_tooltip_stats.add_theme_font_size_override("font_size", 11)
+	_mage_tooltip_stats.modulate = Color(0.82, 0.82, 0.82)
+	vbox.add_child(_mage_tooltip_stats)
+	_mage_tooltip_statuses = Label.new()
+	_mage_tooltip_statuses.add_theme_font_size_override("font_size", 11)
+	_mage_tooltip_statuses.modulate = Color(0.75, 0.90, 0.70)
+	vbox.add_child(_mage_tooltip_statuses)
 
 
 func _get_ground_labels_for_enemy(enemy: EnemyData) -> Array[String]:
@@ -666,8 +749,22 @@ func _show_monster_tooltip(enemy: EnemyData, pos: Vector2) -> void:
 	_monster_tooltip_desc.text = enemy.description
 	_monster_tooltip_desc.visible = not enemy.description.is_empty()
 	var stats_lines: Array[String] = ["HP: %d / %d" % [enemy.current_hp, enemy.max_hp]]
+	if _current_state.enemy_armor.get(enemy.id, 0) > 0:
+		stats_lines.append("Armor: %d" % _current_state.enemy_armor[enemy.id])
+	if _current_state.enemy_shield.get(enemy.id, 0) > 0:
+		stats_lines.append("Shield: %d" % _current_state.enemy_shield[enemy.id])
+	if _current_state.enemy_block.get(enemy.id, 0) > 0:
+		stats_lines.append("Block: %d" % _current_state.enemy_block[enemy.id])
 	stats_lines.append_array(_get_ground_labels_for_enemy(enemy))
 	_monster_tooltip_stats.text = "\n".join(stats_lines)
+	var active_statuses: Array = (_current_state.enemy_statuses.get(enemy.id, []) as Array).filter(
+			func(s: StatusData) -> bool: return s.display_name != "")
+	if not active_statuses.is_empty():
+		var status_lines: Array = active_statuses.map(func(s: StatusData) -> String: return s.get_label())
+		_monster_tooltip_statuses.text = "\n".join(status_lines)
+		_monster_tooltip_statuses.visible = true
+	else:
+		_monster_tooltip_statuses.visible = false
 	if not enemy.traits.is_empty():
 		var labels: Array = enemy.traits.map(func(t: MonsterTraitData) -> String: return t.label)
 		_monster_tooltip_traits.text = "Traits: " + ", ".join(labels)
@@ -741,6 +838,10 @@ func _build_monster_tooltip() -> void:
 	_monster_tooltip_stats.add_theme_font_size_override("font_size", 11)
 	_monster_tooltip_stats.modulate = Color(0.82, 0.82, 0.82)
 	vbox.add_child(_monster_tooltip_stats)
+	_monster_tooltip_statuses = Label.new()
+	_monster_tooltip_statuses.add_theme_font_size_override("font_size", 11)
+	_monster_tooltip_statuses.modulate = Color(0.75, 0.90, 0.70)
+	vbox.add_child(_monster_tooltip_statuses)
 	_monster_tooltip_traits = Label.new()
 	_monster_tooltip_traits.add_theme_font_size_override("font_size", 11)
 	_monster_tooltip_traits.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -806,6 +907,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			var pos := (event as InputEventMouseMotion).position
 			_update_intent_hover(pos)
 			_update_enemy_hover(pos)
+			_update_mage_hover(pos)
 			_update_spell_hover(pos)
 		return
 
@@ -813,6 +915,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		var pos := (event as InputEventMouseMotion).position
 		_update_hover(pos)
 		_update_enemy_hover(pos)
+		_update_mage_hover(pos)
 		_update_spell_hover(pos)
 		return
 	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
