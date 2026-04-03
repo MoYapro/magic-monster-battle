@@ -18,7 +18,7 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 	var zap_target := StatusTarget.for_mage(new_state, mage_index)
 	for status: StatusData in new_state.mage_statuses[mage_index].duplicate():
 		status.on_zap(zap_target, setup)
-	if new_state.mage_mana_spent[mage_index] >= setup.mages[mage_index].mana_allowance:
+	if new_state.mage_mana_spent[mage_index] > setup.mages[mage_index].mana_allowance:
 		return new_state
 	var wand := setup.wands[mage_index]
 
