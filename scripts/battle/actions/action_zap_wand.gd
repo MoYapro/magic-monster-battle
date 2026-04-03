@@ -21,37 +21,8 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 	if new_state.mage_mana_spent[mage_index] > setup.mages[mage_index].mana_allowance:
 		return new_state
 	var wand := setup.wands[mage_index]
-
-	# Hit pattern from the charged tip slot
-	var pattern: Array[Vector2i] = [Vector2i(0, 0)]
-	var tip_slot := wand.get_tip_slot()
-	if tip_slot != null and tip_slot.spell != null:
-		var tip_key := "%d/%s" % [mage_index, tip_slot.id]
-		var tip_charges: int = new_state.slot_charges.get(tip_key, 0)
-		if tip_charges >= tip_slot.spell.mana_cost and not tip_slot.spell.hit_pattern.is_empty():
-			pattern = tip_slot.spell.hit_pattern
-
-	# Collect charged body spells sorted left-to-right (col, then row)
-	var body_slots: Array[SpellSlotData] = []
-	for slot: SpellSlotData in wand.slots:
-		if slot.is_tip or slot.spell == null:
-			continue
-		var key := "%d/%s" % [mage_index, slot.id]
-		if new_state.webbed_slots.has(key):
-			continue
-		if new_state.slot_charges.get(key, 0) < slot.spell.mana_cost:
-			continue
-		body_slots.append(slot)
-	body_slots.sort_custom(func(a: SpellSlotData, b: SpellSlotData) -> bool:
-		return a.grid_col < b.grid_col if a.grid_col != b.grid_col else a.grid_row < b.grid_row)
-
-	var body_spells: Array[SpellData] = []
-	for slot: SpellSlotData in body_slots:
-		body_spells.append(slot.spell)
-
-	# Two-pass alchemy + modifier resolution
-	var cast_events := WandEvaluator.evaluate(body_spells)
-
+	var pattern := _get_hit_pattern(wand, new_state)
+	var cast_events := WandEvaluator.evaluate(_get_charged_body_spells(wand, new_state))
 	for ev: CastEvent in cast_events:
 		match ev.type:
 			CastEvent.Type.PROJECTILE:
@@ -64,13 +35,38 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 				_apply_backfire(new_state, mage_index, ev)
 			CastEvent.Type.FIZZLE:
 				pass  # mana consumed, nothing fires
-
 	new_state.cast_events = cast_events
-
 	for slot: SpellSlotData in wand.slots:
 		new_state.slot_charges.erase("%d/%s" % [mage_index, slot.id])
-
 	return new_state
+
+
+func _get_hit_pattern(wand: WandData, state: BattleState) -> Array[Vector2i]:
+	var tip_slot := wand.get_tip_slot()
+	if tip_slot == null or tip_slot.spell == null:
+		return [Vector2i(0, 0)]
+	var tip_key := "%d/%s" % [mage_index, tip_slot.id]
+	var tip_charges: int = state.slot_charges.get(tip_key, 0)
+	if tip_charges >= tip_slot.spell.mana_cost and not tip_slot.spell.hit_pattern.is_empty():
+		return tip_slot.spell.hit_pattern
+	return [Vector2i(0, 0)]
+
+
+func _get_charged_body_spells(wand: WandData, state: BattleState) -> Array[SpellData]:
+	var body_slots: Array[SpellSlotData] = []
+	for slot: SpellSlotData in wand.slots:
+		if slot.is_tip or slot.spell == null:
+			continue
+		var key := "%d/%s" % [mage_index, slot.id]
+		if state.webbed_slots.has(key) or state.slot_charges.get(key, 0) < slot.spell.mana_cost:
+			continue
+		body_slots.append(slot)
+	body_slots.sort_custom(func(a: SpellSlotData, b: SpellSlotData) -> bool:
+		return a.grid_col < b.grid_col if a.grid_col != b.grid_col else a.grid_row < b.grid_row)
+	var spells: Array[SpellData] = []
+	for slot: SpellSlotData in body_slots:
+		spells.append(slot.spell)
+	return spells
 
 
 func _apply_projectile(
@@ -79,41 +75,61 @@ func _apply_projectile(
 	var blocked_this_zap: Dictionary = {}
 	for cell: Vector2i in EnemyGrid.get_hit_cells(target_cell, pattern):
 		var eid: String = setup.get_occupant_at(cell, state)
-		if eid.is_empty():
-			continue
-		if blocked_this_zap.has(eid):
+		if eid.is_empty() or blocked_this_zap.has(eid):
 			continue
 		if state.obstacle_hp.has(eid):
-			state.obstacle_hp[eid] -= ev.total_damage
-			if state.obstacle_hp[eid] <= 0:
-				state.obstacle_hp.erase(eid)
-			else:
-				for effect: Dictionary in ev.on_hit_effects:
-					if effect.get("type", "") == "push":
-						_push_occupant(state, setup, eid,
-								effect.get("distance", 1), effect.get("damage", 0), push_dir)
+			_apply_damage_to_obstacle(state, setup, eid, ev, push_dir)
 			blocked_this_zap[eid] = true
 			continue
 		if not state.enemy_hp.has(eid):
 			continue
-		if state.enemy_block.get(eid, 0) > 0:
-			state.enemy_block[eid] -= 1
-			if state.enemy_block[eid] <= 0:
-				state.enemy_block.erase(eid)
+		if _try_consume_block(state, eid):
 			blocked_this_zap[eid] = true
 			continue
-		var remaining := ev.total_damage
-		if state.enemy_armor.has(eid):
-			var absorbed := mini(state.enemy_armor[eid], remaining)
-			state.enemy_armor[eid] -= absorbed
-			remaining -= absorbed
-			if state.enemy_armor[eid] <= 0:
-				state.enemy_armor.erase(eid)
-		state.enemy_hp[eid] -= remaining
-		if state.enemy_hp[eid] <= 0:
-			state.kill_enemy(eid)
-		else:
-			_apply_on_hit_effects(state, setup, eid, ev.on_hit_effects, ev.total_damage, push_dir)
+		_apply_damage_to_enemy(state, setup, eid, ev, push_dir)
+
+
+func _try_consume_block(state: BattleState, eid: String) -> bool:
+	if state.enemy_block.get(eid, 0) <= 0:
+		return false
+	state.enemy_block[eid] -= 1
+	if state.enemy_block[eid] <= 0:
+		state.enemy_block.erase(eid)
+	return true
+
+
+func _apply_damage_to_obstacle(
+		state: BattleState, setup: BattleSetup, eid: String,
+		ev: CastEvent, push_dir: Vector2i) -> void:
+	state.obstacle_hp[eid] -= ev.total_damage
+	if state.obstacle_hp[eid] <= 0:
+		state.obstacle_hp.erase(eid)
+		return
+	for effect: Dictionary in ev.on_hit_effects:
+		if effect.get("type", "") == "push":
+			_push_occupant(state, setup, eid,
+					effect.get("distance", 1), effect.get("damage", 0), push_dir)
+
+
+func _apply_damage_to_enemy(
+		state: BattleState, setup: BattleSetup, eid: String,
+		ev: CastEvent, push_dir: Vector2i) -> void:
+	var remaining := _absorb_armor(state, eid, ev.total_damage)
+	state.enemy_hp[eid] -= remaining
+	if state.enemy_hp[eid] <= 0:
+		state.kill_enemy(eid)
+	else:
+		_apply_on_hit_effects(state, setup, eid, ev.on_hit_effects, ev.total_damage, push_dir)
+
+
+func _absorb_armor(state: BattleState, eid: String, damage: int) -> int:
+	if not state.enemy_armor.has(eid):
+		return damage
+	var absorbed := mini(state.enemy_armor[eid], damage)
+	state.enemy_armor[eid] -= absorbed
+	if state.enemy_armor[eid] <= 0:
+		state.enemy_armor.erase(eid)
+	return damage - absorbed
 
 
 func _apply_on_hit_effects(
@@ -197,33 +213,26 @@ func _apply_on_hit_effects_to_mage(
 						func(s: StatusData) -> bool: return not (s is StatusPoison)))
 
 
+func _get_occupant_push_info(setup: BattleSetup, state: BattleState, id: String) -> Dictionary:
+	for i in setup.enemies.size():
+		if setup.enemies[i].id == id:
+			return {"grid_size": setup.enemies[i].grid_size, "pos": setup.get_enemy_pos(i, state), "is_enemy": true}
+	for i in setup.obstacles.size():
+		if setup.obstacles[i].id == id:
+			return {"grid_size": setup.obstacles[i].grid_size, "pos": setup.get_obstacle_pos(i, state), "is_enemy": false}
+	return {}
+
+
 func _push_occupant(
 		state: BattleState, setup: BattleSetup, id: String,
 		distance: int, collision_damage: int,
 		push_dir: Vector2i = Vector2i(1, 0)) -> void:
-	var grid_size: Vector2i
-	var pos: Vector2i
-	var is_enemy := state.enemy_hp.has(id)
-	if is_enemy:
-		var idx := -1
-		for i in setup.enemies.size():
-			if setup.enemies[i].id == id:
-				idx = i
-				break
-		if idx < 0:
-			return
-		grid_size = setup.enemies[idx].grid_size
-		pos = setup.get_enemy_pos(idx, state)
-	else:
-		var idx := -1
-		for i in setup.obstacles.size():
-			if setup.obstacles[i].id == id:
-				idx = i
-				break
-		if idx < 0:
-			return
-		grid_size = setup.obstacles[idx].grid_size
-		pos = setup.get_obstacle_pos(idx, state)
+	var info := _get_occupant_push_info(setup, state, id)
+	if info.is_empty():
+		return
+	var pos: Vector2i = info["pos"]
+	var grid_size: Vector2i = info["grid_size"]
+	var is_enemy: bool = info["is_enemy"]
 	for _step in distance:
 		var new_pos := pos + push_dir
 		if not EnemyGrid.is_within_bounds(new_pos, grid_size):
