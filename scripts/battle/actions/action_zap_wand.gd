@@ -58,7 +58,8 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 				if target_mage_index >= 0:
 					_apply_projectile_to_mage(new_state, ev, target_mage_index, pattern)
 				else:
-					_apply_projectile(new_state, setup, ev, pattern)
+					var push_dir := pattern[1] if pattern.size() > 1 else Vector2i(1, 0)
+					_apply_projectile(new_state, setup, ev, pattern, push_dir)
 			CastEvent.Type.BACKFIRE:
 				_apply_backfire(new_state, mage_index, ev)
 			CastEvent.Type.FIZZLE:
@@ -73,7 +74,8 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 
 
 func _apply_projectile(
-		state: BattleState, setup: BattleSetup, ev: CastEvent, pattern: Array[Vector2i]) -> void:
+		state: BattleState, setup: BattleSetup, ev: CastEvent, pattern: Array[Vector2i],
+		push_dir: Vector2i = Vector2i(1, 0)) -> void:
 	var blocked_this_zap: Dictionary = {}
 	for cell: Vector2i in EnemyGrid.get_hit_cells(target_cell, pattern):
 		var eid: String = setup.get_occupant_at(cell, state)
@@ -98,12 +100,13 @@ func _apply_projectile(
 		if state.enemy_hp[eid] <= 0:
 			state.kill_enemy(eid)
 		else:
-			_apply_on_hit_effects(state, setup, eid, ev.on_hit_effects, ev.total_damage)
+			_apply_on_hit_effects(state, setup, eid, ev.on_hit_effects, ev.total_damage, push_dir)
 
 
 func _apply_on_hit_effects(
 		state: BattleState, setup: BattleSetup, eid: String,
-		effects: Array[Dictionary], total_damage: int) -> void:
+		effects: Array[Dictionary], total_damage: int,
+		push_dir: Vector2i = Vector2i(1, 0)) -> void:
 	for effect: Dictionary in effects:
 		var stacks: int = total_damage if effect.get("stacks_from_damage", false) \
 				else effect.get("stacks", 1)
@@ -126,7 +129,7 @@ func _apply_on_hit_effects(
 				state.enemy_blind[eid] = effect.get("turns", 1)
 			"push":
 				_push_enemy(state, setup, eid,
-						effect.get("distance", 1), effect.get("damage", 0))
+						effect.get("distance", 1), effect.get("damage", 0), push_dir)
 			"cleanse_poison":
 				if state.enemy_statuses.has(eid):
 					(state.enemy_statuses[eid] as Array).assign(
@@ -183,7 +186,8 @@ func _apply_on_hit_effects_to_mage(
 
 func _push_enemy(
 		state: BattleState, setup: BattleSetup, eid: String,
-		distance: int, collision_damage: int) -> void:
+		distance: int, collision_damage: int,
+		push_dir: Vector2i = Vector2i(1, 0)) -> void:
 	var enemy := setup.get_enemy(eid)
 	if enemy == null:
 		return
@@ -195,7 +199,6 @@ func _push_enemy(
 	if idx < 0:
 		return
 	var pos := setup.get_enemy_pos(idx, state)
-	var push_dir := Vector2i(1, 0)  # back = increasing column (away from mages)
 	for _step in distance:
 		var new_pos := pos + push_dir
 		if not EnemyGrid.is_within_bounds(new_pos, enemy.grid_size):
