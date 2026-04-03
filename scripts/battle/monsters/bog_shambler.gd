@@ -5,7 +5,7 @@ func _init() -> void:
 	description = "A rotting swamp creature that entangles and slows enemies in thick mud."
 	main_role = MonsterRole.Type.CROWD_CONTROLLER
 	difficulty_rating = 26
-	traits = [MonsterTraitWetHealing.new(15)]
+	traits = [MonsterTraitWetHealing.new(15), MonsterTraitArmor.new(25)]
 	drop_pool = [SpellVenom.create(), SpellFrost.create()]
 	action_pool = [
 		MonsterActionAttack.new("Mudslap", 6),
