@@ -118,6 +118,7 @@ func _apply_damage_to_enemy(
 		state: BattleState, setup: BattleSetup, eid: String,
 		ev: CastEvent, push_dir: Vector2i) -> void:
 	var remaining := _absorb_armor(state, eid, ev.total_damage)
+	remaining = _absorb_enemy_shield(state, eid, remaining)
 	state.enemy_hp[eid] -= remaining
 	if state.enemy_hp[eid] <= 0:
 		state.kill_enemy(eid)
@@ -166,6 +167,16 @@ func _apply_bounces(
 			_apply_damage_to_enemy(state, setup, next_id, ev, push_dir)
 
 
+func _absorb_enemy_shield(state: BattleState, eid: String, damage: int) -> int:
+	if not state.enemy_shield.has(eid):
+		return damage
+	var absorbed := mini(state.enemy_shield[eid], damage)
+	state.enemy_shield[eid] -= absorbed
+	if state.enemy_shield[eid] <= 0:
+		state.enemy_shield.erase(eid)
+	return damage - absorbed
+
+
 func _absorb_armor(state: BattleState, eid: String, damage: int) -> int:
 	if not state.enemy_armor.has(eid):
 		return damage
@@ -203,6 +214,8 @@ func _apply_on_hit_effects(
 			"push":
 				_push_occupant(state, setup, eid,
 						effect.get("distance", 1), effect.get("damage", 0), push_dir)
+			"shield":
+				state.enemy_shield[eid] = state.enemy_shield.get(eid, 0) + effect.get("amount", 10)
 			"cleanse_poison":
 				if state.enemy_statuses.has(eid):
 					(state.enemy_statuses[eid] as Array).assign(
@@ -300,7 +313,8 @@ func _push_occupant(
 
 func _deal_collision_damage(state: BattleState, target_id: String, damage: int) -> void:
 	if state.enemy_hp.has(target_id):
-		state.enemy_hp[target_id] -= damage
+		var remaining := _absorb_enemy_shield(state, target_id, damage)
+		state.enemy_hp[target_id] -= remaining
 		if state.enemy_hp[target_id] <= 0:
 			state.kill_enemy(target_id)
 	elif state.obstacle_hp.has(target_id):

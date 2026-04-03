@@ -131,6 +131,30 @@ func test_modifier_applies_once_to_merged_multi_cast() -> void:
 	assert_eq((events[0] as CastEvent).total_damage, 54)
 
 
+func test_two_shields_multiply_amount() -> void:
+	var shield := SpellShield.create()
+	var events := WandEvaluator.evaluate([shield, shield])
+	assert_eq(events.size(), 1)
+	var amount: int = (events[0] as CastEvent).on_hit_effects[0].get("amount", 0)
+	assert_eq(amount, 100)  # 10^2
+
+
+func test_three_shields_cube_amount() -> void:
+	var shield := SpellShield.create()
+	var events := WandEvaluator.evaluate([shield, shield, shield])
+	assert_eq(events.size(), 1)
+	var amount: int = (events[0] as CastEvent).on_hit_effects[0].get("amount", 0)
+	assert_eq(amount, 1000)  # 10^3
+
+
+func test_single_shield_amount_unchanged() -> void:
+	var shield := SpellShield.create()
+	var events := WandEvaluator.evaluate([shield])
+	assert_eq(events.size(), 1)
+	var amount: int = (events[0] as CastEvent).on_hit_effects[0].get("amount", 0)
+	assert_eq(amount, 10)
+
+
 func test_modifier_between_identical_spells_breaks_merge() -> void:
 	# frost, modifier, frost → two separate events; modifier applies only to second frost
 	var events := WandEvaluator.evaluate([

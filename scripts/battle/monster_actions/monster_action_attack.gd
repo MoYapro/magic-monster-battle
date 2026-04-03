@@ -22,7 +22,11 @@ func execute(state: BattleState, setup: BattleSetup,
 	if target >= 0 and target < new_state.mage_hp.size():
 		var mult: float = new_state.enemy_attack_mult.get(enemy_id, 1.0)
 		var actual_damage := int(damage * mult)
-		new_state.mage_hp[target] = max(0, new_state.mage_hp[target] - actual_damage)
+		var shield_absorbed := 0
+		if target < new_state.mage_shield.size():
+			shield_absorbed = mini(new_state.mage_shield[target], actual_damage)
+			new_state.mage_shield[target] -= shield_absorbed
+		new_state.mage_hp[target] = max(0, new_state.mage_hp[target] - (actual_damage - shield_absorbed))
 		var enemy := setup.get_enemy(enemy_id)
 		if enemy != null:
 			for t: MonsterTraitData in enemy.traits:

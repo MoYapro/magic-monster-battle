@@ -29,6 +29,7 @@ var _hovered_cells: Array[Vector2i] = []
 var _intents: Dictionary = {}
 var _armors: Dictionary = {}
 var _blocks: Dictionary = {}
+var _shields: Dictionary = {}
 var _enemy_statuses: Dictionary = {}  # enemy_id -> Array[StatusData]
 
 
@@ -39,6 +40,11 @@ func set_armors(armors: Dictionary) -> void:
 
 func set_blocks(blocks: Dictionary) -> void:
 	_blocks = blocks
+	queue_redraw()
+
+
+func set_shields(shields: Dictionary) -> void:
+	_shields = shields
 	queue_redraw()
 
 
@@ -235,8 +241,12 @@ func _draw_enemies() -> void:
 			draw_string(font, pixel_pos + Vector2(5, 44),
 					"🛡 %d" % _armors[enemy.id],
 					HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1.0, 0.85, 0.3))
-		if _blocks.has(enemy.id) and _blocks[enemy.id] > 0:
+		if _shields.has(enemy.id) and _shields[enemy.id] > 0:
 			draw_string(font, pixel_pos + Vector2(pixel_size.x - 5, 44),
+					"◇ %d" % _shields[enemy.id],
+					HORIZONTAL_ALIGNMENT_RIGHT, -1, 11, Color(0.6, 0.85, 1.0))
+		if _blocks.has(enemy.id) and _blocks[enemy.id] > 0:
+			draw_string(font, pixel_pos + Vector2(pixel_size.x - 5, 56),
 					"🔲 %d" % _blocks[enemy.id],
 					HORIZONTAL_ALIGNMENT_RIGHT, -1, 11, Color(0.5, 0.8, 1.0))
 		var pills: Array = (_enemy_statuses.get(enemy.id, []) as Array).filter(

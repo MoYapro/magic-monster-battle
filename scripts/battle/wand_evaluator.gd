@@ -53,6 +53,13 @@ static func _make_projectile(spell: SpellData, mods: Array[Dictionary], count: i
 		elif effect_type == "bounce":
 			var per_cast: int = effect.get("per_cast", 1)
 			ev.bounces += per_cast * count
+		elif effect_type == "shield" and count > 1:
+			var scaled := 1
+			var base: int = effect.get("amount", 10)
+			for _k in count:
+				scaled *= base
+			effect["amount"] = scaled
+			resolved_effects.append(effect)
 		else:
 			resolved_effects.append(effect)
 	ev.on_hit_effects = resolved_effects

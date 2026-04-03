@@ -15,5 +15,9 @@ func execute(state: BattleState, _setup: BattleSetup,
 	var mult: float = new_state.enemy_attack_mult.get(enemy_id, 1.0)
 	var actual_damage := int(damage * mult)
 	for i in new_state.mage_hp.size():
-		new_state.mage_hp[i] = max(0, new_state.mage_hp[i] - actual_damage)
+		var shield_absorbed := 0
+		if i < new_state.mage_shield.size():
+			shield_absorbed = mini(new_state.mage_shield[i], actual_damage)
+			new_state.mage_shield[i] -= shield_absorbed
+		new_state.mage_hp[i] = max(0, new_state.mage_hp[i] - (actual_damage - shield_absorbed))
 	return new_state

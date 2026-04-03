@@ -6,6 +6,8 @@ var enemy_hp: Dictionary = {}
 var enemy_armor: Dictionary = {}
 # enemy_id -> block charges remaining (absent = no block)
 var enemy_block: Dictionary = {}
+# enemy_id -> shield hp remaining (absent = no shield)
+var enemy_shield: Dictionary = {}
 # obstacle_id -> current_hp (absent = destroyed)
 var obstacle_hp: Dictionary = {}
 var mage_hp: Array[int] = []
@@ -68,6 +70,7 @@ func kill_enemy(enemy_id: String) -> void:
 	enemy_hp.erase(enemy_id)
 	enemy_armor.erase(enemy_id)
 	enemy_block.erase(enemy_id)
+	enemy_shield.erase(enemy_id)
 	enemy_statuses.erase(enemy_id)
 	enemy_stunned.erase(enemy_id)
 	enemy_blind.erase(enemy_id)
