@@ -92,7 +92,7 @@ static func _select_obstacles(pool: Array, rng: RandomNumberGenerator) -> Array[
 		weights.append(w)
 		total_weight += w
 
-	var count := rng.randi_range(2, 3)
+	var count := rng.randi_range(4, 6)
 	var obstacles: Array[ObstacleData] = []
 	var id_counts: Dictionary = {}
 	for _i in count:
@@ -178,8 +178,8 @@ static func _place_items(items: Array, rng: RandomNumberGenerator, occupied: Dic
 			continue
 		var _raw_off_role: Variant = items[i].get("off_role")
 		var off_role: MonsterRole.Type = _raw_off_role if _raw_off_role != null else MonsterRole.Type.NONE
-		var pref_row := _blended_row(role, off_role)
-		var chosen := _pick_biased(valid, pref_row, rng)
+		var pref_col := _blended_col(role, off_role)
+		var chosen := _pick_biased(valid, pref_col, rng)
 		positions[i] = chosen
 		for dx in range(grid_size.x):
 			for dy in range(grid_size.y):
@@ -188,32 +188,40 @@ static func _place_items(items: Array, rng: RandomNumberGenerator, occupied: Dic
 	return positions
 
 
-# Maps a role's enum value onto a preferred grid row (0 = front, ROWS-1 = back).
-static func _preferred_row(role: MonsterRole.Type) -> int:
-	if role == MonsterRole.Type.NONE:
-		return EnemyGrid.ROWS / 2
-	return int(round(float(role) / float(MonsterRole.Type.ARTILLERY) * (EnemyGrid.ROWS - 1)))
+# Maps a role's enum value onto a preferred grid column (0 = left/front, COLS-1 = right/back).
+# Returns -1 for NONE and OBSTACLE, meaning no column preference (place randomly).
+static func _preferred_col(role: MonsterRole.Type) -> int:
+	if role == MonsterRole.Type.NONE or role == MonsterRole.Type.OBSTACLE:
+		return -1
+	return int(round(float(role - MonsterRole.Type.TANK) / float(MonsterRole.Type.ARTILLERY - MonsterRole.Type.TANK) * (EnemyGrid.COLS - 1)))
 
 
-# Blends main and off role preferred rows (2:1 weight). Falls back to main only if off is NONE.
-static func _blended_row(main_role: MonsterRole.Type, off_role: MonsterRole.Type) -> int:
-	var main_row := _preferred_row(main_role)
+# Blends main and off role preferred columns (2:1 weight). Falls back to main only if off is NONE.
+static func _blended_col(main_role: MonsterRole.Type, off_role: MonsterRole.Type) -> int:
+	var main_col := _preferred_col(main_role)
+	if main_col == -1:
+		return -1
 	if off_role == MonsterRole.Type.NONE:
-		return main_row
-	var off_row := _preferred_row(off_role)
-	return int(round((main_row * 2.0 + off_row) / 3.0))
+		return main_col
+	var off_col := _preferred_col(off_role)
+	if off_col == -1:
+		return main_col
+	return int(round((main_col * 2.0 + off_col) / 3.0))
 
 
-# Picks randomly from valid positions biased toward preferred_row.
-# Accepts the closest available row plus one further — guideline, not strict.
-static func _pick_biased(valid: Array[Vector2i], preferred_row: int, rng: RandomNumberGenerator) -> Vector2i:
+# Picks randomly from valid positions biased toward preferred_col.
+# -1 means no preference — pick uniformly at random.
+# Accepts the closest available column plus one further — guideline, not strict.
+static func _pick_biased(valid: Array[Vector2i], preferred_col: int, rng: RandomNumberGenerator) -> Vector2i:
+	if preferred_col == -1:
+		return valid[rng.randi() % valid.size()]
 	var sorted := valid.duplicate()
 	sorted.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-		return abs(a.y - preferred_row) < abs(b.y - preferred_row)
+		return abs(a.x - preferred_col) < abs(b.x - preferred_col)
 	)
-	var min_dist: int = abs((sorted[0] as Vector2i).y - preferred_row)
+	var min_dist: int = abs((sorted[0] as Vector2i).x - preferred_col)
 	var candidates: Array[Vector2i] = sorted.filter(func(p: Vector2i) -> bool:
-		return abs(p.y - preferred_row) <= min_dist + 1
+		return abs(p.x - preferred_col) <= min_dist + 1
 	)
 	return candidates[rng.randi() % candidates.size()]
 

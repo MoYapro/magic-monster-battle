@@ -118,25 +118,25 @@ static func _build() -> Array[BiomeData]:
 									CursedKnight, BoneCaller, FallenPaladin]
 
 	# --- Obstacle pools ---
-	desert.obstacle_pool         = [Stone, Boulder, Barrel, Cactus, SandDune, Obelisk]
+	desert.obstacle_pool         = [Stone, Boulder, Barrel, Cactus, SandDune, Obelisk, FossilizedBone]
 	tundra.obstacle_pool         = [Stone, Boulder, Log, IceWall, FrozenLog, GlacierChunk]
-	forest.obstacle_pool         = [ObstacleTree, Log, Stone, Thornbush, AncientStump, MushroomCircle]
-	swamp.obstacle_pool          = [Log, ObstacleTree, Barrel, Mudpit, RottedStump, BogPillar]
+	forest.obstacle_pool         = [ObstacleTree, Log, Stone, Thornbush, AncientStump, MushroomCircle, BramblePatch]
+	swamp.obstacle_pool          = [Log, ObstacleTree, Barrel, Mudpit, RottedStump, BogPillar, SporeVent]
 	mountain.obstacle_pool       = [Boulder, Stone, Monolith, IceBlock, Stalagmite, SnowDrift]
 
-	pyramids.obstacle_pool       = [Stone, Boulder, Obelisk, Sarcophagus, Monolith, Altar]
-	coast.obstacle_pool          = [Log, Barrel, Stone, Boulder, RottedStump, Mudpit]
+	pyramids.obstacle_pool       = [Stone, Boulder, Obelisk, Sarcophagus, Monolith, Altar, FossilizedBone, AncientPillar]
+	coast.obstacle_pool          = [Log, Barrel, Stone, Boulder, RottedStump, Mudpit, TidePool]
 	glacial_temple.obstacle_pool = [IceBlock, IceWall, GlacierChunk, Stone, Monolith, Altar]
 	frozen_shipwreck.obstacle_pool = [FrozenLog, IceBlock, Barrel, Log, BonePile, GlacierChunk]
-	jungle.obstacle_pool         = [ObstacleTree, Log, Thornbush, AncientStump, MushroomCircle, Mudpit]
-	graveyard.obstacle_pool      = [Stone, Monolith, BonePile, Sarcophagus, BrokenPillar, Altar]
-	ruins.obstacle_pool          = [Monolith, Stone, Barrel, BrokenPillar, Altar, Sarcophagus]
-	cave.obstacle_pool           = [Stone, Boulder, Monolith, StalactitePillar, CrystalFormation, BonePile]
-	volcano.obstacle_pool        = [Stone, Boulder, LavaRock, ObsidianSpike, AshPile, Barrel]
+	jungle.obstacle_pool         = [ObstacleTree, Log, Thornbush, AncientStump, MushroomCircle, Mudpit, BramblePatch, WebCocoon, SporeVent]
+	graveyard.obstacle_pool      = [Stone, Monolith, BonePile, Sarcophagus, BrokenPillar, Altar, Pyre, CrumblingWall]
+	ruins.obstacle_pool          = [Monolith, Stone, Barrel, BrokenPillar, Altar, Sarcophagus, AncientPillar, CrumblingWall]
+	cave.obstacle_pool           = [Stone, Boulder, Monolith, StalactitePillar, CrystalFormation, BonePile, WebCocoon]
+	volcano.obstacle_pool        = [Stone, Boulder, LavaRock, ObsidianSpike, AshPile, Barrel, Pyre]
 
-	hell.obstacle_pool           = [LavaRock, ObsidianSpike, AshPile, BonePile, Altar, Sarcophagus]
-	astral.obstacle_pool         = [Stone, Monolith, CrystalFormation, IceBlock, Altar, Obelisk]
-	underwater.obstacle_pool     = [Stone, Boulder, CrystalFormation, StalactitePillar, BonePile, Mudpit]
+	hell.obstacle_pool           = [LavaRock, ObsidianSpike, AshPile, BonePile, Altar, Sarcophagus, Pyre]
+	astral.obstacle_pool         = [Stone, Monolith, CrystalFormation, IceBlock, Altar, Obelisk, AncientPillar]
+	underwater.obstacle_pool     = [Stone, Boulder, CrystalFormation, StalactitePillar, BonePile, Mudpit, TidePool]
 
 	the_source.obstacle_pool     = [Stone, Boulder, Monolith, CrystalFormation, Altar, Sarcophagus,
 									LavaRock, IceBlock, BonePile, ObstacleTree]

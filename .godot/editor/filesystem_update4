@@ -17,3 +17,5 @@ res://scripts/battle/statuses/status_vine_snare.gd
 res://scripts/battle/statuses/status_wet.gd
 res://scripts/battle/spells/spell_frost.gd
 res://tests/test_mage_status_frozen.gd
+res://scripts/battle/battle_composer.gd
+res://scripts/world/biomes_data.gd
