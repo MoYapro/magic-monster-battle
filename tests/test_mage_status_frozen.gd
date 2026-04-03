@@ -44,12 +44,29 @@ func test_frozen_absorbs_fire_regardless_of_stack_count() -> void:
 
 # --- persistence ---
 
-func test_frozen_persists_without_fire() -> void:
+func test_frozen_persists_while_stacks_remain() -> void:
 	var state := _make_state()
-	var frozen := StatusFrozen.new()
+	var frozen := StatusFrozen.new(2)
 	state.mage_statuses[0].append(frozen)
 	frozen.on_turn_end(StatusTarget.for_mage(state, 0), _make_setup())
-	assert_eq(state.mage_statuses[0].size(), 1)
+	assert_true(state.mage_statuses[0].any(func(s: StatusData) -> bool: return s is StatusFrozen))
+
+
+func test_frozen_removed_when_stacks_reach_zero() -> void:
+	var state := _make_state()
+	var frozen := StatusFrozen.new(1)
+	state.mage_statuses[0].append(frozen)
+	frozen.on_turn_end(StatusTarget.for_mage(state, 0), _make_setup())
+	assert_false(state.mage_statuses[0].any(func(s: StatusData) -> bool: return s is StatusFrozen))
+
+
+func test_frozen_stacks_accumulate() -> void:
+	var state := _make_state()
+	state.add_mage_status(0, StatusFrozen.new(1))
+	state.add_mage_status(0, StatusFrozen.new(1))
+	var frozen: Array = state.mage_statuses[0].filter(func(s: StatusData) -> bool: return s is StatusFrozen)
+	assert_eq(frozen.size(), 1)
+	assert_eq((frozen[0] as StatusFrozen).stacks, 2)
 
 
 func test_frozen_unaffected_by_wet() -> void:

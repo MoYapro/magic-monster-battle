@@ -5,6 +5,7 @@ func _init(enemy_id: String) -> void:
 	source_enemy_id = enemy_id
 	display_name = "VINE SNARE"
 	display_color = Color(0.20, 0.55, 0.15)
+	icon = "◆"
 
 
 func on_zap(target: StatusTarget, setup: BattleSetup) -> void:

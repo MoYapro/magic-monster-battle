@@ -44,7 +44,7 @@ var _monster_tooltip_panel: PanelContainer = null
 var _monster_tooltip_name: Label = null
 var _monster_tooltip_desc: Label = null
 var _monster_tooltip_stats: Label = null
-var _monster_tooltip_statuses: Label = null
+var _monster_tooltip_statuses: RichTextLabel = null
 var _monster_tooltip_traits: Label = null
 var _monster_tooltip_attacks: Label = null
 
@@ -55,7 +55,7 @@ var _mage_tooltip_layer: CanvasLayer = null
 var _mage_tooltip_panel: PanelContainer = null
 var _mage_tooltip_name: Label = null
 var _mage_tooltip_stats: Label = null
-var _mage_tooltip_statuses: Label = null
+var _mage_tooltip_statuses: RichTextLabel = null
 
 var _spell_tooltip: SpellTooltip = null
 var _floating_damage: FloatingDamage = null
@@ -685,8 +685,7 @@ func _show_mage_tooltip(idx: int, pos: Vector2) -> void:
 	var active_statuses: Array = (_current_state.mage_statuses[idx] as Array).filter(
 			func(s: StatusData) -> bool: return s.display_name != "")
 	if not active_statuses.is_empty():
-		var status_lines: Array = active_statuses.map(func(s: StatusData) -> String: return s.get_label())
-		_mage_tooltip_statuses.text = "\n".join(status_lines)
+		_mage_tooltip_statuses.text = _format_statuses_bbcode(active_statuses)
 		_mage_tooltip_statuses.visible = true
 	else:
 		_mage_tooltip_statuses.visible = false
@@ -723,9 +722,11 @@ func _build_mage_tooltip() -> void:
 	_mage_tooltip_stats.add_theme_font_size_override("font_size", 11)
 	_mage_tooltip_stats.modulate = Color(0.82, 0.82, 0.82)
 	vbox.add_child(_mage_tooltip_stats)
-	_mage_tooltip_statuses = Label.new()
-	_mage_tooltip_statuses.add_theme_font_size_override("font_size", 11)
-	_mage_tooltip_statuses.modulate = Color(0.75, 0.90, 0.70)
+	_mage_tooltip_statuses = RichTextLabel.new()
+	_mage_tooltip_statuses.bbcode_enabled = true
+	_mage_tooltip_statuses.fit_content = true
+	_mage_tooltip_statuses.scroll_active = false
+	_mage_tooltip_statuses.add_theme_font_size_override("normal_font_size", 11)
 	vbox.add_child(_mage_tooltip_statuses)
 
 
@@ -750,18 +751,17 @@ func _show_monster_tooltip(enemy: EnemyData, pos: Vector2) -> void:
 	_monster_tooltip_desc.visible = not enemy.description.is_empty()
 	var stats_lines: Array[String] = ["HP: %d / %d" % [enemy.current_hp, enemy.max_hp]]
 	if _current_state.enemy_armor.get(enemy.id, 0) > 0:
-		stats_lines.append("Armor: %d" % _current_state.enemy_armor[enemy.id])
+		stats_lines.append("🛡 Armor: %d" % _current_state.enemy_armor[enemy.id])
 	if _current_state.enemy_shield.get(enemy.id, 0) > 0:
-		stats_lines.append("Shield: %d" % _current_state.enemy_shield[enemy.id])
+		stats_lines.append("◇ Shield: %d" % _current_state.enemy_shield[enemy.id])
 	if _current_state.enemy_block.get(enemy.id, 0) > 0:
-		stats_lines.append("Block: %d" % _current_state.enemy_block[enemy.id])
+		stats_lines.append("🔲 Block: %d" % _current_state.enemy_block[enemy.id])
 	stats_lines.append_array(_get_ground_labels_for_enemy(enemy))
 	_monster_tooltip_stats.text = "\n".join(stats_lines)
 	var active_statuses: Array = (_current_state.enemy_statuses.get(enemy.id, []) as Array).filter(
 			func(s: StatusData) -> bool: return s.display_name != "")
 	if not active_statuses.is_empty():
-		var status_lines: Array = active_statuses.map(func(s: StatusData) -> String: return s.get_label())
-		_monster_tooltip_statuses.text = "\n".join(status_lines)
+		_monster_tooltip_statuses.text = _format_statuses_bbcode(active_statuses)
 		_monster_tooltip_statuses.visible = true
 	else:
 		_monster_tooltip_statuses.visible = false
@@ -807,6 +807,14 @@ func _format_action(action: MonsterActionData) -> String:
 	return action.name
 
 
+func _format_statuses_bbcode(statuses: Array) -> String:
+	var lines: Array[String] = []
+	for status: StatusData in statuses:
+		var hex := status.display_color.to_html(false)
+		lines.append("[color=#%s]%s[/color] %s" % [hex, status.icon, status.get_label()])
+	return "\n".join(lines)
+
+
 func _build_monster_tooltip() -> void:
 	_monster_tooltip_layer = CanvasLayer.new()
 	_monster_tooltip_layer.layer = 10
@@ -838,9 +846,11 @@ func _build_monster_tooltip() -> void:
 	_monster_tooltip_stats.add_theme_font_size_override("font_size", 11)
 	_monster_tooltip_stats.modulate = Color(0.82, 0.82, 0.82)
 	vbox.add_child(_monster_tooltip_stats)
-	_monster_tooltip_statuses = Label.new()
-	_monster_tooltip_statuses.add_theme_font_size_override("font_size", 11)
-	_monster_tooltip_statuses.modulate = Color(0.75, 0.90, 0.70)
+	_monster_tooltip_statuses = RichTextLabel.new()
+	_monster_tooltip_statuses.bbcode_enabled = true
+	_monster_tooltip_statuses.fit_content = true
+	_monster_tooltip_statuses.scroll_active = false
+	_monster_tooltip_statuses.add_theme_font_size_override("normal_font_size", 11)
 	vbox.add_child(_monster_tooltip_statuses)
 	_monster_tooltip_traits = Label.new()
 	_monster_tooltip_traits.add_theme_font_size_override("font_size", 11)

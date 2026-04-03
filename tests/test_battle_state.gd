@@ -41,6 +41,40 @@ func test_poison_stacks_accumulate_on_duplicate_state() -> void:
 	assert_eq((poisons[0] as StatusPoison).stacks, 5, "stacks should accumulate on duplicate (3+2=5)")
 
 
+func _frozen_stacks_after(wet: int, incoming_frozen: int) -> int:
+	var s := _make_state()
+	s.add_enemy_status("e1", StatusWet.new(wet))
+	s.add_enemy_status("e1", StatusFrozen.new(incoming_frozen))
+	var frozen: Array = (s.enemy_statuses["e1"] as Array).filter(
+			func(x: StatusData) -> bool: return x is StatusFrozen)
+	return (frozen[0] as StatusFrozen).stacks if frozen.size() > 0 else 0
+
+
+func test_3_wet_plus_1_frozen_gives_1_frozen() -> void:
+	assert_eq(_frozen_stacks_after(3, 1), 1)
+
+
+func test_12_wet_plus_1_frozen_gives_2_frozen() -> void:
+	assert_eq(_frozen_stacks_after(12, 1), 2)
+
+
+func test_29_wet_plus_1_frozen_gives_3_frozen() -> void:
+	assert_eq(_frozen_stacks_after(29, 1), 3)
+
+
+func test_3_wet_plus_2_frozen_gives_2_frozen() -> void:
+	assert_eq(_frozen_stacks_after(3, 2), 2)
+
+
+func test_wet_is_removed_when_frozen_applied() -> void:
+	var s := _make_state()
+	s.add_enemy_status("e1", StatusWet.new(15))
+	s.add_enemy_status("e1", StatusFrozen.new())
+	var wets: Array = (s.enemy_statuses["e1"] as Array).filter(
+			func(x: StatusData) -> bool: return x is StatusWet)
+	assert_eq(wets.size(), 0)
+
+
 func test_wet_absorbs_incoming_fire_on_enemy() -> void:
 	var s := _make_state()
 	s.add_enemy_status("e1", StatusWet.new(2))

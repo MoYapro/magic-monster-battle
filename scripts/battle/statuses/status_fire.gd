@@ -5,6 +5,7 @@ func _init(p_stacks: int) -> void:
 	stacks = p_stacks
 	display_name = "FIRE"
 	display_color = Color(0.95, 0.42, 0.05)
+	icon = "▲"
 
 
 func get_label() -> String:

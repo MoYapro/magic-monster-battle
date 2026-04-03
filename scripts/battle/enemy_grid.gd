@@ -249,21 +249,16 @@ func _draw_enemies() -> void:
 			draw_string(font, pixel_pos + Vector2(pixel_size.x - 5, 56),
 					"🔲 %d" % _blocks[enemy.id],
 					HORIZONTAL_ALIGNMENT_RIGHT, -1, 11, Color(0.5, 0.8, 1.0))
-		var pills: Array = (_enemy_statuses.get(enemy.id, []) as Array).filter(
+		var status_icons: Array = (_enemy_statuses.get(enemy.id, []) as Array).filter(
 				func(s: StatusData) -> bool: return s.display_name != "")
-		if not pills.is_empty():
-			var pill_h := 12.0
-			var pill_gap := 3.0
-			var pill_w := pixel_size.x - 10.0
-			var pill_count := pills.size()
+		if not status_icons.is_empty():
 			var intent_reserve := 16.0 if _intents.has(enemy.id) else 4.0
-			var pills_bottom := pixel_size.y - intent_reserve
-			var pill_y := maxf(34.0, pills_bottom - pill_count * pill_h - (pill_count - 1) * pill_gap)
-			for pill: StatusData in pills:
-				draw_rect(Rect2(pixel_pos + Vector2(5.0, pill_y), Vector2(pill_w, pill_h)), pill.display_color, true)
-				draw_string(font, pixel_pos + Vector2(5.0, pill_y + 10.0),
-						pill.get_label(), HORIZONTAL_ALIGNMENT_CENTER, pill_w, 9, Color.WHITE)
-				pill_y += pill_h + pill_gap
+			var icon_y := pixel_size.y - intent_reserve - 2.0
+			var icon_x := 5.0
+			for status: StatusData in status_icons:
+				draw_string(font, pixel_pos + Vector2(icon_x, icon_y),
+						status.icon, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, status.display_color)
+				icon_x += 12.0
 		if _intents.has(enemy.id):
 			var intent: Dictionary = _intents[enemy.id]
 			var action_name: String = intent.get("action_name", "")

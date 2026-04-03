@@ -5,6 +5,7 @@ func _init(enemy_id: String) -> void:
 	source_enemy_id = enemy_id
 	display_name = "LEECH"
 	display_color = Color(0.55, 0.10, 0.30)
+	icon = "●"
 
 
 func on_turn_end(target: StatusTarget, _setup: BattleSetup) -> void:
