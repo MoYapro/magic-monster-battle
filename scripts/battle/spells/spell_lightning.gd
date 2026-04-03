@@ -5,5 +5,5 @@ static func create() -> SpellData:
 			"Strikes with electric force, stunning the target.")
 	s.spell_id = "lightning"
 	s.spell_type = "projectile"
-	s.on_hit_effects = [{"type": "stun", "turns": 1}]
+	s.on_hit_effects = [{"type": "bounce", "per_cast": 1}]
 	return s

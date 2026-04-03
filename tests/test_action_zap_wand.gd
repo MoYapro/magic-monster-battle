@@ -173,6 +173,34 @@ func test_backfire_deals_damage_to_caster() -> void:
 	assert_eq(result.enemy_hp["e1"], 20)  # enemy unharmed
 
 
+# --- bounce ---
+
+func test_lightning_bounces_to_second_enemy() -> void:
+	var e1 := EnemyData.new("e1", "Target", 20, Vector2i(1, 1), Color.RED)
+	var e2 := EnemyData.new("e2", "Other", 20, Vector2i(1, 1), Color.BLUE)
+	var body := SpellSlotData.new("s0_0", 0, 0, "tip")
+	body.spell = SpellLightning.create()
+	var tip := SpellSlotData.new("tip", 1, 0)
+	tip.spell = SpellSingle.create()
+	var wand := WandData.new([body, tip])
+	var mage := MageData.new("Mage", 30)
+	var setup := BattleSetup.new(
+		[e1, e2], [Vector2i(0, 0), Vector2i(1, 0)],
+		[mage], [wand], 10)
+	var s := BattleState.new()
+	s.enemy_hp["e1"] = 20
+	s.enemy_hp["e2"] = 20
+	s.mage_hp.append(30)
+	s.mage_mana_spent.append(0)
+	s.mage_statuses.append([])
+	s.slot_charges["0/s0_0"] = 99
+	s.slot_charges["0/tip"] = 1
+	s.mana = 10
+	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(s, setup)
+	assert_eq(result.enemy_hp.get("e1", 0), 18, "e1 took lightning damage")
+	assert_eq(result.enemy_hp.get("e2", 0), 18, "e2 took bounce damage")
+
+
 # --- cast events ---
 
 func test_cast_events_recorded_on_state() -> void:

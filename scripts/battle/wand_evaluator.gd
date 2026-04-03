@@ -42,11 +42,20 @@ static func _make_projectile(spell: SpellData, mods: Array[Dictionary], count: i
 	ev.mana_refund = 0
 	for mod in mods:
 		_apply_mod(ev, mod)
+	var resolved_effects: Array[Dictionary] = []
 	for effect: Dictionary in ev.on_hit_effects:
+		var effect_type: String = effect.get("type", "")
 		if effect.has("distance_per_cast"):
 			effect["distance"] = count * effect.get("distance_per_cast", 1)
 			effect["damage"] = ev.total_damage
 			effect.erase("distance_per_cast")
+			resolved_effects.append(effect)
+		elif effect_type == "bounce":
+			var per_cast: int = effect.get("per_cast", 1)
+			ev.bounces += per_cast * count
+		else:
+			resolved_effects.append(effect)
+	ev.on_hit_effects = resolved_effects
 	return ev
 
 

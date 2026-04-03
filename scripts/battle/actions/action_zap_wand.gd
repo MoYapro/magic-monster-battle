@@ -30,7 +30,8 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 					_apply_projectile_to_mage(new_state, ev, target_mage_index, pattern)
 				else:
 					var push_dir := pattern[1] if pattern.size() > 1 else Vector2i(1, 0)
-					_apply_projectile(new_state, setup, ev, pattern, push_dir)
+					var bounce_dir := pattern[1] if pattern.size() > 1 else Vector2i.ZERO
+					_apply_projectile(new_state, setup, ev, pattern, push_dir, bounce_dir)
 			CastEvent.Type.BACKFIRE:
 				_apply_backfire(new_state, mage_index, ev)
 			CastEvent.Type.FIZZLE:
@@ -71,22 +72,24 @@ func _get_charged_body_spells(wand: WandData, state: BattleState) -> Array[Spell
 
 func _apply_projectile(
 		state: BattleState, setup: BattleSetup, ev: CastEvent, pattern: Array[Vector2i],
-		push_dir: Vector2i = Vector2i(1, 0)) -> void:
-	var blocked_this_zap: Dictionary = {}
+		push_dir: Vector2i = Vector2i(1, 0), bounce_dir: Vector2i = Vector2i.ZERO) -> void:
+	var hit_ids: Dictionary = {}
 	for cell: Vector2i in EnemyGrid.get_hit_cells(target_cell, pattern):
 		var eid: String = setup.get_occupant_at(cell, state)
-		if eid.is_empty() or blocked_this_zap.has(eid):
+		if eid.is_empty() or hit_ids.has(eid):
 			continue
 		if state.obstacle_hp.has(eid):
 			_apply_damage_to_obstacle(state, setup, eid, ev, push_dir)
-			blocked_this_zap[eid] = true
+			hit_ids[eid] = true
 			continue
 		if not state.enemy_hp.has(eid):
 			continue
+		hit_ids[eid] = true
 		if _try_consume_block(state, eid):
-			blocked_this_zap[eid] = true
 			continue
 		_apply_damage_to_enemy(state, setup, eid, ev, push_dir)
+	if ev.bounces > 0:
+		_apply_bounces(state, setup, ev, hit_ids, push_dir, bounce_dir)
 
 
 func _try_consume_block(state: BattleState, eid: String) -> bool:
@@ -120,6 +123,47 @@ func _apply_damage_to_enemy(
 		state.kill_enemy(eid)
 	else:
 		_apply_on_hit_effects(state, setup, eid, ev.on_hit_effects, ev.total_damage, push_dir)
+
+
+func _score_bounce_candidate(target: Vector2i, from: Vector2i, bounce_dir: Vector2i) -> int:
+	var diff := target - from
+	if bounce_dir == Vector2i.ZERO:
+		return -(abs(diff.x) + abs(diff.y))
+	return diff.x * bounce_dir.x + diff.y * bounce_dir.y
+
+
+func _apply_bounces(
+		state: BattleState, setup: BattleSetup, ev: CastEvent,
+		hit_ids: Dictionary, push_dir: Vector2i,
+		bounce_dir: Vector2i = Vector2i.ZERO) -> void:
+	var last_pos := target_cell
+	for _bounce in range(ev.bounces):
+		var candidates: Array[String] = []
+		for enemy: EnemyData in setup.enemies:
+			if state.enemy_hp.has(enemy.id) and not hit_ids.has(enemy.id):
+				candidates.append(enemy.id)
+		for obstacle: ObstacleData in setup.obstacles:
+			if state.obstacle_hp.has(obstacle.id) and not hit_ids.has(obstacle.id):
+				candidates.append(obstacle.id)
+		if candidates.is_empty():
+			break
+		var next_id := candidates[0]
+		var next_pos: Vector2i = _get_occupant_push_info(setup, state, next_id)["pos"]
+		var best_score: int = _score_bounce_candidate(next_pos, last_pos, bounce_dir)
+		for j in range(1, candidates.size()):
+			var cid: String = candidates[j]
+			var cpos: Vector2i = _get_occupant_push_info(setup, state, cid)["pos"]
+			var score: int = _score_bounce_candidate(cpos, last_pos, bounce_dir)
+			if score > best_score:
+				best_score = score
+				next_id = cid
+				next_pos = cpos
+		last_pos = next_pos
+		hit_ids[next_id] = true
+		if state.obstacle_hp.has(next_id):
+			_apply_damage_to_obstacle(state, setup, next_id, ev, push_dir)
+		elif not _try_consume_block(state, next_id):
+			_apply_damage_to_enemy(state, setup, next_id, ev, push_dir)
 
 
 func _absorb_armor(state: BattleState, eid: String, damage: int) -> int:
