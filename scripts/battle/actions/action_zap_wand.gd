@@ -79,9 +79,22 @@ func _apply_projectile(
 	var blocked_this_zap: Dictionary = {}
 	for cell: Vector2i in EnemyGrid.get_hit_cells(target_cell, pattern):
 		var eid: String = setup.get_occupant_at(cell, state)
-		if eid.is_empty() or not state.enemy_hp.has(eid):
+		if eid.is_empty():
 			continue
 		if blocked_this_zap.has(eid):
+			continue
+		if state.obstacle_hp.has(eid):
+			state.obstacle_hp[eid] -= ev.total_damage
+			if state.obstacle_hp[eid] <= 0:
+				state.obstacle_hp.erase(eid)
+			else:
+				for effect: Dictionary in ev.on_hit_effects:
+					if effect.get("type", "") == "push":
+						_push_occupant(state, setup, eid,
+								effect.get("distance", 1), effect.get("damage", 0), push_dir)
+			blocked_this_zap[eid] = true
+			continue
+		if not state.enemy_hp.has(eid):
 			continue
 		if state.enemy_block.get(eid, 0) > 0:
 			state.enemy_block[eid] -= 1
@@ -128,7 +141,7 @@ func _apply_on_hit_effects(
 			"blind":
 				state.enemy_blind[eid] = effect.get("turns", 1)
 			"push":
-				_push_enemy(state, setup, eid,
+				_push_occupant(state, setup, eid,
 						effect.get("distance", 1), effect.get("damage", 0), push_dir)
 			"cleanse_poison":
 				if state.enemy_statuses.has(eid):
@@ -184,37 +197,52 @@ func _apply_on_hit_effects_to_mage(
 						func(s: StatusData) -> bool: return not (s is StatusPoison)))
 
 
-func _push_enemy(
-		state: BattleState, setup: BattleSetup, eid: String,
+func _push_occupant(
+		state: BattleState, setup: BattleSetup, id: String,
 		distance: int, collision_damage: int,
 		push_dir: Vector2i = Vector2i(1, 0)) -> void:
-	var enemy := setup.get_enemy(eid)
-	if enemy == null:
-		return
-	var idx := -1
-	for i in setup.enemies.size():
-		if setup.enemies[i].id == eid:
-			idx = i
-			break
-	if idx < 0:
-		return
-	var pos := setup.get_enemy_pos(idx, state)
+	var grid_size: Vector2i
+	var pos: Vector2i
+	var is_enemy := state.enemy_hp.has(id)
+	if is_enemy:
+		var idx := -1
+		for i in setup.enemies.size():
+			if setup.enemies[i].id == id:
+				idx = i
+				break
+		if idx < 0:
+			return
+		grid_size = setup.enemies[idx].grid_size
+		pos = setup.get_enemy_pos(idx, state)
+	else:
+		var idx := -1
+		for i in setup.obstacles.size():
+			if setup.obstacles[i].id == id:
+				idx = i
+				break
+		if idx < 0:
+			return
+		grid_size = setup.obstacles[idx].grid_size
+		pos = setup.get_obstacle_pos(idx, state)
 	for _step in distance:
 		var new_pos := pos + push_dir
-		if not EnemyGrid.is_within_bounds(new_pos, enemy.grid_size):
+		if not EnemyGrid.is_within_bounds(new_pos, grid_size):
 			break
 		var blocker_id := ""
-		for cell: Vector2i in EnemyGrid.get_cells_for_enemy(new_pos, enemy.grid_size):
+		for cell: Vector2i in EnemyGrid.get_cells_for_enemy(new_pos, grid_size):
 			var occupant := setup.get_occupant_at(cell, state)
-			if occupant != "" and occupant != eid:
+			if occupant != "" and occupant != id:
 				blocker_id = occupant
 				break
 		if blocker_id != "":
-			_deal_collision_damage(state, eid, collision_damage)
+			_deal_collision_damage(state, id, collision_damage)
 			_deal_collision_damage(state, blocker_id, collision_damage)
 			break
 		pos = new_pos
-		state.enemy_positions[eid] = pos
+		if is_enemy:
+			state.enemy_positions[id] = pos
+		else:
+			state.obstacle_positions[id] = pos
 
 
 func _deal_collision_damage(state: BattleState, target_id: String, damage: int) -> void:

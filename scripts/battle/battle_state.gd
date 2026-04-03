@@ -22,6 +22,7 @@ var mage_mana_spent: Array[int] = []
 var monster_intents: Dictionary = {}
 var enemy_attack_mult: Dictionary = {}  # enemy_id -> float multiplier for this round
 var enemy_positions: Dictionary = {}   # enemy_id -> Vector2i; overrides setup position when set
+var obstacle_positions: Dictionary = {}  # obstacle_id -> Vector2i; overrides setup position when set
 var enemy_stunned: Dictionary = {}     # enemy_id -> turns remaining; skips attack
 var enemy_blind: Dictionary = {}       # enemy_id -> turns remaining; 50% miss / random target
 var cast_events: Array = []            # CastEvents from the most recent zap action

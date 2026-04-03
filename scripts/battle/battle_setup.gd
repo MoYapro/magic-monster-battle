@@ -83,6 +83,10 @@ func get_enemy_pos(index: int, state: BattleState) -> Vector2i:
 	return state.enemy_positions.get(enemies[index].id, enemy_positions[index])
 
 
+func get_obstacle_pos(index: int, state: BattleState) -> Vector2i:
+	return state.obstacle_positions.get(obstacles[index].id, obstacle_positions[index])
+
+
 func get_occupant_at(cell: Vector2i, state: BattleState) -> String:
 	for i in enemies.size():
 		if not state.enemy_hp.has(enemies[i].id):
@@ -90,9 +94,12 @@ func get_occupant_at(cell: Vector2i, state: BattleState) -> String:
 		for c: Vector2i in EnemyGrid.get_cells_for_enemy(get_enemy_pos(i, state), enemies[i].grid_size):
 			if c == cell:
 				return enemies[i].id
-	var id: String = _cell_to_enemy.get(cell, "")
-	if id != "" and state.obstacle_hp.has(id):
-		return id
+	for i in obstacles.size():
+		if not state.obstacle_hp.has(obstacles[i].id):
+			continue
+		for c: Vector2i in EnemyGrid.get_cells_for_enemy(get_obstacle_pos(i, state), obstacles[i].grid_size):
+			if c == cell:
+				return obstacles[i].id
 	return ""
 
 
