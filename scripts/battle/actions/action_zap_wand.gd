@@ -90,7 +90,12 @@ func _apply_projectile(
 		state: BattleState, setup: BattleSetup, ev: CastEvent, pattern: Array[Vector2i],
 		push_dir: Vector2i = Vector2i(1, 0), bounce_dir: Vector2i = Vector2i.ZERO) -> void:
 	var hit_ids: Dictionary = {}
-	for cell: Vector2i in EnemyGrid.get_hit_cells(target_cell, pattern):
+	var hit_cells: Array[Vector2i] = []
+	if ev.corrupted and pattern.size() > 1:
+		hit_cells.append(target_cell)
+	else:
+		hit_cells = EnemyGrid.get_hit_cells(target_cell, pattern)
+	for cell: Vector2i in hit_cells:
 		var eid: String = setup.get_occupant_at(cell, state)
 		if eid.is_empty() or hit_ids.has(eid):
 			continue
@@ -130,17 +135,33 @@ func _apply_damage_to_obstacle(
 					effect.get("distance", 1), effect.get("damage", 0), push_dir)
 
 
+func _consume_status_stacks(state: BattleState, eid: String) -> int:
+	if not state.enemy_statuses.has(eid):
+		return 0
+	var bonus := 0
+	var kept: Array[StatusData] = []
+	for status: StatusData in state.enemy_statuses[eid]:
+		if (status is StatusFire or status is StatusPoison or status is StatusWet) and status.stacks > 0:
+			bonus += status.stacks
+		else:
+			kept.append(status)
+	state.enemy_statuses[eid] = kept
+	return bonus
+
+
 func _apply_damage_to_enemy(
 		state: BattleState, setup: BattleSetup, eid: String,
 		ev: CastEvent, push_dir: Vector2i) -> void:
-	var remaining := _absorb_armor(state, eid, ev.total_damage)
+	var bonus := _consume_status_stacks(state, eid) if ev.corrupted else 0
+	var total := ev.total_damage + bonus
+	var remaining := _absorb_armor(state, eid, total)
 	remaining = _absorb_enemy_shield(state, eid, remaining)
 	state.enemy_hp[eid] -= remaining
 	if state.enemy_hp[eid] <= 0:
 		state.kill_enemy(eid)
 		_apply_on_kill_effects(state, ev)
 	else:
-		_apply_on_hit_effects(state, setup, eid, ev.on_hit_effects, ev.total_damage, push_dir)
+		_apply_on_hit_effects(state, setup, eid, ev.on_hit_effects, total, push_dir)
 
 
 func _score_bounce_candidate(target: Vector2i, from: Vector2i, bounce_dir: Vector2i) -> int:
