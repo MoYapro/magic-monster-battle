@@ -99,6 +99,19 @@ static func _apply_mod(ev: CastEvent, mod: Dictionary) -> void:
 			ev.mana_refund += mod.get("amount", 0)
 		"reactive":
 			ev.reactive = true
+		"distillation":
+			var bonus := ev.total_damage
+			for effect: Dictionary in ev.on_hit_effects:
+				if effect.get("stacks_from_damage", false):
+					effect["stacks"] = bonus * 2
+					effect.erase("stacks_from_damage")
+				elif effect.has("stacks"):
+					effect["stacks"] = effect.get("stacks", 0) + bonus
+				elif effect.get("type", "") == "bounce":
+					effect["per_cast"] = effect.get("per_cast", 1) + bonus
+				elif effect.has("distance_per_cast"):
+					effect["distance_per_cast"] = effect.get("distance_per_cast", 1) + bonus
+			ev.total_damage = 0
 		"corrupted":
 			ev.corrupted = true
 			var bonus := 0

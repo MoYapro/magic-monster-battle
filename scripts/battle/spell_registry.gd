@@ -20,6 +20,7 @@ static func all_body_spells() -> Array[SpellData]:
 		SpellShield.create(),
 		SpellCorrupted.create(),
 		SpellReactive.create(),
+		SpellDistillation.create(),
 	]
 
 
