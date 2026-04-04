@@ -149,11 +149,39 @@ func _consume_status_stacks(state: BattleState, eid: String) -> int:
 	return bonus
 
 
+func _resolve_reactive(state: BattleState, eid: String, ev: CastEvent) -> Dictionary:
+	match ev.spell.spell_id:
+		"ember":
+			for status: StatusData in state.enemy_statuses.get(eid, []):
+				if status is StatusFire:
+					return {"bonus": status.stacks, "effects": ev.on_hit_effects}
+		"frost":
+			for status: StatusData in state.enemy_statuses.get(eid, []):
+				if status is StatusWet:
+					return {"bonus": status.stacks, "effects": ev.on_hit_effects}
+		"venom":
+			for status: StatusData in state.enemy_statuses.get(eid, []):
+				if status is StatusPoison:
+					var burst := status.stacks
+					var kept_s: Array[StatusData] = []
+					for s: StatusData in state.enemy_statuses[eid]:
+						if not (s is StatusPoison):
+							kept_s.append(s)
+					state.enemy_statuses[eid] = kept_s
+					var kept_e: Array[Dictionary] = []
+					for e: Dictionary in ev.on_hit_effects:
+						if e.get("type", "") != "poison":
+							kept_e.append(e)
+					return {"bonus": burst, "effects": kept_e}
+	return {"bonus": 0, "effects": ev.on_hit_effects}
+
+
 func _apply_damage_to_enemy(
 		state: BattleState, setup: BattleSetup, eid: String,
 		ev: CastEvent, push_dir: Vector2i) -> void:
-	var bonus := _consume_status_stacks(state, eid) if ev.corrupted else 0
-	var total := ev.total_damage + bonus
+	var corruption_bonus := _consume_status_stacks(state, eid) if ev.corrupted else 0
+	var reactive_result := _resolve_reactive(state, eid, ev) if ev.reactive else {"bonus": 0, "effects": ev.on_hit_effects}
+	var total := ev.total_damage + corruption_bonus + reactive_result.get("bonus", 0) as int
 	var remaining := _absorb_armor(state, eid, total)
 	remaining = _absorb_enemy_shield(state, eid, remaining)
 	state.enemy_hp[eid] -= remaining
@@ -161,7 +189,8 @@ func _apply_damage_to_enemy(
 		state.kill_enemy(eid)
 		_apply_on_kill_effects(state, ev)
 	else:
-		_apply_on_hit_effects(state, setup, eid, ev.on_hit_effects, total, push_dir)
+		var effects: Array[Dictionary] = reactive_result.get("effects", ev.on_hit_effects)
+		_apply_on_hit_effects(state, setup, eid, effects, total, push_dir)
 
 
 func _score_bounce_candidate(target: Vector2i, from: Vector2i, bounce_dir: Vector2i) -> int:
@@ -175,6 +204,21 @@ func _apply_bounces(
 		state: BattleState, setup: BattleSetup, ev: CastEvent,
 		hit_ids: Dictionary, push_dir: Vector2i,
 		bounce_dir: Vector2i = Vector2i.ZERO) -> void:
+	if ev.reactive and ev.spell.spell_id == "lightning":
+		for enemy: EnemyData in setup.enemies:
+			if not state.enemy_hp.has(enemy.id) or hit_ids.has(enemy.id):
+				continue
+			var wet := false
+			for s: StatusData in state.enemy_statuses.get(enemy.id, []):
+				if s is StatusWet:
+					wet = true
+					break
+			if not wet:
+				continue
+			hit_ids[enemy.id] = true
+			if not _try_consume_block(state, enemy.id):
+				_apply_damage_to_enemy(state, setup, enemy.id, ev, push_dir)
+		return
 	var last_pos := target_cell
 	for _bounce in range(ev.bounces):
 		var candidates: Array[String] = []

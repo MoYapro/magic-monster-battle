@@ -97,6 +97,8 @@ static func _apply_mod(ev: CastEvent, mod: Dictionary) -> void:
 			ev.on_hit_effects.append(mod.get("effect", {}))
 		"mana_refund":
 			ev.mana_refund += mod.get("amount", 0)
+		"reactive":
+			ev.reactive = true
 		"corrupted":
 			ev.corrupted = true
 			var bonus := 0
