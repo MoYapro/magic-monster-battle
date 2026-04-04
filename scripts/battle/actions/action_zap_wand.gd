@@ -22,7 +22,8 @@ func apply(state: BattleState, setup: BattleSetup) -> BattleState:
 		return new_state
 	var wand := setup.wands[mage_index]
 	var pattern := _get_hit_pattern(wand, new_state)
-	var cast_events := WandEvaluator.evaluate(_get_charged_body_spells(wand, new_state))
+	var zap_mana_cost := _sum_slot_charges(wand, new_state)
+	var cast_events := WandEvaluator.evaluate(_get_charged_body_spells(wand, new_state), zap_mana_cost)
 	for ev: CastEvent in cast_events:
 		match ev.type:
 			CastEvent.Type.PROJECTILE:
@@ -68,6 +69,21 @@ func _get_charged_body_spells(wand: WandData, state: BattleState) -> Array[Spell
 	for slot: SpellSlotData in body_slots:
 		spells.append(slot.spell)
 	return spells
+
+
+func _sum_slot_charges(wand: WandData, state: BattleState) -> int:
+	var total := 0
+	for slot: SpellSlotData in wand.slots:
+		total += state.slot_charges.get("%d/%s" % [mage_index, slot.id], 0)
+	return total
+
+
+func _apply_on_kill_effects(state: BattleState, ev: CastEvent) -> void:
+	for effect: Dictionary in ev.on_kill_effects:
+		match effect.get("type", ""):
+			"refund_zap_mana":
+				state.mana += ev.zap_mana_cost
+				state.mage_mana_spent[mage_index] -= ev.zap_mana_cost
 
 
 func _apply_projectile(
@@ -122,6 +138,7 @@ func _apply_damage_to_enemy(
 	state.enemy_hp[eid] -= remaining
 	if state.enemy_hp[eid] <= 0:
 		state.kill_enemy(eid)
+		_apply_on_kill_effects(state, ev)
 	else:
 		_apply_on_hit_effects(state, setup, eid, ev.on_hit_effects, ev.total_damage, push_dir)
 

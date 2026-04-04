@@ -224,3 +224,29 @@ func test_cast_events_recorded_on_state() -> void:
 	var setup := _make_setup(_strike_spell(), enemy)
 	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(_make_state(setup), setup)
 	assert_gt(result.cast_events.size(), 0)
+
+
+# --- bone soul harvest ---
+
+func test_bone_kill_refunds_all_zap_mana() -> void:
+	var enemy := EnemyData.new("e1", "Target", 3, Vector2i(1, 1), Color.WHITE)
+	var setup := _make_setup(SpellBone.create(), enemy)
+	var state := _make_state(setup)
+	state.slot_charges["0/s0_0"] = 1  # 1 mana on bone
+	state.slot_charges["0/tip"] = 1   # 1 mana on tip
+	state.mana = 5
+	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(state, setup)
+	assert_false(result.enemy_hp.has("e1"), "enemy should be dead")
+	assert_eq(result.mana, 7, "2 mana spent this zap should be refunded")
+
+
+func test_bone_no_refund_when_enemy_survives() -> void:
+	var enemy := EnemyData.new("e1", "Target", 20, Vector2i(1, 1), Color.WHITE)
+	var setup := _make_setup(SpellBone.create(), enemy)
+	var state := _make_state(setup)
+	state.slot_charges["0/s0_0"] = 1
+	state.slot_charges["0/tip"] = 1
+	state.mana = 5
+	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(state, setup)
+	assert_true(result.enemy_hp.has("e1"), "enemy should survive")
+	assert_eq(result.mana, 5, "no refund when kill does not happen")

@@ -11,7 +11,7 @@ class_name WandEvaluator
 # Output: Array[CastEvent] — resolved events to apply to the battle.
 
 
-static func evaluate(spells: Array[SpellData]) -> Array[CastEvent]:
+static func evaluate(spells: Array[SpellData], zap_mana_cost: int = 0) -> Array[CastEvent]:
 	var events: Array[CastEvent] = []
 	var pending_mods: Array[Dictionary] = []
 	var i := 0
@@ -24,13 +24,13 @@ static func evaluate(spells: Array[SpellData]) -> Array[CastEvent]:
 			var count := 1
 			while i + count < spells.size() and spells[i + count].spell_id == spell.spell_id:
 				count += 1
-			events.append(_make_projectile(spell, pending_mods, count))
+			events.append(_make_projectile(spell, pending_mods, count, zap_mana_cost))
 			pending_mods = []
 			i += count
 	return events
 
 
-static func _make_projectile(spell: SpellData, mods: Array[Dictionary], count: int = 1) -> CastEvent:
+static func _make_projectile(spell: SpellData, mods: Array[Dictionary], count: int = 1, zap_mana_cost: int = 0) -> CastEvent:
 	var ev := CastEvent.new()
 	ev.type = CastEvent.Type.PROJECTILE
 	ev.spell = spell
@@ -39,7 +39,9 @@ static func _make_projectile(spell: SpellData, mods: Array[Dictionary], count: i
 		total *= spell.damage
 	ev.total_damage = total
 	ev.on_hit_effects = spell.on_hit_effects.duplicate(true)
+	ev.on_kill_effects = spell.on_kill_effects.duplicate(true)
 	ev.mana_refund = 0
+	ev.zap_mana_cost = zap_mana_cost
 	for mod in mods:
 		_apply_mod(ev, mod)
 	var resolved_effects: Array[Dictionary] = []

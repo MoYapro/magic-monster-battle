@@ -17,8 +17,9 @@ var description: String
 # "alchemy"    — produced by successful fusion; cannot be found as loot
 var spell_type: String = "projectile"
 var spell_id: String = ""
-var on_hit_effects: Array[Dictionary] = []  # [{type, ...}] applied on hit
-var modifier_effect: Dictionary = {}        # {type, ...} for spell_type == "modifier"
+var on_hit_effects: Array[Dictionary] = []   # [{type, ...}] applied on hit
+var on_kill_effects: Array[Dictionary] = []  # [{type, ...}] applied when this spell kills
+var modifier_effect: Dictionary = {}         # {type, ...} for spell_type == "modifier"
 
 
 func _init(p_name: String, p_abbrev: String, p_tags: Array[String], p_color: Color,
