@@ -99,6 +99,34 @@ func test_frozen_enemy_thaws_on_fire_and_no_fire_added() -> void:
 	assert_eq(fires.size(), 0)
 
 
+func test_frost_on_burning_extinguishes_fire() -> void:
+	var s := _make_state()
+	s.add_enemy_status("e1", StatusFire.new(4))
+	s.add_enemy_status("e1", StatusFrozen.new())
+	var fires: Array = (s.enemy_statuses["e1"] as Array).filter(
+			func(x: StatusData) -> bool: return x is StatusFire)
+	assert_eq(fires.size(), 0)
+
+
+func test_frost_on_burning_applies_no_frozen() -> void:
+	var s := _make_state()
+	s.add_enemy_status("e1", StatusFire.new(4))
+	s.add_enemy_status("e1", StatusFrozen.new())
+	var frozen: Array = (s.enemy_statuses["e1"] as Array).filter(
+			func(x: StatusData) -> bool: return x is StatusFrozen)
+	assert_eq(frozen.size(), 0)
+
+
+func test_frost_on_burning_applies_2_wet() -> void:
+	var s := _make_state()
+	s.add_enemy_status("e1", StatusFire.new(4))
+	s.add_enemy_status("e1", StatusFrozen.new())
+	var wets: Array = (s.enemy_statuses["e1"] as Array).filter(
+			func(x: StatusData) -> bool: return x is StatusWet)
+	assert_eq(wets.size(), 1)
+	assert_eq((wets[0] as StatusWet).stacks, 2)
+
+
 # --- kill_enemy ---
 
 func test_kill_enemy_removes_it_from_hp_tracking() -> void:

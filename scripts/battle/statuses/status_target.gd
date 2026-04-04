@@ -44,6 +44,13 @@ func get_statuses() -> Array:
 	return _state.mage_statuses[_mage_index]
 
 
+func add_status(s: StatusData) -> void:
+	if is_enemy():
+		_state.add_enemy_status(_enemy_id, s)
+	else:
+		_state.add_mage_status(_mage_index, s)
+
+
 func remove_status(s: StatusData) -> void:
 	get_statuses().erase(s)
 
