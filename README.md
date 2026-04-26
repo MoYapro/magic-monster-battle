@@ -273,3 +273,7 @@ All three mages share a single mana pool that persists between battles.
 - [x] Summon Skeleton: spawn count scales with drummer HP (1 at full health, up to 3 at low HP); respects grid capacity; blocks respawn of already-alive skeletons
 - [x] War Drummer (boss): forces Raise Fallen when no skeletons are alive or dead; otherwise selects randomly from action pool
 - [x] Wet Healing trait: heals the monster each round by its current wet stack count; does not consume wet stacks
+
+## Architecture
+
+See [`docs/architecture.puml`](docs/architecture.puml) for the high-level component diagram.
