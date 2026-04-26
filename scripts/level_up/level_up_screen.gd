@@ -29,11 +29,11 @@ const COLOR_OPTION_BG      := Color(0.13, 0.16, 0.18)
 const COLOR_SELECTED_BG    := Color(0.12, 0.30, 0.18)
 const COLOR_SELECTED_BORDER := Color(0.30, 0.80, 0.40)
 const COLOR_TITLE          := Color(0.85, 0.90, 0.95)
+const COLOR_HP_FULL        := Color(0.20, 0.75, 0.30)
+const COLOR_HP_LOW         := Color(0.85, 0.20, 0.15)
 
 var _mages: Array[MageData] = []
-var _selected_mage: int = -1
-var _selected_stat: String = ""
-var _confirm_button: Button = null
+var _heal_button: Button = null
 
 
 func _ready() -> void:
@@ -76,26 +76,27 @@ func _draw_mage_card(i: int) -> void:
 	draw_string(ThemeDB.fallback_font,
 			Vector2(x + OPTION_PAD, CARD_Y + 26.0),
 			mage.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, COLOR_MAGE_NAME)
-	_draw_option(i, "hp",   "HP",        mage.max_hp,          HP_GAIN)
+	var hp_frac := clampf(float(mage.current_hp) / float(mage.max_hp), 0.0, 1.0)
+	var hp_color := COLOR_HP_FULL.lerp(COLOR_HP_LOW, 1.0 - hp_frac)
+	var name_w := ThemeDB.fallback_font.get_string_size(mage.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
+	draw_string(ThemeDB.fallback_font,
+			Vector2(x + OPTION_PAD + name_w + 8.0, CARD_Y + 24.0),
+			"%d / %d HP" % [mage.current_hp, mage.max_hp],
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 11, hp_color)
+	_draw_option(i, "hp",   "Max HP",    mage.max_hp,          HP_GAIN)
 	_draw_option(i, "mana", "Mana / turn", mage.mana_allowance, MANA_GAIN)
 
 
 func _draw_option(mage_i: int, stat: String, label: String, current: int, gain: int) -> void:
 	var r := _option_rect(mage_i, stat)
-	var selected := _selected_mage == mage_i and _selected_stat == stat
-	if selected:
-		draw_rect(r, COLOR_SELECTED_BG, true)
-		draw_rect(r, COLOR_SELECTED_BORDER, false, 2.0)
-	else:
-		draw_rect(r, COLOR_OPTION_BG, true)
-		draw_rect(r, COLOR_BORDER, false, 1.0)
+	draw_rect(r, COLOR_OPTION_BG, true)
+	draw_rect(r, COLOR_BORDER, false, 1.0)
 	var font := ThemeDB.fallback_font
 	draw_string(font, Vector2(r.position.x + 8.0, r.position.y + 16.0),
 			label, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COLOR_SECTION)
-	var value_color := COLOR_GAIN if selected else COLOR_STAT
 	draw_string(font, Vector2(r.position.x + 8.0, r.position.y + 36.0),
 			"%d  →  %d" % [current, current + gain],
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 14, value_color)
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 14, COLOR_STAT)
 
 
 func _input(event: InputEvent) -> void:
@@ -106,10 +107,7 @@ func _input(event: InputEvent) -> void:
 	for i in _mages.size():
 		for stat in ["hp", "mana"]:
 			if _option_rect(i, stat).has_point(pos):
-				_selected_mage = i
-				_selected_stat = stat
-				_confirm_button.disabled = false
-				queue_redraw()
+				_apply_upgrade(i, stat)
 				get_viewport().set_input_as_handled()
 				return
 
@@ -123,20 +121,30 @@ func _draw_bottom_bar_bg() -> void:
 func _build_bottom_bar() -> void:
 	var layer := CanvasLayer.new()
 	add_child(layer)
-	_confirm_button = Button.new()
-	_confirm_button.text = "Confirm →"
-	_confirm_button.size = Vector2(148, BOTTOM_BAR_H - 10)
-	_confirm_button.position = Vector2(SCREEN_W - 156.0, SCREEN_H - BOTTOM_BAR_H + 5.0)
-	_confirm_button.disabled = true
-	_confirm_button.pressed.connect(_on_confirm_pressed)
-	layer.add_child(_confirm_button)
+	_heal_button = Button.new()
+	_heal_button.text = "Heal All ♥"
+	_heal_button.size = Vector2(148, BOTTOM_BAR_H - 10)
+	_heal_button.position = Vector2(SCREEN_W - 156.0, SCREEN_H - BOTTOM_BAR_H + 5.0)
+	_heal_button.pressed.connect(_on_heal_all_pressed)
+	layer.add_child(_heal_button)
 
 
-func _on_confirm_pressed() -> void:
-	var mage := _mages[_selected_mage]
-	if _selected_stat == "hp":
+func _on_heal_all_pressed() -> void:
+	for mage: MageData in _mages:
+		if mage.current_hp <= 0:
+			mage.current_hp = int(mage.max_hp * 0.3)
+		else:
+			var heal := int(mage.max_hp * 0.8)
+			mage.current_hp = mini(mage.max_hp, mage.current_hp + heal)
+	GameState.mages = _mages
+	get_tree().change_scene_to_file("res://scenes/world/path_selection_screen.tscn")
+
+
+func _apply_upgrade(mage_i: int, stat: String) -> void:
+	var mage := _mages[mage_i]
+	if stat == "hp":
 		mage.max_hp += HP_GAIN
-		mage.current_hp = mage.max_hp
+		mage.current_hp = mini(mage.max_hp, mage.current_hp + HP_GAIN)
 	else:
 		mage.mana_allowance += MANA_GAIN
 	GameState.mages = _mages
