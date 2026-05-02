@@ -35,7 +35,10 @@ var _current_state: BattleState
 # debug placement
 var _battle_enemies: Array[EnemyData] = []
 var _battle_positions: Array[Vector2i] = []
+var _battle_obstacles: Array[ObstacleData] = []
+var _battle_obstacle_positions: Array[Vector2i] = []
 var _place_cls: Variant = null
+var _place_obstacle_cls: Variant = null
 var _place_size: Vector2i = Vector2i(1, 1)
 var _place_id_counter: Dictionary = {}
 
@@ -55,6 +58,7 @@ func _ready() -> void:
 	_debug_bar.clear_requested.connect(_on_clear_pressed)
 	_debug_bar.level_changed.connect(_on_level_changed)
 	_debug_bar.enemy_selected.connect(_on_enemy_selected)
+	_debug_bar.obstacle_selected.connect(_on_obstacle_selected)
 	_setup_mage_wand_rows()
 	_build_setup()
 	_tooltip_manager = BattleTooltipManager.new()
@@ -91,8 +95,11 @@ func _on_level_changed(_value: float) -> void:
 func _on_clear_pressed() -> void:
 	_cancel_targeting()
 	_place_cls = null
+	_place_obstacle_cls = null
 	_battle_enemies.clear()
 	_battle_positions.clear()
+	_battle_obstacles.clear()
+	_battle_obstacle_positions.clear()
 	_place_id_counter.clear()
 	_rebuild_battle()
 
@@ -102,7 +109,18 @@ func _on_enemy_selected(cls: Variant, size: Vector2i) -> void:
 		_place_cls = null
 		return
 	_cancel_targeting()
+	_place_obstacle_cls = null
 	_place_cls = cls
+	_place_size = size
+
+
+func _on_obstacle_selected(cls: Variant, size: Vector2i) -> void:
+	if cls == null:
+		_place_obstacle_cls = null
+		return
+	_cancel_targeting()
+	_place_cls = null
+	_place_obstacle_cls = cls
 	_place_size = size
 
 
@@ -184,11 +202,13 @@ func _build_setup() -> void:
 	var composition := BattleComposer.compose(biome, biome_level, rng)
 	_battle_enemies = composition["enemies"]
 	_battle_positions = composition["positions"]
+	_battle_obstacles = composition["obstacles"]
+	_battle_obstacle_positions = composition["obstacle_positions"]
 	_place_id_counter.clear()
 	var wands: Array[WandData] = []
 	for wd: WandDisplay in _wand_displays:
 		wands.append(wd.get_wand_data())
-	_setup = BattleSetup.new(_battle_enemies, _battle_positions, _mages, wands, 10, composition["obstacles"], composition["obstacle_positions"])
+	_setup = BattleSetup.new(_battle_enemies, _battle_positions, _mages, wands, 10, _battle_obstacles, _battle_obstacle_positions)
 	_history = BattleHistory.new(_setup.make_initial_state(), _setup)
 	_apply_state(_history.current_state())
 
@@ -198,7 +218,7 @@ func _rebuild_battle() -> void:
 	var wands: Array[WandData] = []
 	for wd: WandDisplay in _wand_displays:
 		wands.append(wd.get_wand_data())
-	_setup = BattleSetup.new(_battle_enemies, _battle_positions, _mages, wands, _setup.max_mana, _setup.obstacles, _setup.obstacle_positions)
+	_setup = BattleSetup.new(_battle_enemies, _battle_positions, _mages, wands, _setup.max_mana, _battle_obstacles, _battle_obstacle_positions)
 	var new_state := _setup.make_initial_state()
 	for i in new_state.mage_hp.size():
 		new_state.mage_hp[i] = prev.mage_hp[i]
@@ -440,7 +460,7 @@ func _draw() -> void:
 	if targets.is_empty():
 		return
 	var from := _get_enemy_scene_center(_intent_hover_enemy)
-	var color := Color(1.0, 0.45, 0.1, 0.9)
+	var color := Palette.COLOR_TARGET_FLASH
 	for t in targets:
 		var to := _mage_displays[t].position + _mage_displays[t].get_rect().get_center()
 		draw_line(from, to, color, 2.5, true)
@@ -485,6 +505,34 @@ func _update_hover(mouse: Vector2) -> void:
 			return
 
 
+func _place_obstacle_at(cell: Vector2i) -> void:
+	var occupied: Dictionary = {}
+	for i in _battle_positions.size():
+		var sz: Vector2i = _battle_enemies[i].grid_size
+		for dx in range(sz.x):
+			for dy in range(sz.y):
+				occupied[_battle_positions[i] + Vector2i(dx, dy)] = true
+	for i in _battle_obstacle_positions.size():
+		var sz: Vector2i = _battle_obstacles[i].grid_size
+		for dx in range(sz.x):
+			for dy in range(sz.y):
+				occupied[_battle_obstacle_positions[i] + Vector2i(dx, dy)] = true
+	for dx in range(_place_size.x):
+		for dy in range(_place_size.y):
+			var c := cell + Vector2i(dx, dy)
+			if c.x >= EnemyGrid.COLS or c.y >= EnemyGrid.ROWS or occupied.has(c):
+				return
+	var obstacle: ObstacleData = _place_obstacle_cls.new()
+	var base_id := obstacle.display_name.to_lower().replace(" ", "_")
+	_place_id_counter[base_id] = _place_id_counter.get(base_id, 0) + 1
+	obstacle.id = base_id + "_" + str(_place_id_counter[base_id])
+	_battle_obstacles.append(obstacle)
+	_battle_obstacle_positions.append(cell)
+	_rebuild_battle()
+	_debug_bar.reset_obstacle_dropdown()
+	_place_obstacle_cls = null
+
+
 func _place_enemy_at(cell: Vector2i) -> void:
 	var occupied: Dictionary = {}
 	for i in _battle_positions.size():
@@ -515,11 +563,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
-	if _place_cls != null:
+	if _place_cls != null or _place_obstacle_cls != null:
 		if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
 			enemy_grid.set_hovered_cells([])
 			_debug_bar.reset_place_dropdown()
+			_debug_bar.reset_obstacle_dropdown()
 			_place_cls = null
+			_place_obstacle_cls = null
 			get_viewport().set_input_as_handled()
 			return
 		if event is InputEventMouseMotion:
@@ -536,7 +586,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			var cell := enemy_grid.get_cell_at(enemy_grid.to_local((event as InputEventMouseButton).position))
 			if cell.x >= 0:
 				enemy_grid.set_hovered_cells([])
-				_place_enemy_at(cell)
+				if _place_cls != null:
+					_place_enemy_at(cell)
+				else:
+					_place_obstacle_at(cell)
 				get_viewport().set_input_as_handled()
 			return
 

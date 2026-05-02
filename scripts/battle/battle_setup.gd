@@ -110,6 +110,20 @@ func get_enemy(p_id: String) -> EnemyData:
 	return null
 
 
+func get_obstacle(p_id: String) -> ObstacleData:
+	for obstacle: ObstacleData in obstacles:
+		if obstacle.id == p_id:
+			return obstacle
+	return null
+
+
+func get_obstacle_pos_by_id(p_id: String, state: BattleState) -> Vector2i:
+	for i in obstacles.size():
+		if obstacles[i].id == p_id:
+			return get_obstacle_pos(i, state)
+	return Vector2i(-1, -1)
+
+
 func roll_intents(state: BattleState, rng: RandomNumberGenerator) -> Dictionary:
 	var intents := {}
 	for enemy: EnemyData in enemies:

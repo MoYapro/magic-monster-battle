@@ -125,9 +125,14 @@ func _try_consume_block(state: BattleState, eid: String) -> bool:
 func _apply_damage_to_obstacle(
 		state: BattleState, setup: BattleSetup, eid: String,
 		ev: CastEvent, push_dir: Vector2i) -> void:
+	var obstacle := setup.get_obstacle(eid)
 	state.obstacle_hp[eid] -= ev.total_damage
+	if obstacle:
+		obstacle.on_hit(state, setup, ev)
 	if state.obstacle_hp[eid] <= 0:
 		state.obstacle_hp.erase(eid)
+		if obstacle:
+			obstacle.on_destroyed(state, setup, ev)
 		return
 	for effect: Dictionary in ev.on_hit_effects:
 		if effect.get("type", "") == "push":
@@ -292,7 +297,8 @@ func _apply_on_hit_effects(
 			"stun":
 				state.enemy_stunned[eid] = effect.get("turns", 1)
 			"blind":
-				state.enemy_blind[eid] = effect.get("turns", 1)
+				state.add_enemy_status(eid, StatusBlind.new())
+				state.monster_intents.erase(eid)
 			"push":
 				_push_occupant(state, setup, eid,
 						effect.get("distance", 1), effect.get("damage", 0), push_dir)

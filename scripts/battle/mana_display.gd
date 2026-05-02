@@ -4,12 +4,6 @@ extends Node2D
 const WIDTH := 56.0
 const PAD := 8.0
 
-const COLOR_BG := Color(0.15, 0.17, 0.19)
-const COLOR_BORDER := Color(0.38, 0.42, 0.48)
-const COLOR_DROPLET := Color(0.25, 0.50, 0.90)
-const COLOR_DROPLET_EMPTY := Color(0.13, 0.20, 0.32)
-const COLOR_DROPLET_BORDER := Color(0.40, 0.62, 1.0)
-
 var _current: int = 10
 var _max: int = 10
 var _height: float = 200.0
@@ -23,8 +17,8 @@ func setup(current: int, max_mana: int, height: float) -> void:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, Vector2(WIDTH, _height)), COLOR_BG, true)
-	draw_rect(Rect2(Vector2.ZERO, Vector2(WIDTH, _height)), COLOR_BORDER, false, 1.0)
+	draw_rect(Rect2(Vector2.ZERO, Vector2(WIDTH, _height)), Palette.COLOR_WIDGET_BG, true)
+	draw_rect(Rect2(Vector2.ZERO, Vector2(WIDTH, _height)), Palette.COLOR_WIDGET_BORDER, false, 1.0)
 
 	if _max <= 0:
 		return
@@ -43,5 +37,5 @@ func _draw() -> void:
 	for i in range(_max - 1, -1, -1):
 		var cy := PAD + radius + float(i) * step
 		var filled := i < _current
-		draw_circle(Vector2(cx, cy), radius, COLOR_DROPLET if filled else COLOR_DROPLET_EMPTY)
-		draw_arc(Vector2(cx, cy), radius, 0.0, TAU, 24, COLOR_DROPLET_BORDER, 1.0)
+		draw_circle(Vector2(cx, cy), radius, Palette.COLOR_MANA_DROPLET if filled else Palette.COLOR_MANA_EMPTY)
+		draw_arc(Vector2(cx, cy), radius, 0.0, TAU, 24, Palette.COLOR_MANA_BORDER, 1.0)

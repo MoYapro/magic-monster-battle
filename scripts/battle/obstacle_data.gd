@@ -11,6 +11,14 @@ var difficulty_rating: int = 10   # 1–100; used in encounter budget
 var generation_weight: int = 10   # relative frequency in generation
 
 
+func on_hit(_state: BattleState, _setup: BattleSetup, _ev: CastEvent) -> void:
+	pass
+
+
+func on_destroyed(_state: BattleState, _setup: BattleSetup, _ev: CastEvent) -> void:
+	pass
+
+
 func _init(
 	p_id: String,
 	p_name: String,

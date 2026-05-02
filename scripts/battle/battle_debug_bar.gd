@@ -7,6 +7,7 @@ signal reroll_requested
 signal clear_requested
 signal level_changed(value: float)
 signal enemy_selected(cls: Variant, size: Vector2i)
+signal obstacle_selected(cls: Variant, size: Vector2i)
 
 const SCREEN_W := 1280.0
 const SCREEN_H := 720.0
@@ -14,12 +15,15 @@ const BOTTOM_BAR_H := 38.0
 
 var _undo_button: Button = null
 var _place_dropdown: OptionButton = null
+var _obstacle_dropdown: OptionButton = null
 var _level_spinbox: SpinBox = null
 var _monsters: Array = []
+var _obstacles: Array = []
 
 
 func setup(parent: Node) -> void:
 	_build_monsters_list()
+	_build_obstacles_list()
 	_build_ui(parent)
 
 
@@ -34,6 +38,22 @@ func get_level() -> int:
 
 func reset_place_dropdown() -> void:
 	_place_dropdown.select(0)
+
+
+func reset_obstacle_dropdown() -> void:
+	_obstacle_dropdown.select(0)
+
+
+func _build_obstacles_list() -> void:
+	var seen: Dictionary = {}
+	for biome: BiomeData in BiomesData.all():
+		for cls in biome.obstacle_pool:
+			if seen.has(cls):
+				continue
+			seen[cls] = true
+			var instance: ObstacleData = cls.new()
+			_obstacles.append([instance.display_name, cls])
+	_obstacles.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
 
 
 func _build_monsters_list() -> void:
@@ -53,13 +73,13 @@ func _build_ui(parent: Node) -> void:
 	parent.add_child(layer)
 
 	var bg := ColorRect.new()
-	bg.color = Color(0.08, 0.09, 0.10)
+	bg.color = Palette.COLOR_DEBUG_BG
 	bg.position = Vector2(0, SCREEN_H - BOTTOM_BAR_H)
 	bg.size = Vector2(SCREEN_W, BOTTOM_BAR_H)
 	layer.add_child(bg)
 
 	var sep := ColorRect.new()
-	sep.color = Color(0.25, 0.28, 0.32)
+	sep.color = Palette.COLOR_DEBUG_SEP
 	sep.position = Vector2(0, SCREEN_H - BOTTOM_BAR_H)
 	sep.size = Vector2(SCREEN_W, 1)
 	layer.add_child(sep)
@@ -69,7 +89,7 @@ func _build_ui(parent: Node) -> void:
 	battle_label.position = Vector2(16, SCREEN_H - BOTTOM_BAR_H)
 	battle_label.size = Vector2(200, BOTTOM_BAR_H)
 	battle_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	battle_label.add_theme_color_override("font_color", Color(0.55, 0.62, 0.70))
+	battle_label.add_theme_color_override("font_color", Palette.COLOR_DEBUG_LABEL)
 	layer.add_child(battle_label)
 
 	var clear_button := Button.new()
@@ -80,20 +100,29 @@ func _build_ui(parent: Node) -> void:
 	layer.add_child(clear_button)
 
 	_place_dropdown = OptionButton.new()
-	_place_dropdown.size = Vector2(175, BOTTOM_BAR_H - 10)
+	_place_dropdown.size = Vector2(160, BOTTOM_BAR_H - 10)
 	_place_dropdown.position = Vector2(298, SCREEN_H - BOTTOM_BAR_H + 5)
-	_place_dropdown.add_item("Place...")
+	_place_dropdown.add_item("Monster...")
 	for entry in _monsters:
 		_place_dropdown.add_item(entry[0])
 	_place_dropdown.item_selected.connect(_on_place_item_selected)
 	layer.add_child(_place_dropdown)
 
+	_obstacle_dropdown = OptionButton.new()
+	_obstacle_dropdown.size = Vector2(160, BOTTOM_BAR_H - 10)
+	_obstacle_dropdown.position = Vector2(466, SCREEN_H - BOTTOM_BAR_H + 5)
+	_obstacle_dropdown.add_item("Obstacle...")
+	for entry in _obstacles:
+		_obstacle_dropdown.add_item(entry[0])
+	_obstacle_dropdown.item_selected.connect(_on_obstacle_item_selected)
+	layer.add_child(_obstacle_dropdown)
+
 	var level_label := Label.new()
 	level_label.text = "Lvl"
-	level_label.position = Vector2(482, SCREEN_H - BOTTOM_BAR_H)
+	level_label.position = Vector2(634, SCREEN_H - BOTTOM_BAR_H)
 	level_label.size = Vector2(28, BOTTOM_BAR_H)
 	level_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	level_label.add_theme_color_override("font_color", Color(0.55, 0.62, 0.70))
+	level_label.add_theme_color_override("font_color", Palette.COLOR_DEBUG_LABEL)
 	layer.add_child(level_label)
 
 	var biome := GameState.current_biome if GameState.current_biome != null else BiomesData.all()[0]
@@ -104,7 +133,7 @@ func _build_ui(parent: Node) -> void:
 	_level_spinbox.step = 1
 	_level_spinbox.value = mini(biome_level, BattleComposer.MAX_LEVEL)
 	_level_spinbox.size = Vector2(66, BOTTOM_BAR_H - 10)
-	_level_spinbox.position = Vector2(510, SCREEN_H - BOTTOM_BAR_H + 5)
+	_level_spinbox.position = Vector2(662, SCREEN_H - BOTTOM_BAR_H + 5)
 	_level_spinbox.value_changed.connect(func(v: float): level_changed.emit(v))
 	layer.add_child(_level_spinbox)
 
@@ -145,3 +174,13 @@ func _on_place_item_selected(index: int) -> void:
 	var cls: Variant = entry[1]
 	var size: Vector2i = (cls.new() as EnemyData).grid_size
 	enemy_selected.emit(cls, size)
+
+
+func _on_obstacle_item_selected(index: int) -> void:
+	if index == 0:
+		obstacle_selected.emit(null, Vector2i.ZERO)
+		return
+	var entry: Array = _obstacles[index - 1]
+	var cls: Variant = entry[1]
+	var size: Vector2i = (cls.new() as ObstacleData).grid_size
+	obstacle_selected.emit(cls, size)

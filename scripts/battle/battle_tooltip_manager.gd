@@ -217,8 +217,8 @@ func _build_monster_tooltip(parent: Node) -> void:
 	_monster_tooltip_layer.visible = false
 	parent.add_child(_monster_tooltip_layer)
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.07, 0.09, 0.11, 0.97)
-	style.border_color = Color(0.25, 0.30, 0.35)
+	style.bg_color = Palette.COLOR_TOOLTIP_BG
+	style.border_color = Palette.COLOR_TOOLTIP_BORDER
 	style.set_border_width_all(1)
 	style.set_content_margin_all(10)
 	_monster_tooltip_panel = PanelContainer.new()
@@ -230,17 +230,17 @@ func _build_monster_tooltip(parent: Node) -> void:
 	_monster_tooltip_panel.add_child(vbox)
 	_monster_tooltip_name = Label.new()
 	_monster_tooltip_name.add_theme_font_size_override("font_size", 14)
-	_monster_tooltip_name.modulate = Color(0.92, 0.92, 0.88)
+	_monster_tooltip_name.modulate = Palette.COLOR_TOOLTIP_NAME
 	vbox.add_child(_monster_tooltip_name)
 	_monster_tooltip_desc = Label.new()
 	_monster_tooltip_desc.add_theme_font_size_override("font_size", 11)
 	_monster_tooltip_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_monster_tooltip_desc.modulate = Color(0.65, 0.70, 0.75)
+	_monster_tooltip_desc.modulate = Palette.COLOR_TOOLTIP_BODY
 	vbox.add_child(_monster_tooltip_desc)
 	vbox.add_child(HSeparator.new())
 	_monster_tooltip_stats = Label.new()
 	_monster_tooltip_stats.add_theme_font_size_override("font_size", 11)
-	_monster_tooltip_stats.modulate = Color(0.82, 0.82, 0.82)
+	_monster_tooltip_stats.modulate = Palette.COLOR_TOOLTIP_STATS
 	vbox.add_child(_monster_tooltip_stats)
 	_monster_tooltip_statuses = RichTextLabel.new()
 	_monster_tooltip_statuses.bbcode_enabled = true
@@ -251,18 +251,18 @@ func _build_monster_tooltip(parent: Node) -> void:
 	_monster_tooltip_traits = Label.new()
 	_monster_tooltip_traits.add_theme_font_size_override("font_size", 11)
 	_monster_tooltip_traits.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_monster_tooltip_traits.modulate = Color(0.65, 0.70, 0.75)
+	_monster_tooltip_traits.modulate = Palette.COLOR_TOOLTIP_BODY
 	vbox.add_child(_monster_tooltip_traits)
 	vbox.add_child(HSeparator.new())
 	var attacks_header := Label.new()
 	attacks_header.text = "Attacks"
 	attacks_header.add_theme_font_size_override("font_size", 11)
-	attacks_header.modulate = Color(0.55, 0.62, 0.70)
+	attacks_header.modulate = Palette.COLOR_TOOLTIP_SECTION
 	vbox.add_child(attacks_header)
 	_monster_tooltip_attacks = Label.new()
 	_monster_tooltip_attacks.add_theme_font_size_override("font_size", 11)
 	_monster_tooltip_attacks.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_monster_tooltip_attacks.modulate = Color(0.82, 0.82, 0.82)
+	_monster_tooltip_attacks.modulate = Palette.COLOR_TOOLTIP_STATS
 	vbox.add_child(_monster_tooltip_attacks)
 
 
@@ -272,8 +272,8 @@ func _build_mage_tooltip(parent: Node) -> void:
 	_mage_tooltip_layer.visible = false
 	parent.add_child(_mage_tooltip_layer)
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.07, 0.09, 0.11, 0.97)
-	style.border_color = Color(0.25, 0.30, 0.35)
+	style.bg_color = Palette.COLOR_TOOLTIP_BG
+	style.border_color = Palette.COLOR_TOOLTIP_BORDER
 	style.set_border_width_all(1)
 	style.set_content_margin_all(10)
 	_mage_tooltip_panel = PanelContainer.new()
@@ -285,12 +285,12 @@ func _build_mage_tooltip(parent: Node) -> void:
 	_mage_tooltip_panel.add_child(vbox)
 	_mage_tooltip_name = Label.new()
 	_mage_tooltip_name.add_theme_font_size_override("font_size", 14)
-	_mage_tooltip_name.modulate = Color(0.92, 0.92, 0.88)
+	_mage_tooltip_name.modulate = Palette.COLOR_TOOLTIP_NAME
 	vbox.add_child(_mage_tooltip_name)
 	vbox.add_child(HSeparator.new())
 	_mage_tooltip_stats = Label.new()
 	_mage_tooltip_stats.add_theme_font_size_override("font_size", 11)
-	_mage_tooltip_stats.modulate = Color(0.82, 0.82, 0.82)
+	_mage_tooltip_stats.modulate = Palette.COLOR_TOOLTIP_STATS
 	vbox.add_child(_mage_tooltip_stats)
 	_mage_tooltip_statuses = RichTextLabel.new()
 	_mage_tooltip_statuses.bbcode_enabled = true

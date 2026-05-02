@@ -23,23 +23,6 @@ const MAGE_HEADER_H := 30.0
 const EMPTY_WAND_SLOT_H := 52.0
 const ROW_GAP := 12.0
 
-const COLOR_BG             := Color(0.07, 0.08, 0.09)
-const COLOR_PANEL          := Color(0.10, 0.12, 0.14)
-const COLOR_BORDER         := Color(0.22, 0.26, 0.30)
-const COLOR_HEADER_BG      := Color(0.08, 0.09, 0.11)
-const COLOR_SCREEN_TITLE   := Color(0.85, 0.90, 0.95)
-const COLOR_SECTION        := Color(0.45, 0.52, 0.60)
-const COLOR_MAGE_NAME      := Color(0.85, 0.90, 0.95)
-const COLOR_SLOT_EMPTY     := Color(0.12, 0.14, 0.16)
-const COLOR_SLOT_BORDER    := Color(0.20, 0.24, 0.28)
-const COLOR_HP_FULL        := Color(0.20, 0.75, 0.30)
-const COLOR_HP_LOW         := Color(0.85, 0.20, 0.15)
-const COLOR_HP_BG          := Color(0.10, 0.12, 0.14)
-const COLOR_DROP_HIGHLIGHT := Color(1.00, 0.85, 0.20, 0.12)
-const COLOR_DROP_BORDER    := Color(1.00, 0.85, 0.20, 0.80)
-const COLOR_WAND_CARD      := Color(0.18, 0.28, 0.42)
-const COLOR_WAND_CARD_BORDER := Color(0.38, 0.55, 0.78)
-
 const CATALOG_W := 900.0
 const CATALOG_H := 480.0
 
@@ -87,7 +70,7 @@ func _ready() -> void:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, Vector2(SCREEN_W, SCREEN_H)), COLOR_BG, true)
+	draw_rect(Rect2(Vector2.ZERO, Vector2(SCREEN_W, SCREEN_H)), Palette.COLOR_BG, true)
 	_draw_header()
 	_draw_loot_panel()
 	_draw_backpack_panel()
@@ -387,22 +370,22 @@ func _panel_rect(panel_x: float) -> Rect2:
 # --- header ---
 
 func _draw_header() -> void:
-	draw_rect(Rect2(Vector2.ZERO, Vector2(SCREEN_W, HEADER_H)), COLOR_HEADER_BG, true)
-	draw_rect(Rect2(Vector2(0, HEADER_H - 1), Vector2(SCREEN_W, 1)), COLOR_BORDER, true)
+	draw_rect(Rect2(Vector2.ZERO, Vector2(SCREEN_W, HEADER_H)), Palette.COLOR_HEADER_BG, true)
+	draw_rect(Rect2(Vector2(0, HEADER_H - 1), Vector2(SCREEN_W, 1)), Palette.COLOR_BORDER, true)
 	draw_string(ThemeDB.fallback_font,
 			Vector2(SCREEN_W * 0.5, HEADER_H * 0.5 + 9.0),
-			"Loot", HORIZONTAL_ALIGNMENT_CENTER, -1, 22, COLOR_SCREEN_TITLE)
+			"Loot", HORIZONTAL_ALIGNMENT_CENTER, -1, 22, Palette.COLOR_TEXT_BRIGHT)
 
 
 # --- panels ---
 
 func _draw_panel_frame(panel_x: float, title: String) -> void:
 	var r := _panel_rect(panel_x)
-	draw_rect(r, COLOR_PANEL, true)
-	draw_rect(r, COLOR_BORDER, false, 1.0)
+	draw_rect(r, Palette.COLOR_PANEL, true)
+	draw_rect(r, Palette.COLOR_BORDER, false, 1.0)
 	draw_string(ThemeDB.fallback_font,
 			Vector2(panel_x + 12.0, PANEL_TOP + 20.0),
-			title, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, COLOR_SECTION)
+			title, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Palette.COLOR_SECTION)
 
 
 func _draw_drop_highlight(panel_x: float) -> void:
@@ -410,8 +393,8 @@ func _draw_drop_highlight(panel_x: float) -> void:
 		return
 	if not _panel_rect(panel_x).has_point(_drag_pos):
 		return
-	draw_rect(_panel_rect(panel_x), COLOR_DROP_HIGHLIGHT, true)
-	draw_rect(_panel_rect(panel_x), COLOR_DROP_BORDER, false, 2.0)
+	draw_rect(_panel_rect(panel_x), Palette.COLOR_DROP_HIGHLIGHT, true)
+	draw_rect(_panel_rect(panel_x), Palette.COLOR_DROP_BORDER, false, 2.0)
 
 
 # --- loot panel ---
@@ -423,14 +406,14 @@ func _draw_loot_panel() -> void:
 		draw_string(ThemeDB.fallback_font,
 				Vector2(LOOT_X + PANEL_W * 0.5, PANEL_TOP + 80.0),
 				"No loot this battle",
-				HORIZONTAL_ALIGNMENT_CENTER, PANEL_W, 13, COLOR_SLOT_BORDER)
+				HORIZONTAL_ALIGNMENT_CENTER, PANEL_W, 13, Palette.COLOR_SLOT_BORDER)
 		return
 	if not GameState.pending_loot.is_empty():
 		_draw_spell_grid(LOOT_X, GameState.pending_loot, -1)
 	if not GameState.pending_loot_wands.is_empty():
 		draw_string(ThemeDB.fallback_font,
 				Vector2(LOOT_X + 12.0, _loot_wand_section_y() + 13.0),
-				"Wands", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COLOR_SECTION)
+				"Wands", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Palette.COLOR_SECTION)
 
 
 # --- backpack panel ---
@@ -458,7 +441,7 @@ func _draw_spell_card(pos: Vector2, spell: SpellData) -> void:
 	var tint := spell.element_color
 	tint.a = 0.22
 	draw_rect(rect, tint, true)
-	draw_rect(rect, COLOR_SLOT_BORDER, false, 1.0)
+	draw_rect(rect, Palette.COLOR_SLOT_BORDER, false, 1.0)
 	var font := ThemeDB.fallback_font
 	var label := spell.abbreviation if not spell.abbreviation.is_empty() else "?"
 	draw_string(font,
@@ -467,13 +450,13 @@ func _draw_spell_card(pos: Vector2, spell: SpellData) -> void:
 			Color(spell.element_color.r, spell.element_color.g, spell.element_color.b))
 	draw_string(font,
 			Vector2(pos.x, pos.y + CARD_SIZE - 8.0),
-			spell.display_name, HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE, 10, COLOR_SECTION)
+			spell.display_name, HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE, 10, Palette.COLOR_SECTION)
 
 
 func _draw_wand_card(pos: Vector2, wand: WandData) -> void:
 	var rect := Rect2(pos, Vector2(CARD_SIZE, CARD_SIZE))
-	draw_rect(rect, COLOR_WAND_CARD, true)
-	draw_rect(rect, COLOR_WAND_CARD_BORDER, false, 1.5)
+	draw_rect(rect, Palette.COLOR_WAND_CARD, true)
+	draw_rect(rect, Palette.COLOR_WAND_CARD_BORDER, false, 1.5)
 	var body_count := 0
 	var tip_abbr := "—"
 	for slot: SpellSlotData in wand.slots:
@@ -487,12 +470,12 @@ func _draw_wand_card(pos: Vector2, wand: WandData) -> void:
 			"Wand", HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE, 15, Color.WHITE)
 	draw_string(font, Vector2(pos.x, pos.y + CARD_SIZE * 0.5 + 16.0),
 			"%d slots  %s" % [body_count, tip_abbr],
-			HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE, 10, COLOR_SECTION)
+			HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE, 10, Palette.COLOR_SECTION)
 
 
 func _draw_empty_slot(pos: Vector2) -> void:
-	draw_rect(Rect2(pos, Vector2(CARD_SIZE, CARD_SIZE)), COLOR_SLOT_EMPTY, true)
-	draw_rect(Rect2(pos, Vector2(CARD_SIZE, CARD_SIZE)), COLOR_SLOT_BORDER, false, 1.0)
+	draw_rect(Rect2(pos, Vector2(CARD_SIZE, CARD_SIZE)), Palette.COLOR_SLOT_EMPTY, true)
+	draw_rect(Rect2(pos, Vector2(CARD_SIZE, CARD_SIZE)), Palette.COLOR_SLOT_BORDER, false, 1.0)
 
 
 # --- equipped wand panel ---
@@ -511,15 +494,15 @@ func _draw_mage_header(mage: MageData, row_y: float) -> void:
 	var pad := 12.0
 	var font := ThemeDB.fallback_font
 	draw_string(font, Vector2(WAND_X + pad, row_y + 14.0),
-			mage.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, COLOR_MAGE_NAME)
+			mage.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Palette.COLOR_TEXT_BRIGHT)
 	draw_string(font, Vector2(WAND_X + PANEL_W - pad, row_y + 14.0),
 			"%d / %d" % [mage.current_hp, mage.max_hp],
-			HORIZONTAL_ALIGNMENT_RIGHT, -1, 11, COLOR_SECTION)
+			HORIZONTAL_ALIGNMENT_RIGHT, -1, 11, Palette.COLOR_SECTION)
 	var bar_y := row_y + 19.0
 	var bar_w := PANEL_W - pad * 2.0
-	draw_rect(Rect2(Vector2(WAND_X + pad, bar_y), Vector2(bar_w, 5.0)), COLOR_HP_BG, true)
+	draw_rect(Rect2(Vector2(WAND_X + pad, bar_y), Vector2(bar_w, 5.0)), Palette.COLOR_PANEL, true)
 	var hp_frac := float(mage.current_hp) / float(mage.max_hp)
-	var hp_color := COLOR_HP_FULL.lerp(COLOR_HP_LOW, 1.0 - hp_frac)
+	var hp_color := Palette.COLOR_HP_FULL.lerp(Palette.COLOR_HP_LOW, 1.0 - hp_frac)
 	draw_rect(Rect2(Vector2(WAND_X + pad, bar_y), Vector2(bar_w * hp_frac, 5.0)), hp_color, true)
 
 
@@ -527,11 +510,11 @@ func _draw_empty_wand_slot(mage_index: int) -> void:
 	var slot_y := _mage_row_ys[mage_index] + MAGE_HEADER_H
 	var r := Rect2(Vector2(WAND_X + 10.0, slot_y), Vector2(PANEL_W - 20.0, EMPTY_WAND_SLOT_H))
 	var is_target := _dragging_wand != null and _mage_equip_index_at(_drag_pos) == mage_index
-	draw_rect(r, COLOR_DROP_HIGHLIGHT if is_target else COLOR_SLOT_EMPTY, true)
-	draw_rect(r, COLOR_DROP_BORDER if is_target else COLOR_SLOT_BORDER, false, 1.5)
+	draw_rect(r, Palette.COLOR_DROP_HIGHLIGHT if is_target else Palette.COLOR_SLOT_EMPTY, true)
+	draw_rect(r, Palette.COLOR_DROP_BORDER if is_target else Palette.COLOR_SLOT_BORDER, false, 1.5)
 	draw_string(ThemeDB.fallback_font,
 			Vector2(WAND_X + 10.0, slot_y + EMPTY_WAND_SLOT_H * 0.5 + 5.0),
-			"Drop wand here", HORIZONTAL_ALIGNMENT_CENTER, PANEL_W - 20.0, 11, COLOR_SLOT_BORDER)
+			"Drop wand here", HORIZONTAL_ALIGNMENT_CENTER, PANEL_W - 20.0, 11, Palette.COLOR_SLOT_BORDER)
 
 
 func _build_loot_wands() -> void:
@@ -597,8 +580,8 @@ func _build_catalog_layer() -> void:
 	_catalog_layer.add_child(dim)
 
 	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = COLOR_PANEL
-	panel_style.border_color = COLOR_BORDER
+	panel_style.bg_color = Palette.COLOR_PANEL
+	panel_style.border_color = Palette.COLOR_BORDER
 	panel_style.set_border_width_all(1)
 
 	var panel := PanelContainer.new()
@@ -662,7 +645,7 @@ func _make_spell_button(spell: SpellData) -> Button:
 	tint.a = 0.35
 	var normal := StyleBoxFlat.new()
 	normal.bg_color = tint
-	normal.border_color = COLOR_SLOT_BORDER
+	normal.border_color = Palette.COLOR_SLOT_BORDER
 	normal.set_border_width_all(1)
 	var hover := StyleBoxFlat.new()
 	hover.bg_color = spell.element_color * Color(1, 1, 1, 0.55)
@@ -733,8 +716,8 @@ func _update_hover(pos: Vector2) -> void:
 
 func _draw_bottom_bar_bg() -> void:
 	var bar_y := SCREEN_H - BOTTOM_BAR_H
-	draw_rect(Rect2(Vector2(0, bar_y), Vector2(SCREEN_W, BOTTOM_BAR_H)), COLOR_HEADER_BG, true)
-	draw_rect(Rect2(Vector2(0, bar_y), Vector2(SCREEN_W, 1)), COLOR_BORDER, true)
+	draw_rect(Rect2(Vector2(0, bar_y), Vector2(SCREEN_W, BOTTOM_BAR_H)), Palette.COLOR_HEADER_BG, true)
+	draw_rect(Rect2(Vector2(0, bar_y), Vector2(SCREEN_W, 1)), Palette.COLOR_BORDER, true)
 
 
 func _build_bottom_bar() -> void:
@@ -825,8 +808,8 @@ func _build_codex_layer() -> void:
 	_codex_layer.add_child(dim)
 
 	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = COLOR_PANEL
-	panel_style.border_color = COLOR_BORDER
+	panel_style.bg_color = Palette.COLOR_PANEL
+	panel_style.border_color = Palette.COLOR_BORDER
 	panel_style.set_border_width_all(1)
 
 	var panel := PanelContainer.new()
@@ -911,7 +894,7 @@ func _codex_grid_section(title: String, cards: Array[Control]) -> VBoxContainer:
 	if not title.is_empty():
 		var lbl := Label.new()
 		lbl.text = title
-		lbl.add_theme_color_override("font_color", COLOR_SECTION)
+		lbl.add_theme_color_override("font_color", Palette.COLOR_SECTION)
 		lbl.add_theme_font_size_override("font_size", 11)
 		section.add_child(lbl)
 	var grid := GridContainer.new()
@@ -931,7 +914,7 @@ func _make_codex_spell_card(spell: SpellData) -> PanelContainer:
 	var tint := spell.element_color
 	tint.a = 0.22
 	style.bg_color = tint
-	style.border_color = COLOR_SLOT_BORDER
+	style.border_color = Palette.COLOR_SLOT_BORDER
 	style.set_border_width_all(1)
 	card.add_theme_stylebox_override("panel", style)
 	card.tooltip_text = spell.display_name + "\n" + spell.description
@@ -947,7 +930,7 @@ func _make_codex_spell_card(spell: SpellData) -> PanelContainer:
 	var name_lbl := Label.new()
 	name_lbl.text = spell.display_name
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.add_theme_color_override("font_color", COLOR_SECTION)
+	name_lbl.add_theme_color_override("font_color", Palette.COLOR_SECTION)
 	name_lbl.add_theme_font_size_override("font_size", 9)
 	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(name_lbl)
@@ -961,7 +944,7 @@ func _make_codex_monster_card(monster: EnemyData) -> PanelContainer:
 	var tint := monster.color
 	tint.a = 0.22
 	style.bg_color = tint
-	style.border_color = COLOR_SLOT_BORDER
+	style.border_color = Palette.COLOR_SLOT_BORDER
 	style.set_border_width_all(1)
 	card.add_theme_stylebox_override("panel", style)
 	card.tooltip_text = monster.display_name + "\n" + monster.description
@@ -978,7 +961,7 @@ func _make_codex_monster_card(monster: EnemyData) -> PanelContainer:
 	var hp_lbl := Label.new()
 	hp_lbl.text = "%d hp" % monster.max_hp
 	hp_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hp_lbl.add_theme_color_override("font_color", COLOR_SECTION)
+	hp_lbl.add_theme_color_override("font_color", Palette.COLOR_SECTION)
 	hp_lbl.add_theme_font_size_override("font_size", 9)
 	vbox.add_child(hp_lbl)
 	return card
@@ -991,7 +974,7 @@ func _make_codex_biome_row(biome: BiomeData) -> PanelContainer:
 	var tint := biome.color
 	tint.a = 0.15
 	style.bg_color = tint
-	style.border_color = COLOR_SLOT_BORDER
+	style.border_color = Palette.COLOR_SLOT_BORDER
 	style.set_border_width_all(1)
 	style.border_width_left = 4
 	card.add_theme_stylebox_override("panel", style)
@@ -1013,7 +996,7 @@ func _make_codex_biome_row(biome: BiomeData) -> PanelContainer:
 	var tagline_lbl := Label.new()
 	tagline_lbl.text = biome.tagline
 	tagline_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	tagline_lbl.add_theme_color_override("font_color", COLOR_SECTION)
+	tagline_lbl.add_theme_color_override("font_color", Palette.COLOR_SECTION)
 	tagline_lbl.add_theme_font_size_override("font_size", 11)
 	tagline_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	hbox.add_child(tagline_lbl)
@@ -1024,7 +1007,7 @@ func _make_codex_biome_row(biome: BiomeData) -> PanelContainer:
 	var monsters_lbl := Label.new()
 	monsters_lbl.text = ", ".join(monster_names)
 	monsters_lbl.custom_minimum_size = Vector2(300, 0)
-	monsters_lbl.add_theme_color_override("font_color", COLOR_SECTION)
+	monsters_lbl.add_theme_color_override("font_color", Palette.COLOR_SECTION)
 	monsters_lbl.add_theme_font_size_override("font_size", 9)
 	monsters_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	monsters_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

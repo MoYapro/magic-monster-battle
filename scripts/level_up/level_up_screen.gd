@@ -17,21 +17,6 @@ const OPTION_PAD := 12.0
 const HP_GAIN := 10
 const MANA_GAIN := 1
 
-const COLOR_BG             := Color(0.07, 0.08, 0.09)
-const COLOR_HEADER_BG      := Color(0.08, 0.09, 0.11)
-const COLOR_BORDER         := Color(0.22, 0.26, 0.30)
-const COLOR_CARD           := Color(0.10, 0.12, 0.14)
-const COLOR_SECTION        := Color(0.45, 0.52, 0.60)
-const COLOR_MAGE_NAME      := Color(0.85, 0.90, 0.95)
-const COLOR_STAT           := Color(0.65, 0.72, 0.80)
-const COLOR_GAIN           := Color(0.35, 0.85, 0.45)
-const COLOR_OPTION_BG      := Color(0.13, 0.16, 0.18)
-const COLOR_SELECTED_BG    := Color(0.12, 0.30, 0.18)
-const COLOR_SELECTED_BORDER := Color(0.30, 0.80, 0.40)
-const COLOR_TITLE          := Color(0.85, 0.90, 0.95)
-const COLOR_HP_FULL        := Color(0.20, 0.75, 0.30)
-const COLOR_HP_LOW         := Color(0.85, 0.20, 0.15)
-
 var _mages: Array[MageData] = []
 var _heal_button: Button = null
 
@@ -42,7 +27,7 @@ func _ready() -> void:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, Vector2(SCREEN_W, SCREEN_H)), COLOR_BG, true)
+	draw_rect(Rect2(Vector2.ZERO, Vector2(SCREEN_W, SCREEN_H)), Palette.COLOR_BG, true)
 	_draw_header()
 	for i in _mages.size():
 		_draw_mage_card(i)
@@ -50,11 +35,11 @@ func _draw() -> void:
 
 
 func _draw_header() -> void:
-	draw_rect(Rect2(Vector2.ZERO, Vector2(SCREEN_W, HEADER_H)), COLOR_HEADER_BG, true)
-	draw_rect(Rect2(Vector2(0, HEADER_H - 1), Vector2(SCREEN_W, 1)), COLOR_BORDER, true)
+	draw_rect(Rect2(Vector2.ZERO, Vector2(SCREEN_W, HEADER_H)), Palette.COLOR_HEADER_BG, true)
+	draw_rect(Rect2(Vector2(0, HEADER_H - 1), Vector2(SCREEN_W, 1)), Palette.COLOR_BORDER, true)
 	draw_string(ThemeDB.fallback_font,
 			Vector2(SCREEN_W * 0.5, HEADER_H * 0.5 + 9.0),
-			"Level Up", HORIZONTAL_ALIGNMENT_CENTER, -1, 22, COLOR_TITLE)
+			"Level Up", HORIZONTAL_ALIGNMENT_CENTER, -1, 22, Palette.COLOR_TEXT_BRIGHT)
 
 
 func _card_x(i: int) -> float:
@@ -71,13 +56,13 @@ func _option_rect(mage_i: int, stat: String) -> Rect2:
 func _draw_mage_card(i: int) -> void:
 	var mage := _mages[i]
 	var x := _card_x(i)
-	draw_rect(Rect2(Vector2(x, CARD_Y), Vector2(CARD_W, CARD_H)), COLOR_CARD, true)
-	draw_rect(Rect2(Vector2(x, CARD_Y), Vector2(CARD_W, CARD_H)), COLOR_BORDER, false, 1.0)
+	draw_rect(Rect2(Vector2(x, CARD_Y), Vector2(CARD_W, CARD_H)), Palette.COLOR_PANEL, true)
+	draw_rect(Rect2(Vector2(x, CARD_Y), Vector2(CARD_W, CARD_H)), Palette.COLOR_BORDER, false, 1.0)
 	draw_string(ThemeDB.fallback_font,
 			Vector2(x + OPTION_PAD, CARD_Y + 26.0),
-			mage.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, COLOR_MAGE_NAME)
+			mage.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Palette.COLOR_TEXT_BRIGHT)
 	var hp_frac := clampf(float(mage.current_hp) / float(mage.max_hp), 0.0, 1.0)
-	var hp_color := COLOR_HP_FULL.lerp(COLOR_HP_LOW, 1.0 - hp_frac)
+	var hp_color := Palette.COLOR_HP_FULL.lerp(Palette.COLOR_HP_LOW, 1.0 - hp_frac)
 	var name_w := ThemeDB.fallback_font.get_string_size(mage.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	draw_string(ThemeDB.fallback_font,
 			Vector2(x + OPTION_PAD + name_w + 8.0, CARD_Y + 24.0),
@@ -89,14 +74,14 @@ func _draw_mage_card(i: int) -> void:
 
 func _draw_option(mage_i: int, stat: String, label: String, current: int, gain: int) -> void:
 	var r := _option_rect(mage_i, stat)
-	draw_rect(r, COLOR_OPTION_BG, true)
-	draw_rect(r, COLOR_BORDER, false, 1.0)
+	draw_rect(r, Palette.COLOR_OPTION_BG, true)
+	draw_rect(r, Palette.COLOR_BORDER, false, 1.0)
 	var font := ThemeDB.fallback_font
 	draw_string(font, Vector2(r.position.x + 8.0, r.position.y + 16.0),
-			label, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COLOR_SECTION)
+			label, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Palette.COLOR_SECTION)
 	draw_string(font, Vector2(r.position.x + 8.0, r.position.y + 36.0),
 			"%d  →  %d" % [current, current + gain],
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 14, COLOR_STAT)
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Palette.COLOR_TEXT_STAT)
 
 
 func _input(event: InputEvent) -> void:
@@ -114,8 +99,8 @@ func _input(event: InputEvent) -> void:
 
 func _draw_bottom_bar_bg() -> void:
 	var bar_y := SCREEN_H - BOTTOM_BAR_H
-	draw_rect(Rect2(Vector2(0, bar_y), Vector2(SCREEN_W, BOTTOM_BAR_H)), COLOR_HEADER_BG, true)
-	draw_rect(Rect2(Vector2(0, bar_y), Vector2(SCREEN_W, 1)), COLOR_BORDER, true)
+	draw_rect(Rect2(Vector2(0, bar_y), Vector2(SCREEN_W, BOTTOM_BAR_H)), Palette.COLOR_HEADER_BG, true)
+	draw_rect(Rect2(Vector2(0, bar_y), Vector2(SCREEN_W, 1)), Palette.COLOR_BORDER, true)
 
 
 func _build_bottom_bar() -> void:

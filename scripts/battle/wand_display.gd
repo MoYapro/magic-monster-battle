@@ -6,23 +6,9 @@ const CELL_SPACING := Vector2(70.0, 60.0)
 const PAD := Vector2(16.0, 16.0)
 const PAD_BOTTOM := 14.0
 
-const COLOR_BG := Color(0.12, 0.13, 0.15)
-const COLOR_BG_BORDER := Color(0.35, 0.40, 0.46)
-const COLOR_SLOT_BODY := Color(0.20, 0.23, 0.26)
-const COLOR_SLOT_TIP := Color(0.26, 0.18, 0.08)
-const COLOR_BORDER_BODY := Color(0.42, 0.48, 0.55)
-const COLOR_BORDER_TIP := Color(0.85, 0.65, 0.20)
-const COLOR_EDGE := Color(0.45, 0.50, 0.58)
-
 signal tip_pressed(wand: WandDisplay)
 signal body_slot_clicked(wand: WandDisplay, slot_id: String)
 signal body_slot_right_clicked(wand: WandDisplay, slot_id: String)
-
-const COLOR_TARGET_AVAILABLE := Color(1.0, 0.85, 0.2)
-const COLOR_TARGET_HOVER := Color(0.95, 0.18, 0.18)
-const COLOR_PIP_FILLED    := Color(0.35, 0.70, 1.00)
-const COLOR_PIP_EMPTY     := Color(0.18, 0.22, 0.27)
-const COLOR_ACTIVE_BORDER := Color(0.35, 0.70, 1.00)
 
 var _data: WandData = null
 var _highlighted := false
@@ -127,15 +113,15 @@ func _draw() -> void:
 	if _data == null:
 		return
 	var bounds := _compute_bounds()
-	draw_rect(bounds, COLOR_BG, true)
-	draw_rect(bounds, COLOR_BG_BORDER, false, 1.5)
+	draw_rect(bounds, Palette.COLOR_WAND_BG, true)
+	draw_rect(bounds, Palette.COLOR_WAND_BG_BORDER, false, 1.5)
 	_draw_edges()
 	for slot: SpellSlotData in _data.slots:
 		_draw_slot(slot)
 	if _hovered:
-		draw_rect(bounds, COLOR_TARGET_HOVER, false, 3.0)
+		draw_rect(bounds, Palette.COLOR_TARGET_HOVER, false, 3.0)
 	elif _highlighted:
-		draw_rect(bounds, COLOR_TARGET_AVAILABLE, false, 2.5)
+		draw_rect(bounds, Palette.COLOR_TARGET_AVAILABLE, false, 2.5)
 
 
 func _draw_edges() -> void:
@@ -149,7 +135,7 @@ func _draw_edges() -> void:
 		var to := _slot_center(next)
 		var dir := (to - from).normalized()
 		var half := SLOT_SIZE.x * 0.5
-		draw_line(from + dir * (half + 1.0), to - dir * (half + 1.0), COLOR_EDGE, 1.5)
+		draw_line(from + dir * (half + 1.0), to - dir * (half + 1.0), Palette.COLOR_WAND_EDGE, 1.5)
 		_draw_arrowhead(from, to)
 
 
@@ -158,7 +144,7 @@ func _draw_arrowhead(from: Vector2, to: Vector2) -> void:
 	var tip := to - dir * (SLOT_SIZE.x * 0.5 + 2.0)
 	var perp := Vector2(-dir.y, dir.x) * 4.5
 	var base := tip - dir * 7.0
-	draw_colored_polygon(PackedVector2Array([tip, base + perp, base - perp]), COLOR_EDGE)
+	draw_colored_polygon(PackedVector2Array([tip, base + perp, base - perp]), Palette.COLOR_WAND_EDGE)
 
 
 func _draw_icon(pos: Vector2, size: Vector2, icon_name: String) -> void:
@@ -170,31 +156,31 @@ func _draw_bomb_icon(pos: Vector2, size: Vector2) -> void:
 	var center := pos + Vector2(size.x * 0.44, size.y * 0.60)
 	var radius := size.x * 0.27
 
-	draw_circle(center, radius, Color(0.14, 0.14, 0.17))
-	draw_arc(center, radius, 0.0, TAU, 32, Color(0.78, 0.78, 0.82), 1.5)
+	draw_circle(center, radius, Palette.COLOR_BOMB_BODY)
+	draw_arc(center, radius, 0.0, TAU, 32, Palette.COLOR_BOMB_RIM, 1.5)
 	# Shine
 	draw_circle(center + Vector2(-radius * 0.28, -radius * 0.32), radius * 0.22,
-			Color(1.0, 1.0, 1.0, 0.28))
+			Palette.COLOR_BOMB_SHINE)
 
 	# Fuse
 	var fuse_base := center + Vector2(radius * 0.60, -radius * 0.78)
 	var fuse_tip := pos + Vector2(size.x * 0.76, size.y * 0.13)
-	draw_line(fuse_base, fuse_tip, Color(0.68, 0.56, 0.30), 1.5)
+	draw_line(fuse_base, fuse_tip, Palette.COLOR_BOMB_FUSE, 1.5)
 
 	# Spark
-	draw_circle(fuse_tip, 3.2, Color(1.0, 0.82, 0.18))
-	draw_circle(fuse_tip, 1.6, Color(1.0, 1.0, 0.80))
+	draw_circle(fuse_tip, 3.2, Palette.COLOR_BOMB_SPARK)
+	draw_circle(fuse_tip, 1.6, Palette.COLOR_BOMB_SPARK_HOT)
 
 
 func _draw_slot(slot: SpellSlotData) -> void:
 	var pos := _slot_pixel_pos(slot)
 	var rect := Rect2(pos, SLOT_SIZE)
 	if slot.is_tip:
-		draw_rect(rect, COLOR_SLOT_TIP, true)
-		draw_rect(rect, COLOR_BORDER_TIP, false, 1.5)
+		draw_rect(rect, Palette.COLOR_WAND_SLOT_TIP, true)
+		draw_rect(rect, Palette.COLOR_WAND_BORDER_TIP, false, 1.5)
 	else:
-		draw_rect(rect, COLOR_SLOT_BODY, true)
-		draw_rect(rect, COLOR_BORDER_BODY, false, 1.0)
+		draw_rect(rect, Palette.COLOR_WAND_SLOT_BODY, true)
+		draw_rect(rect, Palette.COLOR_WAND_BORDER_BODY, false, 1.0)
 
 	if slot.spell == null:
 		return
@@ -214,14 +200,14 @@ func _draw_slot(slot: SpellSlotData) -> void:
 
 	_draw_mana_pips(pos, charges, cost)
 	if active:
-		draw_rect(rect, COLOR_ACTIVE_BORDER, false, 2.0)
+		draw_rect(rect, Palette.COLOR_ACTIVE_BORDER, false, 2.0)
 	if _webbed.has(slot.id):
 		_draw_net_overlay(pos)
 
 
 func _draw_net_overlay(pos: Vector2) -> void:
-	draw_rect(Rect2(pos, SLOT_SIZE), Color(0.35, 0.22, 0.05, 0.50), true)
-	var c := Color(0.62, 0.44, 0.14, 0.88)
+	draw_rect(Rect2(pos, SLOT_SIZE), Palette.COLOR_BOMB_SLOT_FILL, true)
+	var c := Palette.COLOR_BOMB_SLOT_BORDER
 	const STEP := 9.0
 	var end_x := pos.x + SLOT_SIZE.x
 	var end_y := pos.y + SLOT_SIZE.y
@@ -244,5 +230,5 @@ func _draw_mana_pips(pos: Vector2, charges: int, cost: int) -> void:
 	var px := pos.x + (SLOT_SIZE.x - total_w) * 0.5
 	var py := pos.y + SLOT_SIZE.y - PIP - 3.0
 	for i in cost:
-		var color := COLOR_PIP_FILLED if i < charges else COLOR_PIP_EMPTY
+		var color := Palette.COLOR_PIP_FILLED if i < charges else Palette.COLOR_PIP_EMPTY
 		draw_rect(Rect2(Vector2(px + i * (PIP + GAP), py), Vector2(PIP, PIP)), color, true)
