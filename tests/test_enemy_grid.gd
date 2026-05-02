@@ -35,19 +35,19 @@ func test_1x1_at_origin_is_valid() -> void:
 
 
 func test_1x1_at_far_corner_is_valid() -> void:
-	assert_true(EnemyGrid.is_within_bounds(Vector2i(2, 4), Vector2i(1, 1)))
+	assert_true(EnemyGrid.is_within_bounds(Vector2i(4, 6), Vector2i(1, 1)))
 
 
 func test_column_out_of_range_is_invalid() -> void:
-	assert_false(EnemyGrid.is_within_bounds(Vector2i(3, 0), Vector2i(1, 1)))
+	assert_false(EnemyGrid.is_within_bounds(Vector2i(5, 0), Vector2i(1, 1)))
 
 
 func test_row_out_of_range_is_invalid() -> void:
-	assert_false(EnemyGrid.is_within_bounds(Vector2i(0, 5), Vector2i(1, 1)))
+	assert_false(EnemyGrid.is_within_bounds(Vector2i(0, 7), Vector2i(1, 1)))
 
 
 func test_wide_enemy_that_extends_beyond_cols_is_invalid() -> void:
-	assert_false(EnemyGrid.is_within_bounds(Vector2i(2, 0), Vector2i(2, 1)))
+	assert_false(EnemyGrid.is_within_bounds(Vector2i(4, 0), Vector2i(2, 1)))
 
 
 func test_negative_position_is_invalid() -> void:
@@ -64,7 +64,7 @@ func test_can_place_on_empty_grid() -> void:
 
 func test_cannot_place_out_of_bounds() -> void:
 	var grid := EnemyGrid.new()
-	assert_false(grid.can_place_enemy(Vector2i(3, 0), Vector2i(1, 1)))
+	assert_false(grid.can_place_enemy(Vector2i(5, 0), Vector2i(1, 1)))
 	grid.free()
 
 

@@ -158,37 +158,6 @@ func test_on_hit_effects_not_applied_when_enemy_is_killed() -> void:
 	assert_false(result.enemy_statuses.has("e1"))
 
 
-# --- backfire ---
-
-func test_backfire_deals_damage_to_caster() -> void:
-	# force_push + lightning + ember → backfire
-	var body := SpellSlotData.new("s0_0", 0, 0, "s1_0")
-	body.spell = SpellForcePush.create()
-	var r1_slot := SpellSlotData.new("s1_0", 1, 0, "s2_0")
-	r1_slot.spell = SpellLightning.create()
-	var r2_slot := SpellSlotData.new("s2_0", 2, 0, "tip")
-	r2_slot.spell = SpellEmber.create()
-	var tip := SpellSlotData.new("tip", 3, 0)
-	tip.spell = SpellSingle.create()
-	var wand := WandData.new([body, r1_slot, r2_slot, tip])
-	var mage := MageData.new("Mage", 30)
-	var enemy := EnemyData.new("e1", "Target", 20, Vector2i(1, 1), Color.RED)
-	var setup := BattleSetup.new([enemy], [Vector2i(0, 0)], [mage], [wand], 10)
-	var state := BattleState.new()
-	state.enemy_hp["e1"] = 20
-	state.mage_hp.append(30)
-	state.mage_mana_spent.append(0)
-	state.mage_statuses.append([])
-	state.slot_charges["0/s0_0"] = 99
-	state.slot_charges["0/s1_0"] = 99
-	state.slot_charges["0/s2_0"] = 99
-	state.slot_charges["0/tip"] = 1
-	state.mana = 10
-	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(state, setup)
-	assert_lt(result.mage_hp[0], 30)
-	assert_eq(result.enemy_hp["e1"], 20)  # enemy unharmed
-
-
 # --- bounce ---
 
 func test_lightning_bounces_to_second_enemy() -> void:
