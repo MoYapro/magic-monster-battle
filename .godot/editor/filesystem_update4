@@ -48,3 +48,8 @@ res://tests/test_wand_data.gd
 res://tests/test_wand_evaluator.gd
 res://tests/test_wand_generator.gd
 res://tests/test_war_drummer.gd
+res://scripts/battle/monsters/bog_shambler.gd
+res://scripts/battle/monsters/cursed_knight.gd
+res://scripts/battle/monsters/fallen_paladin.gd
+res://scripts/battle/monsters/shield_ogre.gd
+res://scripts/battle/monsters/stone_giant.gd

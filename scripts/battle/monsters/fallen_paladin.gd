@@ -11,5 +11,5 @@ func _init() -> void:
 	drop_pool = [SpellShield.create(), SpellAmplify.create()]
 	action_pool = [
 		MonsterActionAttack.new("Smite", 16),
-		MonsterActionHeal.new("Divine Guard", 35),
+		MonsterActionAttack.new("Holy Charge", 20),
 	]
