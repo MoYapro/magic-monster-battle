@@ -221,43 +221,17 @@ func _try_fuse_wand(mage_index: int) -> void:
 	var wand: WandData = GameState.wands[mage_index] if mage_index < GameState.wands.size() else null
 	if wand == null:
 		return
-	var catalyst_slot: SpellSlotData = null
-	for slot: SpellSlotData in wand.slots:
-		if slot.spell != null and slot.spell.spell_type == "catalyst":
-			catalyst_slot = slot
-			break
-	if catalyst_slot == null:
+	var result := AlchemyFuser.try_fuse(wand)
+	if result == null:
 		return
-	var reactant_slots: Array[SpellSlotData] = []
-	for slot: SpellSlotData in wand.slots:
-		if slot == catalyst_slot or slot.is_tip or slot.spell == null:
-			continue
-		if slot.spell.spell_type == "projectile" or slot.spell.spell_type == "catalyst":
-			reactant_slots.append(slot)
-	if reactant_slots.size() < 2:
-		return
-	for i in reactant_slots.size():
-		for j in range(i + 1, reactant_slots.size()):
-			var r1 := reactant_slots[i]
-			var r2 := reactant_slots[j]
-			var result := AlchemyTable.lookup(catalyst_slot.spell, r1.spell, r2.spell)
-			if result == null:
-				continue
-			r1.spell = null
-			r2.spell = null
-			var mage: MageData = GameState.mages[mage_index]
-			match result.outcome:
-				AlchemyResult.Outcome.SUCCESS:
-					catalyst_slot.spell = result.spell
-				AlchemyResult.Outcome.FIZZLE:
-					catalyst_slot.spell = null
-					mage.mana_debt = mage.mana_allowance
-					_spawn_alchemy_feedback(mage_index, AlchemyResult.Outcome.FIZZLE, 0)
-				AlchemyResult.Outcome.BACKFIRE:
-					catalyst_slot.spell = null
-					mage.hp_penalty = mage.max_hp / 2
-					_spawn_alchemy_feedback(mage_index, AlchemyResult.Outcome.BACKFIRE, mage.max_hp / 2)
-			return
+	var mage: MageData = GameState.mages[mage_index]
+	match result.outcome:
+		AlchemyResult.Outcome.FIZZLE:
+			mage.mana_debt = mage.mana_allowance
+			_spawn_alchemy_feedback(mage_index, AlchemyResult.Outcome.FIZZLE, 0)
+		AlchemyResult.Outcome.BACKFIRE:
+			mage.hp_penalty = mage.max_hp / 2
+			_spawn_alchemy_feedback(mage_index, AlchemyResult.Outcome.BACKFIRE, mage.max_hp / 2)
 
 
 func _spawn_alchemy_feedback(mage_index: int, outcome: AlchemyResult.Outcome, damage: int) -> void:
