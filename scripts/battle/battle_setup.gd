@@ -43,59 +43,74 @@ func make_initial_state() -> BattleState:
 	_fill_ground(state, rng)
 	state.mana = max_mana
 	apply_puddle_wet(state)
-	state.monster_intents = roll_intents(state, rng)
+	roll_intents(state, rng)
 	return state
 
 
 func _fill_monsters(state: BattleState) -> void:
 	for enemy: EnemyData in enemies:
-		state.enemy_hp[enemy.id] = enemy.max_hp
+		var es := EnemyState.new()
+		es.combatant.hp = enemy.max_hp
 		for t: MonsterTraitData in enemy.traits:
 			if t is MonsterTraitArmor:
-				state.enemy_armor[enemy.id] = (t as MonsterTraitArmor).armor_amount
+				es.armor = (t as MonsterTraitArmor).armor_amount
 			elif t is MonsterTraitBlock:
-				state.enemy_block[enemy.id] = (t as MonsterTraitBlock).block_charges
+				es.block = (t as MonsterTraitBlock).block_charges
+		state.enemies[enemy.id] = es
 
 
 func _fill_ground(state: BattleState, rng: RandomNumberGenerator) -> void:
 	for row in EnemyGrid.ROWS:
 		for col in EnemyGrid.COLS:
-			var type := GroundType.Type.PUDDLE if rng.randf() < 0.5 else GroundType.Type.SOIL
-			state.ground[Vector2i(col, row)] = type
+			var cs := CellState.new()
+			cs.ground = GroundType.Type.PUDDLE if rng.randf() < 0.5 else GroundType.Type.SOIL
+			state.cells[Vector2i(col, row)] = cs
 
 
 func _fill_obstacles(state: BattleState) -> void:
 	for obstacle: ObstacleData in obstacles:
-		state.obstacle_hp[obstacle.id] = obstacle.max_hp
+		var os := ObstacleState.new()
+		os.combatant.hp = obstacle.max_hp
+		state.obstacles[obstacle.id] = os
 
 
 func _copy_mages(state: BattleState) -> void:
 	for mage: MageData in mages:
-		state.mage_hp.append(maxi(1, mage.max_hp - mage.hp_penalty))
-		state.mage_shield.append(0)
-		state.mage_mana_spent.append(mage.mana_debt)
-		state.mage_statuses.append([])
+		var ms := MageState.new()
+		ms.combatant.hp = maxi(1, mage.max_hp - mage.hp_penalty)
+		ms.mana_spent = mage.mana_debt
+		state.mages.append(ms)
 		mage.hp_penalty = 0
 		mage.mana_debt = 0
 
 
 func get_enemy_pos(index: int, state: BattleState) -> Vector2i:
-	return state.enemy_positions.get(enemies[index].id, enemy_positions[index])
+	var eid := enemies[index].id
+	if state.enemies.has(eid):
+		var pos := (state.enemies[eid] as EnemyState).position
+		if pos != Vector2i(-1, -1):
+			return pos
+	return enemy_positions[index]
 
 
 func get_obstacle_pos(index: int, state: BattleState) -> Vector2i:
-	return state.obstacle_positions.get(obstacles[index].id, obstacle_positions[index])
+	var oid := obstacles[index].id
+	if state.obstacles.has(oid):
+		var pos := (state.obstacles[oid] as ObstacleState).position
+		if pos != Vector2i(-1, -1):
+			return pos
+	return obstacle_positions[index]
 
 
 func get_occupant_at(cell: Vector2i, state: BattleState) -> String:
 	for i in enemies.size():
-		if not state.enemy_hp.has(enemies[i].id):
+		if not state.enemies.has(enemies[i].id):
 			continue
 		for c: Vector2i in EnemyGrid.get_cells_for_enemy(get_enemy_pos(i, state), enemies[i].grid_size):
 			if c == cell:
 				return enemies[i].id
 	for i in obstacles.size():
-		if not state.obstacle_hp.has(obstacles[i].id):
+		if not state.obstacles.has(obstacles[i].id):
 			continue
 		for c: Vector2i in EnemyGrid.get_cells_for_enemy(get_obstacle_pos(i, state), obstacles[i].grid_size):
 			if c == cell:
@@ -124,11 +139,11 @@ func get_obstacle_pos_by_id(p_id: String, state: BattleState) -> Vector2i:
 	return Vector2i(-1, -1)
 
 
-func roll_intents(state: BattleState, rng: RandomNumberGenerator) -> Dictionary:
-	var intents := {}
+func roll_intents(state: BattleState, rng: RandomNumberGenerator) -> void:
 	for enemy: EnemyData in enemies:
-		if not state.enemy_hp.has(enemy.id) or enemy.action_pool.is_empty():
+		if not state.enemies.has(enemy.id) or enemy.action_pool.is_empty():
 			continue
+		var enemy_state := state.enemies[enemy.id] as EnemyState
 		var action_index := enemy.pick_action_index(state, self, rng)
 		var action: MonsterActionData = enemy.action_pool[action_index]
 		var target := -1
@@ -137,12 +152,12 @@ func roll_intents(state: BattleState, rng: RandomNumberGenerator) -> Dictionary:
 		if action.target_type == MonsterActionData.TargetType.MAGE:
 			var living: Array[int] = []
 			for i in mages.size():
-				if i < state.mage_hp.size() and state.mage_hp[i] > 0:
+				if i < state.mages.size() and (state.mages[i] as MageState).combatant.hp > 0:
 					living.append(i)
 			if living.is_empty():
 				continue
-			if enemy is Banshee and state.monster_intents.has(enemy.id):
-				var locked: int = state.monster_intents[enemy.id].get("locked_target", -1)
+			if enemy is Banshee and not enemy_state.intent.is_empty():
+				var locked: int = enemy_state.intent.get("locked_target", -1)
 				target = locked if locked in living else living[rng.randi() % living.size()]
 			else:
 				target = living[rng.randi() % living.size()]
@@ -152,10 +167,12 @@ func roll_intents(state: BattleState, rng: RandomNumberGenerator) -> Dictionary:
 		elif action.target_type == MonsterActionData.TargetType.MONSTER:
 			var lowest_hp := INF
 			for e: EnemyData in enemies:
-				if state.enemy_hp.has(e.id) and state.enemy_hp[e.id] < lowest_hp:
-					lowest_hp = state.enemy_hp[e.id]
-					target_enemy_id = e.id
-					target_name = e.display_name
+				if state.enemies.has(e.id):
+					var hp := (state.enemies[e.id] as EnemyState).combatant.hp
+					if hp < lowest_hp:
+						lowest_hp = hp
+						target_enemy_id = e.id
+						target_name = e.display_name
 		var intent := {
 			"action_index": action_index,
 			"action_name": action.name,
@@ -176,18 +193,17 @@ func roll_intents(state: BattleState, rng: RandomNumberGenerator) -> Dictionary:
 					candidates.append(slot)
 			if not candidates.is_empty():
 				intent["webbed_slot_id"] = candidates[rng.randi_range(0, candidates.size() - 1)].id
-		intents[enemy.id] = intent
-	return intents
+		enemy_state.intent = intent
 
 
 func apply_puddle_wet(state: BattleState) -> void:
 	for i in enemies.size():
 		var enemy := enemies[i]
-		if not state.enemy_hp.has(enemy.id):
+		if not state.enemies.has(enemy.id):
 			continue
 		var pos := get_enemy_pos(i, state)
 		for cell in EnemyGrid.get_cells_for_enemy(pos, enemy.grid_size):
-			if state.ground.get(cell, GroundType.Type.SOIL) == GroundType.Type.PUDDLE:
+			if state.get_cell(cell).ground == GroundType.Type.PUDDLE:
 				state.add_enemy_status(enemy.id, StatusWet.new(2))
 
 

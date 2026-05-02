@@ -1,8 +1,9 @@
 class_name StatusTarget extends RefCounted
 
+var _combatant: CombatantState
 var _state: BattleState
-var _enemy_id: String
-var _mage_index: int
+var _enemy_id: String = ""
+var _mage_index: int = -1
 
 
 static func for_enemy(state: BattleState, enemy_id: String) -> StatusTarget:
@@ -10,14 +11,16 @@ static func for_enemy(state: BattleState, enemy_id: String) -> StatusTarget:
 	t._state = state
 	t._enemy_id = enemy_id
 	t._mage_index = -1
+	t._combatant = (state.enemies[enemy_id] as EnemyState).combatant
 	return t
 
 
 static func for_mage(state: BattleState, mage_index: int) -> StatusTarget:
 	var t := StatusTarget.new()
 	t._state = state
-	t._enemy_id = ""
 	t._mage_index = mage_index
+	t._enemy_id = ""
+	t._combatant = (state.mages[mage_index] as MageState).combatant
 	return t
 
 
@@ -26,22 +29,15 @@ func is_enemy() -> bool:
 
 
 func get_hp() -> int:
-	if is_enemy():
-		return _state.enemy_hp.get(_enemy_id, 0)
-	return _state.mage_hp[_mage_index]
+	return _combatant.hp
 
 
 func set_hp(val: int) -> void:
-	if is_enemy():
-		_state.enemy_hp[_enemy_id] = val
-	else:
-		_state.mage_hp[_mage_index] = val
+	_combatant.hp = val
 
 
 func get_statuses() -> Array:
-	if is_enemy():
-		return _state.enemy_statuses.get(_enemy_id, [])
-	return _state.mage_statuses[_mage_index]
+	return _combatant.statuses
 
 
 func add_status(s: StatusData) -> void:
@@ -58,13 +54,10 @@ func remove_status(s: StatusData) -> void:
 func kill() -> void:
 	if is_enemy():
 		_state.kill_enemy(_enemy_id)
-	# mage death is detected by battle_scene via hp check
 
 
 func is_alive() -> bool:
-	if is_enemy():
-		return _state.enemy_hp.has(_enemy_id)
-	return _state.mage_hp[_mage_index] > 0
+	return _combatant.is_alive()
 
 
 func get_state() -> BattleState:

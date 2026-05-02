@@ -12,12 +12,10 @@ func _init(p_name: String, p_damage: int) -> void:
 func execute(state: BattleState, _setup: BattleSetup,
 		enemy_id: String, _target: int) -> BattleState:
 	var new_state := state.duplicate()
-	var mult: float = new_state.enemy_attack_mult.get(enemy_id, 1.0)
+	var es := new_state.enemies.get(enemy_id) as EnemyState
+	var mult: float = es.attack_mult if es != null else 1.0
 	var actual_damage := int(damage * mult)
-	for i in new_state.mage_hp.size():
-		var shield_absorbed := 0
-		if i < new_state.mage_shield.size():
-			shield_absorbed = mini(new_state.mage_shield[i], actual_damage)
-			new_state.mage_shield[i] -= shield_absorbed
-		new_state.mage_hp[i] = max(0, new_state.mage_hp[i] - (actual_damage - shield_absorbed))
+	for ms: MageState in new_state.mages:
+		var remaining := ms.combatant.absorb_shield(actual_damage)
+		ms.combatant.hp = max(0, ms.combatant.hp - remaining)
 	return new_state

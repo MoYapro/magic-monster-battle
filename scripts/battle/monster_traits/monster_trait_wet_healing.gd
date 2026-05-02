@@ -9,8 +9,11 @@ func _init(p_amount: int) -> void:
 
 
 func apply_end_of_round(state: BattleState, setup: BattleSetup, enemy_id: String) -> BattleState:
+	if not state.enemies.has(enemy_id):
+		return state
+	var es := state.enemies[enemy_id] as EnemyState
 	var wet_status: StatusWet = null
-	for s: StatusData in (state.enemy_statuses.get(enemy_id, []) as Array):
+	for s: StatusData in es.combatant.statuses:
 		if s is StatusWet:
 			wet_status = s
 			break
@@ -21,5 +24,6 @@ func apply_end_of_round(state: BattleState, setup: BattleSetup, enemy_id: String
 	var enemy := setup.get_enemy(enemy_id)
 	if enemy == null:
 		return new_state
-	new_state.enemy_hp[enemy_id] = mini(new_state.enemy_hp[enemy_id] + wet * amount, enemy.max_hp)
+	var new_es := new_state.enemies[enemy_id] as EnemyState
+	new_es.combatant.hp = mini(new_es.combatant.hp + wet * amount, enemy.max_hp)
 	return new_state

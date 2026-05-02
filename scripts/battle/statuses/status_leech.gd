@@ -14,9 +14,9 @@ func on_turn_end(target: StatusTarget, _setup: BattleSetup) -> void:
 
 func on_mana_spent(target: StatusTarget, setup: BattleSetup) -> void:
 	var state := target.get_state()
-	if not state.enemy_hp.has(source_enemy_id):
+	if not state.enemies.has(source_enemy_id):
 		return
+	var es := state.enemies[source_enemy_id] as EnemyState
 	var leecher := setup.get_enemy(source_enemy_id)
 	if leecher != null:
-		state.enemy_hp[source_enemy_id] = mini(
-				state.enemy_hp[source_enemy_id] + 1, leecher.max_hp)
+		es.combatant.hp = mini(es.combatant.hp + 1, leecher.max_hp)

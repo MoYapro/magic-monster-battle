@@ -107,12 +107,13 @@ func _update_spell_hover(pos: Vector2) -> void:
 
 func _show_mage_tooltip(idx: int, pos: Vector2) -> void:
 	var mage := _current_setup.mages[idx]
+	var ms := _current_state.mages[idx] as MageState
 	_mage_tooltip_name.text = mage.name
-	var stats_lines: Array[String] = ["HP: %d / %d" % [_current_state.mage_hp[idx], mage.max_hp]]
-	if idx < _current_state.mage_shield.size() and _current_state.mage_shield[idx] > 0:
-		stats_lines.append("Shield: %d" % _current_state.mage_shield[idx])
+	var stats_lines: Array[String] = ["HP: %d / %d" % [ms.combatant.hp, mage.max_hp]]
+	if ms.combatant.shield > 0:
+		stats_lines.append("Shield: %d" % ms.combatant.shield)
 	_mage_tooltip_stats.text = "\n".join(stats_lines)
-	var active_statuses: Array = (_current_state.mage_statuses[idx] as Array).filter(
+	var active_statuses: Array = (ms.combatant.statuses as Array).filter(
 			func(s: StatusData) -> bool: return s.display_name != "")
 	if not active_statuses.is_empty():
 		_mage_tooltip_statuses.text = _format_statuses_bbcode(active_statuses)
@@ -131,16 +132,20 @@ func _show_monster_tooltip(enemy: EnemyData, pos: Vector2) -> void:
 	_monster_tooltip_desc.text = enemy.description
 	_monster_tooltip_desc.visible = not enemy.description.is_empty()
 	var stats_lines: Array[String] = ["HP: %d / %d" % [enemy.current_hp, enemy.max_hp]]
-	if _current_state.enemy_armor.get(enemy.id, 0) > 0:
-		stats_lines.append("🛡 Armor: %d" % _current_state.enemy_armor[enemy.id])
-	if _current_state.enemy_shield.get(enemy.id, 0) > 0:
-		stats_lines.append("◇ Shield: %d" % _current_state.enemy_shield[enemy.id])
-	if _current_state.enemy_block.get(enemy.id, 0) > 0:
-		stats_lines.append("🔲 Block: %d" % _current_state.enemy_block[enemy.id])
+	if _current_state.enemies.has(enemy.id):
+		var es := _current_state.enemies[enemy.id] as EnemyState
+		if es.armor > 0:
+			stats_lines.append("🛡 Armor: %d" % es.armor)
+		if es.combatant.shield > 0:
+			stats_lines.append("◇ Shield: %d" % es.combatant.shield)
+		if es.block > 0:
+			stats_lines.append("🔲 Block: %d" % es.block)
 	stats_lines.append_array(_get_ground_labels_for_enemy(enemy))
 	_monster_tooltip_stats.text = "\n".join(stats_lines)
-	var active_statuses: Array = (_current_state.enemy_statuses.get(enemy.id, []) as Array).filter(
-			func(s: StatusData) -> bool: return s.display_name != "")
+	var active_statuses: Array = []
+	if _current_state.enemies.has(enemy.id):
+		active_statuses = ((_current_state.enemies[enemy.id] as EnemyState).combatant.statuses as Array).filter(
+				func(s: StatusData) -> bool: return s.display_name != "")
 	if not active_statuses.is_empty():
 		_monster_tooltip_statuses.text = _format_statuses_bbcode(active_statuses)
 		_monster_tooltip_statuses.visible = true
@@ -174,7 +179,7 @@ func _get_ground_labels_for_enemy(enemy: EnemyData) -> Array[String]:
 	var cells := EnemyGrid.get_cells_for_enemy(grid_pos, enemy.grid_size)
 	var puddles := cells.filter(
 		func(c: Vector2i) -> bool:
-			return _current_state.ground.get(c, GroundType.Type.SOIL) == GroundType.Type.PUDDLE)
+			return _current_state.get_cell(c).ground == GroundType.Type.PUDDLE)
 	var labels: Array[String] = []
 	if puddles.size() > 0:
 		labels.append("Puddle (%d cells) — Wet +%d/round" % [puddles.size(), puddles.size() * 2])

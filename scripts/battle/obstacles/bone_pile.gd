@@ -17,7 +17,7 @@ func on_hit(state: BattleState, setup: BattleSetup, _ev: CastEvent) -> void:
 				cloud[cell + Vector2i(dx, dy)] = true
 	for cell: Vector2i in cloud.keys():
 		var occupant := setup.get_occupant_at(cell, state)
-		if not occupant.is_empty() and state.enemy_hp.has(occupant):
+		if not occupant.is_empty() and state.enemies.has(occupant):
 			state.add_enemy_status(occupant, StatusBlind.new())
-			state.monster_intents.erase(occupant)
+			(state.enemies[occupant] as EnemyState).intent = {}
 

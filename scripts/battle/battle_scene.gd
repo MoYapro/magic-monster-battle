@@ -74,7 +74,7 @@ func _on_end_turn_pressed() -> void:
 	_cancel_targeting()
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	_apply_state(_history.push(ActionEndTurn.new(rng.seed)))
+	_apply_state(_history.push(ActionEndTurn.new(rng.seed)).state)
 
 
 func _on_undo_pressed() -> void:
@@ -220,11 +220,13 @@ func _rebuild_battle() -> void:
 		wands.append(wd.get_wand_data())
 	_setup = BattleSetup.new(_battle_enemies, _battle_positions, _mages, wands, _setup.max_mana, _battle_obstacles, _battle_obstacle_positions)
 	var new_state := _setup.make_initial_state()
-	for i in new_state.mage_hp.size():
-		new_state.mage_hp[i] = prev.mage_hp[i]
+	for i in new_state.mages.size():
+		var prev_ms := prev.mages[i] as MageState
+		var new_ms := new_state.mages[i] as MageState
+		new_ms.combatant.hp = prev_ms.combatant.hp
+		new_ms.slot_charges = prev_ms.slot_charges.duplicate()
+		new_ms.mana_spent = prev_ms.mana_spent
 	new_state.mana = prev.mana
-	new_state.slot_charges = prev.slot_charges.duplicate()
-	new_state.mage_mana_spent = prev.mage_mana_spent.duplicate()
 	_history = BattleHistory.new(new_state, _setup)
 	_apply_state(_history.current_state())
 
@@ -233,20 +235,22 @@ func _apply_state(state: BattleState) -> void:
 	_current_state = state
 	_refresh_enemy_grid(state)
 	for i in _setup.mages.size():
-		_setup.mages[i].current_hp = state.mage_hp[i]
+		var ms := state.mages[i] as MageState
+		_setup.mages[i].current_hp = ms.combatant.hp
 		var incoming_attack := 0
-		for enemy_id: String in state.monster_intents:
-			var intent: Dictionary = state.monster_intents[enemy_id]
-			var targets_mage: bool = intent.get("target", -1) == i or intent.get("all_mages", false)
-			if not targets_mage or not state.enemy_hp.has(enemy_id):
+		for enemy_id: String in state.enemies:
+			var es := state.enemies[enemy_id] as EnemyState
+			if es.intent.is_empty():
 				continue
-			var _es: Array = state.enemy_statuses.get(enemy_id, [])
-			if _es.any(func(s: StatusData) -> bool: return s.blocks_action()):
+			var targets_mage: bool = es.intent.get("target", -1) == i or es.intent.get("all_mages", false)
+			if not targets_mage:
+				continue
+			if es.combatant.statuses.any(func(s: StatusData) -> bool: return s.blocks_action()):
 				continue
 			var enemy := _setup.get_enemy(enemy_id)
 			if enemy == null:
 				continue
-			var action_index: int = intent.get("action_index", 0)
+			var action_index: int = es.intent.get("action_index", 0)
 			if action_index >= enemy.action_pool.size():
 				continue
 			var action := enemy.action_pool[action_index]
@@ -254,38 +258,38 @@ func _apply_state(state: BattleState) -> void:
 				incoming_attack += (action as MonsterActionAttack).damage
 			elif action is MonsterActionCleave:
 				incoming_attack += (action as MonsterActionCleave).damage
-		_mage_displays[i].set_status(incoming_attack, state.mage_statuses[i], state.mage_shield[i])
+		_mage_displays[i].set_status(incoming_attack, ms.combatant.statuses, ms.combatant.shield)
 	_mana_display.setup(state.mana, _setup.max_mana, _panel_height)
 	_refresh_wand_charges(state)
 	_debug_bar.set_undo_enabled(_history.can_undo())
 	var all_mages_dead := true
-	for hp: int in state.mage_hp:
-		if hp > 0:
+	for ms: MageState in state.mages:
+		if ms.combatant.hp > 0:
 			all_mages_dead = false
 			break
 	if all_mages_dead:
 		_on_battle_lost()
 		return
-	if _history.can_undo() and state.enemy_hp.is_empty():
+	if _history.can_undo() and state.enemies.is_empty():
 		_on_battle_won()
 
 
 func _refresh_wand_charges(state: BattleState) -> void:
 	for i in _wand_displays.size():
+		var ms := state.mages[i] as MageState
 		var charges := {}
 		var committed := 0
 		for slot: SpellSlotData in _setup.wands[i].slots:
-			var key := "%d/%s" % [i, slot.id]
-			var c: int = state.slot_charges.get(key, 0)
+			var c: int = ms.slot_charges.get(slot.id, 0)
 			charges[slot.id] = c
 			committed += c
 		_wand_displays[i].set_charges(charges)
 		var webbed := {}
 		for slot: SpellSlotData in _setup.wands[i].slots:
-			if state.webbed_slots.has("%d/%s" % [i, slot.id]):
+			if ms.webbed_slots.has(slot.id):
 				webbed[slot.id] = true
 		_wand_displays[i].set_webbed(webbed)
-		_mage_displays[i].set_mana(state.mage_mana_spent[i], _setup.mages[i].mana_allowance)
+		_mage_displays[i].set_mana(ms.mana_spent, _setup.mages[i].mana_allowance)
 
 
 func _on_battle_lost() -> void:
@@ -323,22 +327,45 @@ func _generate_loot() -> void:
 
 func _refresh_enemy_grid(state: BattleState) -> void:
 	enemy_grid.clear_enemies()
+	var intents: Dictionary = {}
+	var armors: Dictionary = {}
+	var blocks: Dictionary = {}
+	var shields: Dictionary = {}
+	var statuses: Dictionary = {}
 	for i in _setup.enemies.size():
 		var enemy := _setup.enemies[i]
-		if not state.enemy_hp.has(enemy.id):
+		if not state.enemies.has(enemy.id):
 			continue
-		enemy.current_hp = state.enemy_hp[enemy.id]
+		var es := state.enemies[enemy.id] as EnemyState
+		enemy.current_hp = es.combatant.hp
 		enemy_grid.place_enemy(enemy, _setup.get_enemy_pos(i, state))
+		if not es.intent.is_empty():
+			intents[enemy.id] = es.intent
+		if es.armor > 0:
+			armors[enemy.id] = es.armor
+		if es.block > 0:
+			blocks[enemy.id] = es.block
+		if es.combatant.shield > 0:
+			shields[enemy.id] = es.combatant.shield
+		if not es.combatant.statuses.is_empty():
+			statuses[enemy.id] = es.combatant.statuses
 	var effective_obstacle_positions: Array[Vector2i] = []
+	var obstacle_hp: Dictionary = {}
 	for i in _setup.obstacles.size():
 		effective_obstacle_positions.append(_setup.get_obstacle_pos(i, state))
-	enemy_grid.set_obstacles(_setup.obstacles, effective_obstacle_positions, state.obstacle_hp)
-	enemy_grid.set_intents(state.monster_intents)
-	enemy_grid.set_armors(state.enemy_armor)
-	enemy_grid.set_blocks(state.enemy_block)
-	enemy_grid.set_shields(state.enemy_shield)
-	enemy_grid.set_statuses(state.enemy_statuses)
-	enemy_grid.set_ground(state.ground)
+		var oid := _setup.obstacles[i].id
+		if state.obstacles.has(oid):
+			obstacle_hp[oid] = (state.obstacles[oid] as ObstacleState).combatant.hp
+	enemy_grid.set_obstacles(_setup.obstacles, effective_obstacle_positions, obstacle_hp)
+	enemy_grid.set_intents(intents)
+	enemy_grid.set_armors(armors)
+	enemy_grid.set_blocks(blocks)
+	enemy_grid.set_shields(shields)
+	enemy_grid.set_statuses(statuses)
+	var ground: Dictionary = {}
+	for pos: Vector2i in state.cells:
+		ground[pos] = (state.cells[pos] as CellState).ground
+	enemy_grid.set_ground(ground)
 
 
 # --- targeting ---
@@ -348,18 +375,18 @@ func _on_body_slot_clicked(wand: WandDisplay, slot_id: String) -> void:
 		_cancel_targeting()
 		return
 	var mage_index := _wand_displays.find(wand)
-	if _history.current_state().mage_hp[mage_index] <= 0:
+	if (_history.current_state().mages[mage_index] as MageState).combatant.hp <= 0:
 		return
-	_apply_state(_history.push(ActionAddMana.new(mage_index, slot_id)))
+	_apply_state(_history.push(ActionAddMana.new(mage_index, slot_id)).state)
 
 
 func _on_body_slot_right_clicked(wand: WandDisplay, slot_id: String) -> void:
 	if _targeting_wand != null:
 		return
 	var mage_index := _wand_displays.find(wand)
-	if _history.current_state().mage_hp[mage_index] <= 0:
+	if (_history.current_state().mages[mage_index] as MageState).combatant.hp <= 0:
 		return
-	_apply_state(_history.push(ActionRemoveMana.new(mage_index, slot_id)))
+	_apply_state(_history.push(ActionRemoveMana.new(mage_index, slot_id)).state)
 
 
 func _on_tip_pressed(wand: WandDisplay) -> void:
@@ -367,16 +394,16 @@ func _on_tip_pressed(wand: WandDisplay) -> void:
 		_cancel_targeting()
 		return
 	var mage_index := _wand_displays.find(wand)
-	if _history.current_state().mage_hp[mage_index] <= 0:
+	var cur := _history.current_state()
+	if (cur.mages[mage_index] as MageState).combatant.hp <= 0:
 		return
 	var tip := _setup.wands[mage_index].get_tip_slot()
 	if tip == null or tip.spell == null:
 		return
-	var key := "%d/%s" % [mage_index, tip.id]
-	var charges: int = _history.current_state().slot_charges.get(key, 0)
+	var charges: int = (cur.mages[mage_index] as MageState).slot_charges.get(tip.id, 0)
 	if charges < tip.spell.mana_cost:
-		_apply_state(_history.push(ActionAddMana.new(mage_index, tip.id)))
-	elif _history.current_state().mage_mana_spent[mage_index] < _setup.mages[mage_index].mana_allowance:
+		_apply_state(_history.push(ActionAddMana.new(mage_index, tip.id)).state)
+	elif (cur.mages[mage_index] as MageState).mana_spent < _setup.mages[mage_index].mana_allowance:
 		_start_targeting(wand)
 
 
@@ -424,7 +451,8 @@ func _update_intent_hover(mouse: Vector2) -> void:
 	_clear_intent_hover()
 	_intent_hover_enemy = hovered_id
 	if hovered_id != "":
-		var intent: Dictionary = _history.current_state().monster_intents.get(hovered_id, {})
+		var es := _history.current_state().enemies.get(hovered_id) as EnemyState
+		var intent: Dictionary = es.intent if es != null else {}
 		if intent.get("all_mages", false):
 			_intent_hover_all_mages = true
 			for d: MageDisplay in _mage_displays:
@@ -640,18 +668,18 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _fire_at_cell(cell: Vector2i) -> void:
 	var mage_index := _wand_displays.find(_targeting_wand)
-	var new_state := _history.push(ActionZapWand.new(mage_index, cell))
-	if not new_state.cast_events.is_empty():
-		_floating_damage.spawn_events(new_state.cast_events, get_global_mouse_position())
-	_apply_state(new_state)
+	var result := _history.push(ActionZapWand.new(mage_index, cell))
+	if not result.cast_events.is_empty():
+		_floating_damage.spawn_events(result.cast_events, get_global_mouse_position())
+	_apply_state(result.state)
 
 
 func _fire_at_mage(target_mage_index: int) -> void:
 	var mage_index := _wand_displays.find(_targeting_wand)
-	var new_state := _history.push(ActionZapWand.new(mage_index, Vector2i(-1, -1), target_mage_index))
-	if not new_state.cast_events.is_empty():
-		_floating_damage.spawn_events(new_state.cast_events, get_global_mouse_position())
-	_apply_state(new_state)
+	var result := _history.push(ActionZapWand.new(mage_index, Vector2i(-1, -1), target_mage_index))
+	if not result.cast_events.is_empty():
+		_floating_damage.spawn_events(result.cast_events, get_global_mouse_position())
+	_apply_state(result.state)
 
 
 # --- data factories ---

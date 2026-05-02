@@ -19,14 +19,13 @@ func _init(p_name: String, p_damage: int, p_wet_stacks: int = 0,
 func execute(state: BattleState, setup: BattleSetup,
 		enemy_id: String, target: int) -> BattleState:
 	var new_state := state.duplicate()
-	if target >= 0 and target < new_state.mage_hp.size():
-		var mult: float = new_state.enemy_attack_mult.get(enemy_id, 1.0)
+	if target >= 0 and target < new_state.mages.size():
+		var ms := new_state.mages[target] as MageState
+		var es := new_state.enemies.get(enemy_id) as EnemyState
+		var mult: float = es.attack_mult if es != null else 1.0
 		var actual_damage := int(damage * mult)
-		var shield_absorbed := 0
-		if target < new_state.mage_shield.size():
-			shield_absorbed = mini(new_state.mage_shield[target], actual_damage)
-			new_state.mage_shield[target] -= shield_absorbed
-		new_state.mage_hp[target] = max(0, new_state.mage_hp[target] - (actual_damage - shield_absorbed))
+		var remaining := ms.combatant.absorb_shield(actual_damage)
+		ms.combatant.hp = max(0, ms.combatant.hp - remaining)
 		var enemy := setup.get_enemy(enemy_id)
 		if enemy != null:
 			for t: MonsterTraitData in enemy.traits:
