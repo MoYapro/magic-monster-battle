@@ -224,3 +224,37 @@ func test_bone_no_refund_when_enemy_survives() -> void:
 	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(state, setup).state
 	assert_true(result.enemies.has("e1"), "enemy should survive")
 	assert_eq(result.mana, 5, "no refund when kill does not happen")
+
+
+func test_bone_multi_kill_does_not_double_refund_mana() -> void:
+	var e1 := EnemyData.new("e1", "Target1", 3, Vector2i(1, 1), Color.WHITE)
+	var e2 := EnemyData.new("e2", "Target2", 3, Vector2i(1, 1), Color.WHITE)
+	var body := SpellSlotData.new("s0_0", 0, 0, "tip")
+	body.spell = SpellBone.create()
+	var tip_spell := SpellData.new("Wide", "W", [], Color.WHITE,
+			[Vector2i(0, 0), Vector2i(0, 1)], "", 0, 1)
+	tip_spell.spell_type = "tip"
+	var tip := SpellSlotData.new("tip", 1, 0)
+	tip.spell = tip_spell
+	var wand := WandData.new([body, tip])
+	var mage := MageData.new("Mage", 30)
+	var setup := BattleSetup.new(
+			[e1, e2] as Array[EnemyData],
+			[Vector2i(0, 0), Vector2i(0, 1)] as Array[Vector2i],
+			[mage] as Array[MageData],
+			[wand] as Array[WandData], 10)
+	var state := BattleState.new()
+	var ms := MageState.new()
+	ms.combatant.hp = 30
+	ms.slot_charges["s0_0"] = 1
+	ms.slot_charges["tip"] = 1
+	state.mages.append(ms)
+	state.mana = 8
+	for e: EnemyData in setup.enemies:
+		var es := EnemyState.new()
+		es.combatant.hp = e.max_hp
+		state.enemies[e.id] = es
+	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(state, setup).state
+	assert_false(result.enemies.has("e1"), "e1 should be dead")
+	assert_false(result.enemies.has("e2"), "e2 should be dead")
+	assert_eq(result.mana, 10, "refund happens only once, capped at max_mana")

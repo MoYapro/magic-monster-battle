@@ -84,12 +84,15 @@ func _sum_slot_charges(wand: WandData, state: BattleState) -> int:
 	return total
 
 
-func _apply_on_kill_effects(state: BattleState, ev: CastEvent) -> void:
+func _apply_on_kill_effects(state: BattleState, setup: BattleSetup, ev: CastEvent) -> void:
 	for effect: Dictionary in ev.on_kill_effects:
 		match effect.get("type", ""):
 			"refund_zap_mana":
-				state.mana += ev.zap_mana_cost
-				(state.mages[mage_index] as MageState).mana_spent -= ev.zap_mana_cost
+				var refund := ev.zap_mana_cost
+				ev.zap_mana_cost = 0
+				var ms := state.mages[mage_index] as MageState
+				state.mana = mini(state.mana + refund, setup.max_mana)
+				ms.mana_spent = maxi(ms.mana_spent - refund, 0)
 
 
 func _apply_projectile(
@@ -199,7 +202,7 @@ func _apply_damage_to_enemy(
 	es.combatant.hp -= remaining
 	if es.combatant.hp <= 0:
 		state.kill_enemy(eid)
-		_apply_on_kill_effects(state, ev)
+		_apply_on_kill_effects(state, setup, ev)
 	else:
 		var effects: Array[Dictionary] = reactive_result.get("effects", ev.on_hit_effects)
 		_apply_on_hit_effects(state, setup, eid, effects, total, push_dir)
