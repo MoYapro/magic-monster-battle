@@ -26,6 +26,9 @@ var enemy_stunned: Dictionary = {}     # enemy_id -> turns remaining; skips atta
 var enemy_blind: Dictionary = {}       # enemy_id -> turns remaining; 50% miss / random target
 var cast_events: Array = []            # CastEvents from the most recent zap action
 var ground: Dictionary = {}           # Vector2i -> GroundType.Type
+# enemy_id -> { "statuses": Array[StatusData], "position": Vector2i (optional) }
+# Populated by kill_enemy; used by Revenge Revive trait
+var dead_enemies: Dictionary = {}
 
 
 func duplicate() -> BattleState:
@@ -63,7 +66,11 @@ func _add_status(target: StatusTarget, new_status: StatusData) -> void:
 		target.get_statuses().append(new_status)
 
 
-func kill_enemy(enemy_id: String) -> void:
+func kill_enemy(enemy_id: String, setup: BattleSetup = null) -> void:
+	var record: Dictionary = { "statuses": enemy_statuses.get(enemy_id, []).duplicate() }
+	if enemy_positions.has(enemy_id):
+		record["position"] = enemy_positions[enemy_id]
+	dead_enemies[enemy_id] = record
 	enemy_hp.erase(enemy_id)
 	enemy_armor.erase(enemy_id)
 	enemy_block.erase(enemy_id)
@@ -75,3 +82,10 @@ func kill_enemy(enemy_id: String) -> void:
 	for statuses: Array in mage_statuses:
 		statuses.assign(statuses.filter(
 				func(s: StatusData) -> bool: return s.source_enemy_id != enemy_id))
+	if setup == null:
+		return
+	for enemy: EnemyData in setup.enemies:
+		if not enemy_hp.has(enemy.id):
+			continue
+		for t: MonsterTraitData in enemy.traits:
+			t.apply_on_monster_dies(self, setup, enemy.id, enemy_id)

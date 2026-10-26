@@ -73,13 +73,31 @@ func _ready() -> void:
 
 
 func _build_monsters_list() -> void:
-	var seen: Dictionary = {}
-	for biome: BiomeData in BiomesData.all():
-		for cls in biome.monster_pool:
-			if seen.has(cls):
-				continue
-			seen[cls] = true
-			var instance: EnemyData = cls.new()
+	var classes: Array = [
+		preload("res://scripts/battle/monsters/banshee.gd"),
+		preload("res://scripts/battle/monsters/bog_shambler.gd"),
+		preload("res://scripts/battle/monsters/bone_caller.gd"),
+		preload("res://scripts/battle/monsters/cave_spider.gd"),
+		preload("res://scripts/battle/monsters/cursed_knight.gd"),
+		preload("res://scripts/battle/monsters/fallen_paladin.gd"),
+		preload("res://scripts/battle/monsters/fire_elemental.gd"),
+		preload("res://scripts/battle/monsters/frost_mage.gd"),
+		preload("res://scripts/battle/monsters/goblin.gd"),
+		preload("res://scripts/battle/monsters/grove_tender.gd"),
+		preload("res://scripts/battle/monsters/scorpion.gd"),
+		preload("res://scripts/battle/monsters/shadow_panther.gd"),
+		preload("res://scripts/battle/monsters/shield_ogre.gd"),
+		preload("res://scripts/battle/monsters/skeleton.gd"),
+		preload("res://scripts/battle/monsters/stone_giant.gd"),
+		preload("res://scripts/battle/monsters/treant.gd"),
+		preload("res://scripts/battle/monsters/troll.gd"),
+		preload("res://scripts/battle/monsters/war_drummer.gd"),
+		preload("res://scripts/battle/monsters/witch.gd"),
+		preload("res://scripts/battle/monsters/wraith_blade.gd"),
+	]
+	for cls in classes:
+		var instance := cls.new() as EnemyData
+		if instance != null:
 			_monsters.append([instance.display_name, cls])
 	_monsters.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
 

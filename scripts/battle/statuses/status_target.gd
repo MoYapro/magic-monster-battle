@@ -48,9 +48,9 @@ func remove_status(s: StatusData) -> void:
 	get_statuses().erase(s)
 
 
-func kill() -> void:
+func kill(setup: BattleSetup = null) -> void:
 	if is_enemy():
-		_state.kill_enemy(_enemy_id)
+		_state.kill_enemy(_enemy_id, setup)
 	# mage death is detected by battle_scene via hp check
 
 

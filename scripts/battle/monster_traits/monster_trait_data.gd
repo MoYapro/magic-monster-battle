@@ -16,3 +16,7 @@ func apply_end_of_round(state: BattleState, _setup: BattleSetup, _enemy_id: Stri
 
 func apply_on_hit(state: BattleState, _setup: BattleSetup, _enemy_id: String, _target_mage: int, _damage: int) -> BattleState:
 	return state
+
+
+func apply_on_monster_dies(_state: BattleState, _setup: BattleSetup, _trait_owner_id: String, _dead_enemy_id: String) -> void:
+	pass

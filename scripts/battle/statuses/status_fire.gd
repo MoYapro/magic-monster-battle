@@ -23,7 +23,7 @@ func on_add_status(target: StatusTarget, incoming: StatusData) -> void:
 			target.remove_status(self)
 
 
-func on_turn_end(target: StatusTarget, _setup: BattleSetup) -> void:
+func on_turn_end(target: StatusTarget, setup: BattleSetup) -> void:
 	if not target.is_alive():
 		return
 	target.set_hp(max(0, target.get_hp() - stacks))
@@ -31,7 +31,7 @@ func on_turn_end(target: StatusTarget, _setup: BattleSetup) -> void:
 	if stacks <= 0:
 		target.remove_status(self)
 	if target.get_hp() <= 0:
-		target.kill()
+		target.kill(setup)
 
 
 func get_turn_damage() -> int:

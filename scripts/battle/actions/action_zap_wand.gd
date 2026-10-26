@@ -96,7 +96,7 @@ func _apply_projectile(
 				state.enemy_armor.erase(eid)
 		state.enemy_hp[eid] -= remaining
 		if state.enemy_hp[eid] <= 0:
-			state.kill_enemy(eid)
+			state.kill_enemy(eid, setup)
 		else:
 			_apply_on_hit_effects(state, setup, eid, ev.on_hit_effects)
 
