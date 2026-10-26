@@ -226,11 +226,12 @@ All three mages share a single mana pool that persists between battles.
 - [ ] Focus element slot per mage
 
 ### Path Selection
-- [ ] Path selection screen showing random subset of unlocked biomes
-- [ ] Biome definitions with own monster rosters and loot tables
-- [ ] Per-biome difficulty scaling
-- [ ] Boss fight trigger after ~10 battles per biome
-- [ ] Biome unlock chain on boss defeat
+- [ ] Boss fight trigger after ~10 battles per biome (currently 10 wins count as a boss defeat)
+- [ ] Biome-specific loot tables (loot currently comes only from per-monster drop pools)
+- [ ] Stray monsters from nearby biomes (`stray_pool` / `stray_weight` exist but are unused)
+- [ ] Assign a biome to the first battle (currently falls back to Desert and the win is not counted)
+- [ ] Keep scaling or retire a biome after level 10 (level caps at 10, so a biome can be farmed indefinitely)
+- [ ] Remove or hide the debug level spinbox in the battle screen
 
 ## Implemented Features
 
@@ -273,3 +274,11 @@ All three mages share a single mana pool that persists between battles.
 - [x] Summon Skeleton: spawn count scales with drummer HP (1 at full health, up to 3 at low HP); respects grid capacity; blocks respawn of already-alive skeletons
 - [x] War Drummer (boss): forces Raise Fallen when no skeletons are alive or dead; otherwise selects randomly from action pool
 - [x] Wet Healing trait: heals the monster each round by its current wet stack count; does not consume wet stacks
+
+### Path Selection
+- [x] Path selection screen showing 2 random unlocked biomes with name, tagline, and current level
+- [x] 18 biomes in 4 layers (5 starters → 9 mid → 3 endgame → The Source), each with its own monster and obstacle pool
+- [x] Biome unlock chain: layer 2/3 biomes unlock when any parent biome is beaten; The Source requires all three layer-3 biomes
+- [x] Per-biome difficulty scaling: biome level = wins in that biome + 1 (max 10), scaling difficulty budget and elite chance
+- [x] Battles composed from the selected biome's monster and obstacle pools
+- [x] Codex biomes tab listing every biome and its monsters
