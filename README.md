@@ -41,22 +41,33 @@ After loot, the player picks the next battle from a random subset of currently u
 The phase ends explicitly when the player confirms their selection.
 
 **Biomes:**
-- There are at least **3 starter biomes** available from the beginning
-- Each biome has its own monster roster; some monsters may be shared across biomes
+- 18 biomes in **4 layers**: 5 starters → 9 mid biomes → 3 endgame biomes → The Source
+- The **5 starter biomes** are available from the beginning and form an element cycle: Fire (Desert) > Ice (Tundra) > Nature (Forest) > Poison (Swamp) > Earth (Mountain) > Fire
+- Each biome has its own monster roster and obstacle pool; some monsters are shared across biomes
 - Monsters drop monster specific loot with per-monster drop chances
 - Difficulty within each biome scales independently — the player can revisit easier biomes but they will outscale other biomes if they are battled more often
 - Cross-biome synergy: spells looted in one biome can counter enemies in another (e.g. water spells block poison used by graveyard enemies)
 - After ~10 battles in a biome a **boss fight** triggers
 - The boss should combine some of the mechanics / actions / traits seen earlier in this biome 
-- Defeating a boss unlocks a new biome in path selection
+- Defeating a boss unlocks the biome's children in the next layer
+- Layer 2 and 3 biomes unlock when **any one** of their parents' bosses is beaten; The Source requires **all three** layer 3 bosses
 - Path selection always shows a random subset of unlocked biomes
+- Biomes sit on a 2D world map (hot/dry ↔ wet/cold, real ↔ fantasy); nearby biomes may lend stray monsters to each other
 
-**Biome progression example:**
+**Biome progression:**
 ```
-Forest (starter) → beat boss → unlocks Graveyard
-Graveyard → beat boss → unlocks Hell
-Coast (starter) → beat boss → unlocks Water
-Water -> beat boss -> unlocks Sub-marine
+Layer 1 (starters)   Layer 2                          Layer 3 (any one parent)
+Desert    →          Pyramids, Coast
+Tundra    →          Glacial Temple, Frozen Shipwreck
+Forest    →          Jungle, Graveyard
+Swamp     →          Ruins, Coast, Graveyard
+Mountain  →          Cave, Volcano
+
+                     Graveyard | Ruins | Volcano        →  Hell
+                     Glacial Temple | Pyramids | Jungle  →  Astral Plane
+                     Coast | Frozen Shipwreck | Cave     →  Underwater
+
+Layer 4: Hell + Astral Plane + Underwater  →  The Source
 ```
 
 ## Core Systems
