@@ -315,14 +315,11 @@ func _on_battle_won() -> void:
 func _generate_loot() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
+	var biome: BiomeData = GameState.current_biome if GameState.current_biome != null else BiomesData.all()[0]
 	GameState.pending_loot.clear()
 	GameState.pending_loot_wands.clear()
-	GameState.pending_loot_wands.append(WandGenerator.generate(rng))
-	GameState.pending_loot.append(WandGenerator._pick_tip_spell(rng))
-	for enemy: EnemyData in _setup.enemies:
-		if not enemy.drop_pool.is_empty():
-			GameState.pending_loot.append(
-				enemy.drop_pool[rng.randi_range(0, enemy.drop_pool.size() - 1)])
+	GameState.pending_loot_wands.append(WandGenerator.generate_biome_wand(rng, biome.layer))
+	GameState.pending_loot.append_array(LootRoller.roll_spell_offers(_setup.enemies, rng))
 
 
 func _refresh_enemy_grid(state: BattleState) -> void:
@@ -399,6 +396,7 @@ func _on_tip_pressed(wand: WandDisplay) -> void:
 		return
 	var tip := _setup.wands[mage_index].get_tip_slot()
 	if tip == null or tip.spell == null:
+		_start_targeting(wand)  # tipless wands fire as a single-cell hit
 		return
 	var charges: int = (cur.mages[mage_index] as MageState).slot_charges.get(tip.id, 0)
 	if charges < tip.spell.mana_cost:
@@ -519,7 +517,8 @@ func _update_hover(mouse: Vector2) -> void:
 		if tip != null and not tip.hit_pattern.is_empty():
 			pattern = tip.hit_pattern
 		_hovered_cells = enemy_grid.get_hit_cells(cell, pattern)
-		enemy_grid.set_hovered_cells(_hovered_cells)
+		enemy_grid.set_hovered_cells(_hovered_cells,
+				not _setup.has_line_of_sight(cell, _current_state))
 		return
 	for mage in _mage_displays:
 		if mage.get_rect().has_point(mage.to_local(mouse)):
@@ -646,6 +645,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	var cell := enemy_grid.get_cell_at(enemy_grid.to_local(mouse))
 	if cell.x >= 0:
 		get_viewport().set_input_as_handled()
+		if not _setup.has_line_of_sight(cell, _current_state):
+			return
 		_fire_at_cell(cell)
 		_cancel_targeting()
 		return

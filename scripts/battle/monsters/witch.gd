@@ -12,7 +12,7 @@ func _init() -> void:
 	main_role = MonsterRole.Type.MAGE
 	off_role = MonsterRole.Type.HEALER
 	difficulty_rating = 30
-	drop_pool = [SpellVenom.create(), SpellAmplify.create()]
+	drop_pool = [SpellVenom.create(), SpellAmplify.create(), SpellReactive.create()]
 	action_pool = [
 		MonsterActionAttack.new("Curse", 4),
 		MonsterActionAttack.new("Hex", 9),

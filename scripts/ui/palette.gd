@@ -23,6 +23,7 @@ const COLOR_HP_LABEL       := Color(0.65, 0.80, 0.65)
 # --- Targeting ---
 const COLOR_TARGET_AVAILABLE := Color(1.0, 0.85, 0.2)
 const COLOR_TARGET_HOVER     := Color(0.95, 0.18, 0.18)
+const COLOR_TARGET_BLOCKED   := Color(0.45, 0.45, 0.50)
 const COLOR_TARGET_FLASH     := Color(1.0, 0.45, 0.1, 0.9)
 
 # --- Widget panels (MageDisplay / ManaDisplay) ---

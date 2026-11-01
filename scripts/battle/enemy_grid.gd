@@ -15,6 +15,7 @@ var _obstacle_hp: Dictionary = {}
 var _ground: Dictionary = {}  # Vector2i -> GroundType.Type
 var _highlighted := false
 var _hovered_cells: Array[Vector2i] = []
+var _hover_blocked: bool = false
 var _intents: Dictionary = {}
 var _armors: Dictionary = {}
 var _blocks: Dictionary = {}
@@ -57,9 +58,14 @@ func set_highlighted(on: bool) -> void:
 	queue_redraw()
 
 
-func set_hovered_cells(cells: Array[Vector2i]) -> void:
+func set_hovered_cells(cells: Array[Vector2i], blocked: bool = false) -> void:
 	_hovered_cells = cells
+	_hover_blocked = blocked
 	queue_redraw()
+
+
+func _hover_color() -> Color:
+	return Palette.COLOR_TARGET_BLOCKED if _hover_blocked else Palette.COLOR_TARGET_HOVER
 
 
 static func get_hit_cells(target: Vector2i, pattern: Array[Vector2i]) -> Array[Vector2i]:
@@ -171,7 +177,7 @@ func _draw_grid() -> void:
 				draw_rect(rect, Palette.COLOR_STATUS_PUDDLE, true)
 			draw_rect(rect, Palette.COLOR_GRID_BORDER, false)
 			if _hovered_cells.has(Vector2i(col, row)):
-				draw_rect(rect, Palette.COLOR_TARGET_HOVER, false, 3.0)
+				draw_rect(rect, _hover_color(), false, 3.0)
 			elif _highlighted:
 				draw_rect(rect, Palette.COLOR_TARGET_AVAILABLE, false, 2.5)
 
@@ -215,7 +221,7 @@ func _draw_enemies() -> void:
 			if occupied.has(hc):
 				is_hovered = true
 				break
-		var border_color := Palette.COLOR_TARGET_HOVER if is_hovered \
+		var border_color := _hover_color() if is_hovered \
 				else (Palette.COLOR_TARGET_AVAILABLE if _highlighted else Color.WHITE)
 		var border_width := 3.0 if (is_hovered or _highlighted) else 2.0
 		draw_rect(enemy_rect, border_color, false, border_width)

@@ -6,6 +6,7 @@ const MIN_MONSTERS := 2
 const MAX_LEVEL    := 10
 const BUDGET_L1    := 25   # total difficulty budget at level 1  (~2 easy monsters)
 const BUDGET_L10   := 500  # total difficulty budget at level 10
+const LOW_OBSTACLE_LEVELS := 2  # starter biome levels that spawn only non-blocking obstacles
 
 
 
@@ -13,7 +14,7 @@ static func compose(biome: BiomeData, biome_level: int, rng: RandomNumberGenerat
 	var elite_chance := 0.5 * clampf(float(biome_level - 1) / float(MAX_LEVEL - 1), 0.0, 1.0)
 	var battle_type: BattleType = BattleType.ELITE if rng.randf() < elite_chance else BattleType.HORDE
 	var enemies := _select_monsters(biome.monster_pool, battle_type, biome_level, rng)
-	var obstacles := _select_obstacles(biome.obstacle_pool, rng)
+	var obstacles := _select_obstacles(obstacle_pool_for(biome, biome_level), rng)
 
 	# Obstacles placed first — they claim front rows before enemies.
 	var occupied: Dictionary = {}
@@ -84,7 +85,16 @@ static func _select_monsters(
 	return enemies
 
 
+# Starter biomes keep their first levels free of sight-blocking obstacles.
+static func obstacle_pool_for(biome: BiomeData, biome_level: int) -> Array:
+	if biome.layer > 1 or biome_level > LOW_OBSTACLE_LEVELS:
+		return biome.obstacle_pool
+	return biome.obstacle_pool.filter(func(cls) -> bool: return not cls.new().is_blocking)
+
+
 static func _select_obstacles(pool: Array, rng: RandomNumberGenerator) -> Array[ObstacleData]:
+	if pool.is_empty():
+		return []
 	var weights: Array[int] = []
 	var total_weight := 0
 	for cls in pool:

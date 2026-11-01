@@ -7,7 +7,7 @@ func _init() -> void:
 	main_role = MonsterRole.Type.MAGE
 	difficulty_rating = 38
 	traits = [MonsterTraitFire.new()]
-	drop_pool = [SpellEmber.create(), SpellAmplify.create()]
+	drop_pool = [SpellEmber.create(), SpellAmplify.create(), SpellFireCatalyst.create()]
 	action_pool = [
 		MonsterActionAttack.new("Fire Blast", 13),
 		MonsterActionAttack.new("Ignite", 7),

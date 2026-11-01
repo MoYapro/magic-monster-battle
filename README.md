@@ -159,7 +159,7 @@ Cast-time visuals signal all three outcomes (success, fizzle, backfire). Because
 A codex screen lists all spells (drops + alchemy), biomes, and monsters. Discovered entries show a full description; undiscovered entries show only a silhouette/outline.
 
 **Line of Sight**
-A target cannot be hit if a monster or obstacle (tree, stone, wall, etc.) occupies a cell in front of it.
+The clicked cell cannot be targeted if a monster or a blocking obstacle (tree, stone, wall, etc.) occupies a cell in front of it in the same row. Low obstacles (bramble patch, pyre, tide pool, …) don't block. Multi-cell monsters can be hit through any uncovered cell. Only the clicked cell is checked — tip patterns still hit neighbouring cells "around the corner". Blocked cells show a grey hover outline and ignore clicks. The first two levels of a starter (layer 1) biome spawn only low obstacles, so early fights stay fair.
 
 ### Mages
 The player controls three mages. Mages are lost permanently if killed in battle.
@@ -265,7 +265,7 @@ All three mages share a single mana pool that persists between battles.
   - [x] Frozen: blocks the mage's zap action; melts completely when hit by fire
   - [x] Vine Snare: penalises the mage on zap (HP cost + heals the snarer); self-removes after zap or at turn end
   - [x] Leech: heals the source enemy by 1 per mana the mage spends; self-removes at turn end
-- [x] Line-of-sight blocking — obstacles and enemies block hits to cells behind them
+- [x] Line-of-sight blocking — enemies and blocking obstacles (`is_blocking`) prevent targeting cells behind them; only the clicked cell is checked
 
 ### Wand System
 - [x] Directed spell-graph wand (SpellSlotData with next_id chain toward tip)
@@ -278,6 +278,9 @@ All three mages share a single mana pool that persists between battles.
 - [x] Alchemy table: catalyst trios resolve to success (secret spell), fizzle (wasted), or backfire (damages caster)
 - [x] Spell modifiers: apply to the next projectile — damage multipliers, extra on-hit effects
 - [x] Backfire: resolves against the casting mage; amplified if a modifier precedes it
+- [x] Multi-cast: consecutive identical spells merge into one projectile scaling quadratically (`damage × count²`, e.g. 5× Bone = 100)
+- [x] Bone kill refund returns the zap's mana to the shared pool; the mage's spend allowance stays used
+- [x] Tipless wands fire as a single-cell hit
 
 ### Monsters
 - [x] Cleave: damages all mages equally; respects attack multiplier
@@ -286,6 +289,12 @@ All three mages share a single mana pool that persists between battles.
 - [x] War Drummer (boss): forces Raise Fallen when no skeletons are alive or dead; otherwise selects randomly from action pool
 - [x] Wet Healing trait: heals the monster each round by its current wet stack count; does not consume wet stacks
 - [x] Revenge Revive trait (Bone Caller): when a monster dies, revives the strongest dead ally at full HP in its last cell (or a random free cell); monsters with Revenge Revive cannot be revived
+
+### Loot
+- [x] Each killed monster drops one spell from its own pool (2–3 spells); 1% chance of any spell instead, tips included
+- [x] Up to 3 spell offers per battle (one per killed monster); the player may take all of them
+- [x] One empty wand dropped per battle by the biome; longest body chain capped by layer (3 / 5 / 10), 50% chance of a tip spell
+- [x] Tip spells only come from biome wands and the rare random drop
 
 ### Path Selection
 - [x] Path selection screen showing 2 random unlocked biomes with name, tagline, and current level

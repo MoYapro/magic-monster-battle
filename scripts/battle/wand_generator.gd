@@ -8,6 +8,9 @@ class_name WandGenerator
 #
 # Column counts and row counts per column are randomised within bounds.
 
+const BIOME_WAND_TIP_CHANCE := 0.5
+
+
 static func generate_starter(rng: RandomNumberGenerator) -> WandData:
 	var wand := generate(rng, 2, 2, 1, 2)
 	for slot: SpellSlotData in wand.slots:
@@ -21,6 +24,25 @@ static func generate_starter(rng: RandomNumberGenerator) -> WandData:
 		(empty_body[rng.randi_range(0, empty_body.size() - 1)] as SpellSlotData).spell = \
 				_pick_body_spell(rng)
 	return wand
+
+
+# Empty wand dropped by a biome: longest body chain is capped by the biome layer,
+# and only half of them come with a tip spell.
+static func generate_biome_wand(rng: RandomNumberGenerator, layer: int) -> WandData:
+	var wand := generate(rng, 2, max_path_length(layer))
+	for slot: SpellSlotData in wand.slots:
+		slot.spell = null
+		if slot.is_tip and rng.randf() < BIOME_WAND_TIP_CHANCE:
+			slot.spell = _pick_tip_spell(rng)
+	return wand
+
+
+static func max_path_length(layer: int) -> int:
+	if layer <= 1:
+		return 3
+	if layer == 2:
+		return 5
+	return 10
 
 
 static func generate(rng: RandomNumberGenerator, min_cols: int = 2, max_cols: int = 3,

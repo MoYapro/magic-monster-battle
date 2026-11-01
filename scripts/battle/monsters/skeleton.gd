@@ -7,7 +7,7 @@ func _init() -> void:
 	main_role = MonsterRole.Type.DAMAGE
 	difficulty_rating = 10
 	traits = [MonsterTraitPoisonImmunity.new()]
-	drop_pool = [SpellFrost.create(), SpellShield.create()]
+	drop_pool = [SpellBone.create(), SpellFrost.create(), SpellShield.create()]
 	action_pool = [
 		MonsterActionAttack.new("Strike", 4),
 		MonsterActionAttack.new("Rattle", 2),

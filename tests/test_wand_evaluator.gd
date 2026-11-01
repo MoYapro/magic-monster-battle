@@ -101,19 +101,29 @@ func test_modifier_applies_to_catalyst_firing_as_projectile() -> void:
 # --- multi-cast (consecutive identical spells) ---
 
 func test_two_identical_spells_merge_into_one_event() -> void:
-	# 5^2 = 25
+	# 5 * 2² = 20
 	var events := WandEvaluator.evaluate([_projectile("frost", 5), _projectile("frost", 5)])
 	assert_eq(events.size(), 1)
-	assert_eq((events[0] as CastEvent).total_damage, 25)
+	assert_eq((events[0] as CastEvent).total_damage, 20)
 
 
-func test_three_identical_spells_cube_damage() -> void:
-	# 3^3 = 27
+func test_three_identical_spells_scale_quadratically() -> void:
+	# 3 * 3² = 27
 	var events := WandEvaluator.evaluate([
 		_projectile("frost", 3), _projectile("frost", 3), _projectile("frost", 3)
 	])
 	assert_eq(events.size(), 1)
 	assert_eq((events[0] as CastEvent).total_damage, 27)
+
+
+func test_five_identical_spells_scale_quadratically() -> void:
+	# 4 * 5² = 100
+	var spells: Array[SpellData] = []
+	for _i in 5:
+		spells.append(_projectile("bone", 4))
+	var events := WandEvaluator.evaluate(spells)
+	assert_eq(events.size(), 1)
+	assert_eq((events[0] as CastEvent).total_damage, 100)
 
 
 func test_different_spells_do_not_merge() -> void:
@@ -122,7 +132,7 @@ func test_different_spells_do_not_merge() -> void:
 
 
 func test_modifier_applies_once_to_merged_multi_cast() -> void:
-	# 3^3 = 27, then damage_mult x2 → 54
+	# 3 * 3² = 27, then damage_mult x2 → 54
 	var events := WandEvaluator.evaluate([
 		_modifier({"type": "damage_mult", "factor": 2}),
 		_projectile("frost", 3), _projectile("frost", 3), _projectile("frost", 3),
@@ -136,15 +146,15 @@ func test_two_shields_multiply_amount() -> void:
 	var events := WandEvaluator.evaluate([shield, shield])
 	assert_eq(events.size(), 1)
 	var amount: int = (events[0] as CastEvent).on_hit_effects[0].get("amount", 0)
-	assert_eq(amount, 100)  # 10^2
+	assert_eq(amount, 40)  # 10 * 2²
 
 
-func test_three_shields_cube_amount() -> void:
+func test_three_shields_scale_amount_quadratically() -> void:
 	var shield := SpellShield.create()
 	var events := WandEvaluator.evaluate([shield, shield, shield])
 	assert_eq(events.size(), 1)
 	var amount: int = (events[0] as CastEvent).on_hit_effects[0].get("amount", 0)
-	assert_eq(amount, 1000)  # 10^3
+	assert_eq(amount, 90)  # 10 * 3²
 
 
 func test_single_shield_amount_unchanged() -> void:

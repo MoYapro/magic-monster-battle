@@ -8,7 +8,7 @@ func _init() -> void:
 	off_role = MonsterRole.Type.BRUISER
 	difficulty_rating = 70
 	traits = [MonsterTraitArmor.new(50)]
-	drop_pool = [SpellShield.create(), SpellAmplify.create()]
+	drop_pool = [SpellShield.create(), SpellAmplify.create(), SpellForcePush.create()]
 	action_pool = [
 		MonsterActionAttack.new("Crush", 28),
 		MonsterActionAttack.new("Boulder Throw", 20),

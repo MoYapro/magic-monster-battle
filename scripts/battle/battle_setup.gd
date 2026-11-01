@@ -118,6 +118,21 @@ func get_occupant_at(cell: Vector2i, state: BattleState) -> String:
 	return ""
 
 
+# Mages fire from the left: any blocker in a lower column of the same row hides the cell.
+func has_line_of_sight(cell: Vector2i, state: BattleState) -> bool:
+	var target_id := get_occupant_at(cell, state)
+	for col in cell.x:
+		var occupant := get_occupant_at(Vector2i(col, cell.y), state)
+		if occupant != "" and occupant != target_id and _blocks_sight(occupant):
+			return false
+	return true
+
+
+func _blocks_sight(occupant_id: String) -> bool:
+	var obstacle := get_obstacle(occupant_id)
+	return obstacle == null or obstacle.is_blocking
+
+
 func get_enemy(p_id: String) -> EnemyData:
 	for enemy: EnemyData in enemies:
 		if enemy.id == p_id:

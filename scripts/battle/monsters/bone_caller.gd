@@ -7,7 +7,7 @@ func _init() -> void:
 	main_role = MonsterRole.Type.SUMMONER
 	difficulty_rating = 38
 	traits = [MonsterTraitPoisonImmunity.new(), MonsterTraitRevengeRevive.new()]
-	drop_pool = [SpellVenom.create(), SpellPierce.create()]
+	drop_pool = [SpellBone.create(), SpellVenom.create(), SpellDistillation.create()]
 	action_pool = [
 		MonsterActionAttack.new("Dark Bolt", 9),
 		MonsterActionAttack.new("Bone Spike", 15),

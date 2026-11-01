@@ -14,6 +14,9 @@ func _init(p_mage_index: int, p_target_cell: Vector2i, p_target_mage: int = -1) 
 func apply(state: BattleState, setup: BattleSetup) -> ActionResult:
 	var result := ActionResult.new()
 	var new_state := state.duplicate()
+	if target_mage_index < 0 and not setup.has_line_of_sight(target_cell, state):
+		result.state = new_state
+		return result
 	var ms := new_state.mages[mage_index] as MageState
 	if ms.combatant.statuses.any(func(s: StatusData) -> bool: return s.blocks_action()):
 		result.state = new_state
@@ -88,11 +91,10 @@ func _apply_on_kill_effects(state: BattleState, setup: BattleSetup, ev: CastEven
 	for effect: Dictionary in ev.on_kill_effects:
 		match effect.get("type", ""):
 			"refund_zap_mana":
+				# Mana returns to the shared pool; the mage's spend allowance stays used.
 				var refund := ev.zap_mana_cost
 				ev.zap_mana_cost = 0
-				var ms := state.mages[mage_index] as MageState
 				state.mana = mini(state.mana + refund, setup.max_mana)
-				ms.mana_spent = maxi(ms.mana_spent - refund, 0)
 
 
 func _apply_projectile(

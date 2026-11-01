@@ -44,10 +44,7 @@ static func _make_projectile(spell: SpellData, mods: Array[Dictionary], count: i
 	var ev := CastEvent.new()
 	ev.type = CastEvent.Type.PROJECTILE
 	ev.spell = spell
-	var total := 1
-	for _k in count:
-		total *= spell.damage
-	ev.total_damage = total
+	ev.total_damage = stack_amount(spell.damage, count)
 	ev.on_hit_effects = spell.on_hit_effects.duplicate(true)
 	ev.on_kill_effects = spell.on_kill_effects.duplicate(true)
 	ev.mana_refund = 0
@@ -77,16 +74,17 @@ static func _make_projectile(spell: SpellData, mods: Array[Dictionary], count: i
 			else:
 				resolved_effects.append(effect)
 		elif effect_type == "shield" and count > 1:
-			var scaled := 1
-			var base: int = effect.get("amount", 10)
-			for _k in count:
-				scaled *= base
-			effect["amount"] = scaled
+			effect["amount"] = stack_amount(effect.get("amount", 10), count)
 			resolved_effects.append(effect)
 		else:
 			resolved_effects.append(effect)
 	ev.on_hit_effects = resolved_effects
 	return ev
+
+
+# Consecutive identical spells scale quadratically: base * count².
+static func stack_amount(base: int, count: int) -> int:
+	return base * count * count
 
 
 static func _apply_mod(ev: CastEvent, mod: Dictionary) -> void:

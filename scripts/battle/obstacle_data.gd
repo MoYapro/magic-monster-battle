@@ -9,6 +9,7 @@ var max_hp: int
 var main_role: MonsterRole.Type = MonsterRole.Type.OBSTACLE
 var difficulty_rating: int = 10   # 1–100; used in encounter budget
 var generation_weight: int = 10   # relative frequency in generation
+var is_blocking: bool = false     # blocks line of sight to cells behind it
 
 
 func on_hit(_state: BattleState, _setup: BattleSetup, _ev: CastEvent) -> void:

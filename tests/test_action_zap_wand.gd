@@ -214,6 +214,19 @@ func test_bone_kill_refunds_all_zap_mana() -> void:
 	assert_eq(result.mana, 7, "2 mana spent this zap should be refunded")
 
 
+func test_bone_refund_keeps_mage_spend_allowance_used() -> void:
+	var enemy := EnemyData.new("e1", "Target", 3, Vector2i(1, 1), Color.WHITE)
+	var setup := _make_setup(SpellBone.create(), enemy)
+	var state := _make_state(setup)
+	(state.mages[0] as MageState).slot_charges["s0_0"] = 1
+	(state.mages[0] as MageState).slot_charges["tip"] = 1
+	(state.mages[0] as MageState).mana_spent = 2
+	state.mana = 5
+	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(state, setup).state
+	assert_eq(result.mana, 7, "refund returns to the shared pool")
+	assert_eq((result.mages[0] as MageState).mana_spent, 2, "mage allowance is not restored")
+
+
 func test_bone_no_refund_when_enemy_survives() -> void:
 	var enemy := EnemyData.new("e1", "Target", 20, Vector2i(1, 1), Color.WHITE)
 	var setup := _make_setup(SpellBone.create(), enemy)

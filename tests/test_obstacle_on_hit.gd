@@ -48,7 +48,7 @@ func test_hitting_bone_pile_blinds_adjacent_enemy() -> void:
 	var enemy := EnemyData.new("goblin_1", "Goblin", 20, Vector2i(1, 1), Color.GREEN)
 	var setup := _make_setup(
 		_strike(),
-		[enemy], [Vector2i(1, 3)],
+		[enemy], [Vector2i(2, 2)],
 		[bone_pile], [Vector2i(2, 3)]
 	)
 	var result := ActionZapWand.new(0, Vector2i(2, 3)).apply(_make_state(setup), setup).state
@@ -76,7 +76,7 @@ func test_bone_pile_cloud_fires_even_when_destroyed_by_the_hit() -> void:
 	var enemy := EnemyData.new("goblin_1", "Goblin", 20, Vector2i(1, 1), Color.GREEN)
 	var setup := _make_setup(
 		_strike(),
-		[enemy], [Vector2i(1, 3)],
+		[enemy], [Vector2i(2, 2)],
 		[bone_pile], [Vector2i(2, 3)]
 	)
 	var state := _make_state(setup)
