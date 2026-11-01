@@ -92,8 +92,8 @@ func _input(event: InputEvent) -> void:
 	for i in _mages.size():
 		for stat in ["hp", "mana"]:
 			if _option_rect(i, stat).has_point(pos):
-				_apply_upgrade(i, stat)
 				get_viewport().set_input_as_handled()
+				_apply_upgrade(i, stat)
 				return
 
 
