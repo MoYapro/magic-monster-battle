@@ -287,3 +287,218 @@ func test_parallel_identical_spells_do_not_stack_on_zap() -> void:
 	(state.mages[0] as MageState).slot_charges = {"a": 1, "b": 1, "tip": 1}
 	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(state, setup).state
 	assert_eq((result.enemies["e1"] as EnemyState).combatant.hp, 92, "two separate Bone hits of 4, not 4 · 2²")
+
+
+# --- helpers for multi-slot wands ---
+
+func _wand_slot(id: String, col: int, row: int, next_id: String, spell: SpellData) -> SpellSlotData:
+	var s := SpellSlotData.new(id, col, row, next_id)
+	s.spell = spell
+	return s
+
+
+func _multi_setup(slots: Array, enemies: Array, positions: Array) -> BattleSetup:
+	var wand_slots: Array[SpellSlotData] = []
+	wand_slots.assign(slots + [_wand_slot("tip", 9, 0, "", SpellSingle.create())])
+	var typed_enemies: Array[EnemyData] = []
+	typed_enemies.assign(enemies)
+	var typed_positions: Array[Vector2i] = []
+	typed_positions.assign(positions)
+	return BattleSetup.new(typed_enemies, typed_positions,
+			[MageData.new("Mage", 30)] as Array[MageData], [WandData.new(wand_slots)] as Array[WandData], 10)
+
+
+func _zap_charged(setup: BattleSetup, charges: Dictionary, target: Vector2i) -> BattleState:
+	var state := _make_state(setup)
+	(state.mages[0] as MageState).slot_charges = charges.merged({"tip": 1})
+	return ActionZapWand.new(0, target).apply(state, setup).state
+
+
+func _fire_stacks(state: BattleState, eid: String) -> int:
+	for status: StatusData in (state.enemies[eid] as EnemyState).combatant.statuses:
+		if status is StatusFire:
+			return status.stacks
+	return 0
+
+
+func _hp(state: BattleState, eid: String) -> int:
+	return (state.enemies[eid] as EnemyState).combatant.hp
+
+
+# --- zero-cost modifiers ---
+
+func test_zero_cost_modifier_is_active_without_mana() -> void:
+	var enemy := EnemyData.new("e1", "Target", 20, Vector2i(1, 1), Color.RED)
+	var setup := _multi_setup([_wand_slot("amp", 0, 0, "s", SpellAmplify.create()),
+			_wand_slot("s", 1, 0, "tip", _strike_spell())], [enemy], [Vector2i(0, 0)])
+	var result := _zap_charged(setup, {"s": 1}, Vector2i(0, 0))
+	assert_eq(_hp(result, "e1"), 10, "Amplify doubles 5 without being charged")
+
+
+func test_zero_cost_modifier_does_not_break_chain() -> void:
+	var enemy := EnemyData.new("e1", "Target", 50, Vector2i(1, 1), Color.RED)
+	var setup := _multi_setup([_wand_slot("a", 0, 0, "amp", _strike_spell()),
+			_wand_slot("amp", 1, 0, "b", SpellAmplify.create()),
+			_wand_slot("b", 2, 0, "tip", _strike_spell())], [enemy], [Vector2i(0, 0)])
+	var result := _zap_charged(setup, {"a": 1, "b": 1}, Vector2i(0, 0))
+	assert_eq(_hp(result, "e1"), 35, "Strike 5 + amplified Strike 10 in one chain")
+
+
+# --- sunder ---
+
+func test_split_armor_sunder_breaks_armor_and_overflows() -> void:
+	assert_eq(ActionZapWand.split_armor(10, 8, 2), Vector2i(0, 3))
+
+
+func test_split_armor_sunder_partial() -> void:
+	assert_eq(ActionZapWand.split_armor(10, 4, 2), Vector2i(2, 0))
+
+
+func test_split_armor_normal_rate() -> void:
+	assert_eq(ActionZapWand.split_armor(3, 5, 1), Vector2i(0, 2))
+
+
+func test_sunder_zap_strips_double_armor() -> void:
+	var strike := _strike_spell()
+	strike.damage = 8
+	var enemy := EnemyData.new("e1", "Target", 20, Vector2i(1, 1), Color.RED)
+	var setup := _multi_setup([_wand_slot("su", 0, 0, "s", SpellSunder.create()),
+			_wand_slot("s", 1, 0, "tip", strike)], [enemy], [Vector2i(0, 0)])
+	var state := _make_state(setup)
+	(state.enemies["e1"] as EnemyState).armor = 10
+	(state.mages[0] as MageState).slot_charges = {"s": 1, "tip": 1}
+	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(state, setup).state
+	assert_eq((result.enemies["e1"] as EnemyState).armor, 0)
+	assert_eq(_hp(result, "e1"), 17)
+
+
+# --- detonate ---
+
+func _target_and_neighbour() -> Array:
+	return [[EnemyData.new("e1", "Target", 50, Vector2i(1, 1), Color.RED),
+			EnemyData.new("e2", "Near", 50, Vector2i(1, 1), Color.BLUE),
+			EnemyData.new("e3", "Far", 50, Vector2i(1, 1), Color.GREEN)],
+			[Vector2i(2, 3), Vector2i(3, 4), Vector2i(4, 3)]]
+
+
+func test_detonate_bursts_fire_into_neighbours() -> void:
+	var e := _target_and_neighbour()
+	var setup := _multi_setup([_wand_slot("em", 0, 0, "dt", SpellEmber.create()),
+			_wand_slot("dt", 1, 0, "tip", SpellDetonate.create())], e[0], e[1])
+	var result := _zap_charged(setup, {"em": 1, "dt": 1}, Vector2i(2, 3))
+	assert_eq(_hp(result, "e1"), 47, "target takes no explosion damage")
+	assert_eq(_fire_stacks(result, "e1"), 0, "fire consumed")
+	assert_eq(_hp(result, "e2"), 47, "diagonal neighbour takes 3")
+	assert_eq(_hp(result, "e3"), 50, "two cells away is untouched")
+
+
+func test_stacked_detonates_multiply_explosion() -> void:
+	var e := _target_and_neighbour()
+	var setup := _multi_setup([_wand_slot("em", 0, 0, "d1", SpellEmber.create()),
+			_wand_slot("d1", 1, 0, "d2", SpellDetonate.create()),
+			_wand_slot("d2", 2, 0, "tip", SpellDetonate.create())], e[0], e[1])
+	var result := _zap_charged(setup, {"em": 1, "d1": 1, "d2": 1}, Vector2i(2, 3))
+	assert_eq(_hp(result, "e2"), 38, "3 fire × 2²")
+
+
+func test_detonate_mid_chain_then_new_fire() -> void:
+	var e := _target_and_neighbour()
+	var setup := _multi_setup([_wand_slot("a", 0, 0, "dt", SpellEmber.create()),
+			_wand_slot("dt", 1, 0, "b", SpellDetonate.create()),
+			_wand_slot("b", 2, 0, "tip", SpellEmber.create())], e[0], e[1])
+	var result := _zap_charged(setup, {"a": 1, "dt": 1, "b": 1}, Vector2i(2, 3))
+	assert_eq(_hp(result, "e2"), 47)
+	assert_eq(_fire_stacks(result, "e1"), 3, "last Ember re-applies fire")
+
+
+# Em(A) → Dt → tip
+# Em(B) ↗
+func test_merged_branches_each_detonate_their_own_fire() -> void:
+	var e := _target_and_neighbour()
+	var setup := _multi_setup([_wand_slot("a", 0, 0, "dt", SpellEmber.create()),
+			_wand_slot("b", 0, 1, "dt", SpellEmber.create()),
+			_wand_slot("dt", 1, 0, "tip", SpellDetonate.create())], e[0], e[1])
+	var result := _zap_charged(setup, {"a": 1, "b": 1, "dt": 1}, Vector2i(2, 3))
+	assert_eq(_hp(result, "e1"), 44, "two Ember hits")
+	assert_eq(_hp(result, "e2"), 44, "Detonate fired once per branch, 3 each")
+	assert_eq(_fire_stacks(result, "e1"), 0)
+
+
+func test_detonate_without_fire_does_nothing() -> void:
+	var e := _target_and_neighbour()
+	var setup := _multi_setup([_wand_slot("dt", 0, 0, "tip", SpellDetonate.create())], e[0], e[1])
+	var result := _zap_charged(setup, {"dt": 1}, Vector2i(2, 3))
+	assert_eq(_hp(result, "e2"), 50)
+
+
+# --- harmony ---
+
+func test_harmony_zap_applies_combined_blast() -> void:
+	var e := _target_and_neighbour()
+	var setup := _multi_setup([_wand_slot("ha", 0, 0, "em", SpellHarmony.create()),
+			_wand_slot("em", 1, 0, "vn", SpellEmber.create()),
+			_wand_slot("vn", 2, 0, "tip", SpellVenom.create())], e[0], e[1])
+	var result := _zap_charged(setup, {"em": 1, "vn": 1}, Vector2i(2, 3))
+	assert_eq(_hp(result, "e1"), 41, "2·2 + 3 + 2")
+	assert_eq(_fire_stacks(result, "e1"), 3)
+
+
+func test_detonate_damages_neighbouring_obstacle() -> void:
+	var target := EnemyData.new("e1", "Target", 50, Vector2i(1, 1), Color.RED)
+	var rock := ObstacleData.new("rock_1", "Rock", Vector2i(1, 1), Color.GRAY, 10)
+	var setup := _multi_setup([_wand_slot("em", 0, 0, "dt", SpellEmber.create()),
+			_wand_slot("dt", 1, 0, "tip", SpellDetonate.create())], [target], [Vector2i(2, 3)])
+	setup.obstacles.assign([rock])
+	setup.obstacle_positions.assign([Vector2i(3, 2)])
+	var state := _make_state(setup)
+	state.obstacles["rock_1"] = ObstacleState.new()
+	(state.obstacles["rock_1"] as ObstacleState).combatant.hp = 10
+	(state.mages[0] as MageState).slot_charges = {"em": 1, "dt": 1, "tip": 1}
+	var result := ActionZapWand.new(0, Vector2i(2, 3)).apply(state, setup).state
+	assert_eq((result.obstacles["rock_1"] as ObstacleState).combatant.hp, 7)
+
+
+func test_detonate_kills_weak_neighbour() -> void:
+	var e := _target_and_neighbour()
+	(e[0][1] as EnemyData).max_hp = 3
+	var setup := _multi_setup([_wand_slot("em", 0, 0, "dt", SpellEmber.create()),
+			_wand_slot("dt", 1, 0, "tip", SpellDetonate.create())], e[0], e[1])
+	var result := _zap_charged(setup, {"em": 1, "dt": 1}, Vector2i(2, 3))
+	assert_false(result.enemies.has("e2"), "neighbour killed by the burst")
+	assert_true(result.dead_enemies.has("e2"))
+
+
+# Target is 2 wide at (2,3)-(3,3); a burst reaches cells around both of its cells.
+func test_detonate_on_wide_target_reaches_all_sides() -> void:
+	var enemies := [EnemyData.new("big", "Big", 50, Vector2i(2, 1), Color.RED),
+			EnemyData.new("left", "Left", 50, Vector2i(1, 1), Color.BLUE),
+			EnemyData.new("right", "Right", 50, Vector2i(1, 1), Color.BLUE),
+			EnemyData.new("far", "Far", 50, Vector2i(1, 1), Color.GREEN)]
+	var positions := [Vector2i(2, 3), Vector2i(1, 2), Vector2i(4, 4), Vector2i(5, 3)]
+	var setup := _multi_setup([_wand_slot("em", 0, 0, "dt", SpellEmber.create()),
+			_wand_slot("dt", 1, 0, "tip", SpellDetonate.create())], enemies, positions)
+	var result := _zap_charged(setup, {"em": 1, "dt": 1}, Vector2i(2, 3))
+	assert_eq(_hp(result, "left"), 47)
+	assert_eq(_hp(result, "right"), 47)
+	assert_eq(_hp(result, "far"), 50)
+
+
+func test_harmony_blast_with_detonate_bursts_its_fire() -> void:
+	var e := _target_and_neighbour()
+	var setup := _multi_setup([_wand_slot("ha", 0, 0, "em", SpellHarmony.create()),
+			_wand_slot("em", 1, 0, "dt", SpellEmber.create()),
+			_wand_slot("dt", 2, 0, "tip", SpellDetonate.create())], e[0], e[1])
+	var result := _zap_charged(setup, {"em": 1, "dt": 1}, Vector2i(2, 3))
+	assert_eq(_hp(result, "e1"), 43, "2·2 + 3 + 0")
+	assert_eq(_hp(result, "e2"), 47, "Ember's 3 fire burst")
+
+
+func test_harmony_blast_that_kills_does_not_detonate() -> void:
+	var e := _target_and_neighbour()
+	(e[0][0] as EnemyData).max_hp = 7
+	var setup := _multi_setup([_wand_slot("ha", 0, 0, "em", SpellHarmony.create()),
+			_wand_slot("em", 1, 0, "dt", SpellEmber.create()),
+			_wand_slot("dt", 2, 0, "tip", SpellDetonate.create())], e[0], e[1])
+	var result := _zap_charged(setup, {"em": 1, "dt": 1}, Vector2i(2, 3))
+	assert_false(result.enemies.has("e1"))
+	assert_eq(_hp(result, "e2"), 50, "on-hit effects skip killing blows")

@@ -7,7 +7,7 @@ func _init() -> void:
 	off_role = MonsterRole.Type.SUSTAINER
 	difficulty_rating = 60
 	traits = [MonsterTraitRegen.new(10), MonsterTraitWetHealing.new(30)]
-	drop_pool = [SpellShield.create(), SpellVenom.create()]
+	drop_pool = [SpellShield.create(), SpellVenom.create(), SpellHarmony.create()]
 	action_pool = [
 		MonsterActionAttack.new("Bash", 19),
 		MonsterActionAttack.new("Root", 8),

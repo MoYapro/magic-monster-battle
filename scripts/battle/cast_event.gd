@@ -14,6 +14,7 @@ var zap_mana_cost: int = 0  # total mana spent firing this zap; used by on_kill_
 var bounces: int = 0  # number of additional targets to chain to after initial hit
 var corrupted: bool = false  # consume existing status stacks on target as bonus damage
 var reactive: bool = false   # branch on target's existing conditions at hit time
+var sunder: bool = false     # each damage point strips two armor
 
 # BACKFIRE fields
 var backfire_damage: int

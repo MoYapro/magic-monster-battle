@@ -139,9 +139,7 @@ func _apply_damage_to_obstacle(
 	if obstacle:
 		obstacle.on_hit(state, setup, ev)
 	if os.combatant.hp <= 0:
-		state.obstacles.erase(eid)
-		if obstacle:
-			obstacle.on_destroyed(state, setup, ev)
+		state.destroy_obstacle(eid, setup, ev)
 		return
 	for effect: Dictionary in ev.on_hit_effects:
 		if effect.get("type", "") == "push":
@@ -197,7 +195,7 @@ func _apply_damage_to_enemy(
 	var corruption_bonus := _consume_status_stacks(state, eid) if ev.corrupted else 0
 	var reactive_result := _resolve_reactive(state, eid, ev) if ev.reactive else {"bonus": 0, "effects": ev.on_hit_effects}
 	var total := ev.total_damage + corruption_bonus + reactive_result.get("bonus", 0) as int
-	var remaining := _absorb_armor(es, total)
+	var remaining := _absorb_armor(es, total, 2 if ev.sunder else 1)
 	remaining = es.combatant.absorb_shield(remaining)
 	es.combatant.hp -= remaining
 	if es.combatant.hp <= 0:
@@ -264,12 +262,43 @@ func _apply_bounces(
 			_apply_damage_to_enemy(state, setup, next_id, ev, push_dir)
 
 
-func _absorb_armor(es: EnemyState, damage: int) -> int:
-	if es.armor <= 0:
-		return damage
-	var absorbed := mini(es.armor, damage)
-	es.armor -= absorbed
-	return damage - absorbed
+func _absorb_armor(es: EnemyState, damage: int, armor_mult: int = 1) -> int:
+	var split := split_armor(es.armor, damage, armor_mult)
+	es.armor = split.x
+	return split.y
+
+
+# Returns (armor left, damage left) when damage hits armor; each damage point strips armor_mult armor.
+static func split_armor(armor: int, damage: int, armor_mult: int = 1) -> Vector2i:
+	if armor <= 0:
+		return Vector2i(armor, damage)
+	var used := mini(damage, ceili(float(armor) / armor_mult))
+	return Vector2i(maxi(0, armor - used * armor_mult), damage - used)
+
+
+func _detonate(state: BattleState, setup: BattleSetup, eid: String, mult: int) -> void:
+	var damage := _consume_fire(state, eid) * mult
+	if damage <= 0:
+		return
+	var info := _get_occupant_push_info(setup, state, eid)
+	var hit: Dictionary = {}
+	for cell: Vector2i in EnemyGrid.get_surrounding_cells(info["pos"], info["grid_size"]):
+		var occupant := setup.get_occupant_at(cell, state)
+		if occupant.is_empty() or occupant == eid or hit.has(occupant):
+			continue
+		hit[occupant] = true
+		_deal_collision_damage(state, setup, occupant, damage)
+
+
+func _consume_fire(state: BattleState, eid: String) -> int:
+	var es := state.enemies[eid] as EnemyState
+	var stacks := 0
+	for status: StatusData in es.combatant.statuses:
+		if status is StatusFire:
+			stacks += status.stacks
+	es.combatant.statuses.assign(es.combatant.statuses.filter(
+			func(s: StatusData) -> bool: return not (s is StatusFire)))
+	return stacks
 
 
 func _apply_on_hit_effects(
@@ -302,6 +331,8 @@ func _apply_on_hit_effects(
 						effect.get("distance", 1), effect.get("damage", 0), push_dir)
 			"shield":
 				(state.enemies[eid] as EnemyState).combatant.shield += effect.get("amount", 10)
+			"detonate":
+				_detonate(state, setup, eid, effect.get("mult", 1))
 			"cleanse_poison":
 				var es := state.enemies.get(eid) as EnemyState
 				if es != null:
@@ -409,7 +440,7 @@ func _deal_collision_damage(state: BattleState, setup: BattleSetup, target_id: S
 		var os := state.obstacles[target_id] as ObstacleState
 		os.combatant.hp -= damage
 		if os.combatant.hp <= 0:
-			state.obstacles.erase(target_id)
+			state.destroy_obstacle(target_id, setup)
 
 
 func _apply_backfire(state: BattleState, mage_idx: int, ev: CastEvent) -> void:

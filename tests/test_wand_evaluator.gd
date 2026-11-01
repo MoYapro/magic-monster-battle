@@ -289,3 +289,121 @@ func test_uncharged_slot_breaks_stack() -> void:
 	var chains := WandEvaluator.charged_chains(_frost_merge(), _charged(["fc", "fb"]))
 	assert_eq(chains.size(), 2)
 	assert_eq(_total_damage(WandEvaluator.evaluate_chains(chains)), 4)  # 2 + 2
+
+
+# --- modifier-only chains ---
+
+func test_chain_of_only_modifiers_yields_no_event() -> void:
+	var events := WandEvaluator.evaluate([SpellAmplify.create(), SpellSunder.create()] as Array[SpellData])
+	assert_eq(events.size(), 0)
+
+
+# --- sunder ---
+
+func test_sunder_flags_next_projectile() -> void:
+	var events := WandEvaluator.evaluate([SpellSunder.create(), SpellEmber.create()] as Array[SpellData])
+	assert_true(events[0].sunder)
+
+
+# --- harmony ---
+
+func _eval(spells: Array) -> Array[CastEvent]:
+	var chain: Array[SpellData] = []
+	chain.assign(spells)
+	return WandEvaluator.evaluate(chain)
+
+
+func _effect_stacks(ev: CastEvent, type: String) -> int:
+	for effect: Dictionary in ev.on_hit_effects:
+		if effect.get("type", "") == type:
+			return effect.get("stacks", 0)
+	return -1
+
+
+func test_harmony_counts_different_spells() -> void:
+	var events := _eval([SpellHarmony.create(), SpellEmber.create(), SpellVenom.create(), SpellLightning.create()])
+	assert_eq(events.size(), 1)
+	assert_eq(events[0].total_damage, 13)  # 2·3 + (3 + 2 + 2)
+	assert_eq(events[0].spell.spell_id, "harmony")
+
+
+func test_harmony_effects_use_single_cast_values() -> void:
+	var ev: CastEvent = _eval([SpellHarmony.create(), SpellEmber.create(), SpellVenom.create(), SpellLightning.create()])[0]
+	assert_eq(_effect_stacks(ev, "fire"), 3)
+	assert_eq(_effect_stacks(ev, "poison"), 2)
+	assert_eq(ev.bounces, 1)
+
+
+func test_harmony_ignores_duplicates() -> void:
+	var events := _eval([SpellHarmony.create(), SpellEmber.create(), SpellEmber.create()])
+	assert_eq(events.size(), 1)
+	assert_eq(events[0].total_damage, 5)  # 2·1 + 3, no stacking
+	assert_eq(_effect_stacks(events[0], "fire"), 3)
+
+
+func test_modifier_before_harmony_applies_to_blast() -> void:
+	var events := _eval([SpellAmplify.create(), SpellHarmony.create(), SpellEmber.create(), SpellVenom.create()])
+	assert_eq(events[0].total_damage, 18)  # (2·2 + 5) × 2
+
+
+func test_modifier_after_harmony_applies_to_blast() -> void:
+	var events := _eval([SpellHarmony.create(), SpellEmber.create(), SpellAmplify.create(), SpellVenom.create()])
+	assert_eq(events.size(), 1)
+	assert_eq(events[0].total_damage, 18)
+
+
+func test_harmony_keeps_spells_before_it_separate() -> void:
+	var events := _eval([SpellBone.create(), SpellHarmony.create(), SpellEmber.create()])
+	assert_eq(events.size(), 2)
+	assert_eq(events[0].total_damage, 4)
+	assert_eq(events[1].total_damage, 5)
+
+
+func test_harmony_carries_on_kill_effects_once() -> void:
+	var ev: CastEvent = _eval([SpellHarmony.create(), SpellBone.create(), SpellBone.create()])[0]
+	assert_eq(ev.on_kill_effects.size(), 1)
+
+
+func test_harmony_without_projectile_after_does_nothing() -> void:
+	assert_eq(_eval([SpellHarmony.create()]).size(), 0)
+	assert_eq(_eval([SpellHarmony.create(), SpellAmplify.create()]).size(), 0)
+
+
+func test_trailing_harmony_lets_trailing_mods_apply_back() -> void:
+	var events := _eval([SpellEmber.create(), SpellHarmony.create(), SpellAmplify.create()])
+	assert_eq(events.size(), 1)
+	assert_eq(events[0].total_damage, 6)
+
+
+# --- detonate ---
+
+func _detonate_mult(ev: CastEvent) -> int:
+	for effect: Dictionary in ev.on_hit_effects:
+		if effect.get("type", "") == "detonate":
+			return effect.get("mult", 0)
+	return 0
+
+
+func test_single_detonate_has_mult_one() -> void:
+	assert_eq(_detonate_mult(_eval([SpellDetonate.create()])[0]), 1)
+
+
+func test_stacked_detonates_scale_quadratically() -> void:
+	assert_eq(_detonate_mult(_eval([SpellDetonate.create(), SpellDetonate.create()])[0]), 4)
+
+
+# Ha → Vn → Em → tip
+#      Ha ↗
+func test_harmony_in_each_branch_counts_its_own_spells() -> void:
+	var wand := WandData.new([
+		_slot("ha1", 0, 0, "vn", SpellHarmony.create()),
+		_slot("vn", 1, 0, "em", SpellVenom.create()),
+		_slot("ha2", 1, 1, "em", SpellHarmony.create()),
+		_slot("em", 2, 0, "tip", SpellEmber.create()),
+		_slot("tip", 3, 0, "", SpellSingle.create()),
+	])
+	var events := WandEvaluator.evaluate_chains(
+			WandEvaluator.charged_chains(wand, _charged(["ha1", "vn", "ha2", "em"])))
+	assert_eq(events.size(), 2)
+	assert_eq(events[0].total_damage, 9)  # 2·2 + (2 + 3)
+	assert_eq(events[1].total_damage, 5)  # 2·1 + 3

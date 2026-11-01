@@ -52,30 +52,88 @@ static func evaluate_chains(chains: Array[Array], zap_mana_cost: int = 0) -> Arr
 static func evaluate(spells: Array[SpellData], zap_mana_cost: int = 0) -> Array[CastEvent]:
 	var events: Array[CastEvent] = []
 	var pending_mods: Array[Dictionary] = []
-	var last_spell: SpellData = null
-	var last_count := 0
-	var last_pre_mods: Array[Dictionary] = []
+	var last_group := {}
 	var i := 0
 	while i < spells.size():
 		var spell: SpellData = spells[i]
+		var rest := spells.slice(i + 1)
+		if _is_harmony(spell) and not distinct_projectiles(rest).is_empty():
+			events.append(_make_harmony(spell, rest, pending_mods, zap_mana_cost))
+			return events
 		if spell.spell_type == "modifier":
-			pending_mods.append(spell.modifier_effect)
+			if not _is_harmony(spell):
+				pending_mods.append(spell.modifier_effect)
 			i += 1
-		else:
-			var count := 1
-			while i + count < spells.size() and spells[i + count].spell_id == spell.spell_id:
-				count += 1
-			last_spell = spell
-			last_count = count
-			last_pre_mods = pending_mods.duplicate()
-			events.append(_make_projectile(spell, pending_mods, count, zap_mana_cost))
-			pending_mods = []
-			i += count
+			continue
+		var count := _run_length(spells, i)
+		last_group = {"spell": spell, "count": count, "mods": pending_mods}
+		events.append(_make_projectile(spell, pending_mods, count, zap_mana_cost))
+		pending_mods = []
+		i += count
 	# Trailing modifiers (after the last spell group) apply back to that group
-	if not pending_mods.is_empty() and last_spell != null:
-		var combined: Array[Dictionary] = last_pre_mods + pending_mods
-		events[events.size() - 1] = _make_projectile(last_spell, combined, last_count, zap_mana_cost)
+	if not pending_mods.is_empty() and not last_group.is_empty():
+		var combined: Array[Dictionary] = last_group["mods"] + pending_mods
+		events[-1] = _make_projectile(last_group["spell"], combined, last_group["count"], zap_mana_cost)
 	return events
+
+
+static func _run_length(spells: Array[SpellData], start: int) -> int:
+	var count := 1
+	while start + count < spells.size() and spells[start + count].spell_id == spells[start].spell_id:
+		count += 1
+	return count
+
+
+static func _is_harmony(spell: SpellData) -> bool:
+	return spell.spell_type == "modifier" and spell.modifier_effect.get("type", "") == "harmony"
+
+
+# First occurrence of each different non-modifier spell, in chain order.
+static func distinct_projectiles(spells: Array[SpellData]) -> Array[SpellData]:
+	var seen: Dictionary = {}
+	var result: Array[SpellData] = []
+	for spell: SpellData in spells:
+		if spell.spell_type != "modifier" and not seen.has(spell.spell_id):
+			seen[spell.spell_id] = true
+			result.append(spell)
+	return result
+
+
+static func _modifier_effects(spells: Array[SpellData]) -> Array[Dictionary]:
+	var mods: Array[Dictionary] = []
+	for spell: SpellData in spells:
+		if spell.spell_type == "modifier" and not _is_harmony(spell):
+			mods.append(spell.modifier_effect)
+	return mods
+
+
+# Harmony fuses everything after it into one event: harmony.damage per different
+# spell plus each different spell's single-cast damage and effects.
+static func _make_harmony(harmony: SpellData, rest: Array[SpellData],
+		pre_mods: Array[Dictionary], zap_mana_cost: int) -> CastEvent:
+	var distinct := distinct_projectiles(rest)
+	var ev := _make_projectile(harmony, [], 1, zap_mana_cost)
+	ev.total_damage = harmony.damage * distinct.size()
+	for spell: SpellData in distinct:
+		var single := _make_projectile(spell, [], 1, zap_mana_cost)
+		ev.total_damage += single.total_damage
+		ev.on_hit_effects.append_array(_fix_damage_stacks(single.on_hit_effects, single.total_damage))
+		ev.on_kill_effects.append_array(single.on_kill_effects)
+		ev.bounces += single.bounces
+	for mod: Dictionary in pre_mods + _modifier_effects(rest):
+		_apply_mod(ev, mod)
+	return ev
+
+
+static func _fix_damage_stacks(effects: Array[Dictionary], damage: int) -> Array[Dictionary]:
+	var fixed: Array[Dictionary] = []
+	for effect: Dictionary in effects:
+		var copy := effect.duplicate(true)
+		if copy.get("stacks_from_damage", false):
+			copy.erase("stacks_from_damage")
+			copy["stacks"] = damage
+		fixed.append(copy)
+	return fixed
 
 
 static func _make_projectile(spell: SpellData, mods: Array[Dictionary], count: int = 1, zap_mana_cost: int = 0) -> CastEvent:
@@ -111,6 +169,9 @@ static func _make_projectile(spell: SpellData, mods: Array[Dictionary], count: i
 				ev.total_damage += effect.get("damage", 0)
 			else:
 				resolved_effects.append(effect)
+		elif effect_type == "detonate":
+			effect["mult"] = stack_amount(effect.get("mult", 1), count)
+			resolved_effects.append(effect)
 		elif effect_type == "shield" and count > 1:
 			effect["amount"] = stack_amount(effect.get("amount", 10), count)
 			resolved_effects.append(effect)
@@ -135,6 +196,8 @@ static func _apply_mod(ev: CastEvent, mod: Dictionary) -> void:
 			ev.mana_refund += mod.get("amount", 0)
 		"reactive":
 			ev.reactive = true
+		"sunder":
+			ev.sunder = true
 		"distillation":
 			var bonus := ev.total_damage
 			for effect: Dictionary in ev.on_hit_effects:

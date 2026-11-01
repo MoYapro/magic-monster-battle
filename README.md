@@ -93,7 +93,7 @@ This makes the graph layout and mana placement the core strategic decisions.
 
 **Projectile Spells** deal damage and may apply on-hit effects (e.g. Fireball, Magic Missile, Lightning Bolt). These are the primary offensive units.
 
-**Spell Modifiers** alter the behaviour of the next projectile spell in the resolved cast sequence. They do not fire on their own. Effects include: extra on-hit effects, mana refund, damage multipliers.
+**Spell Modifiers** alter the behaviour of the next projectile spell in the resolved cast sequence. They cost no mana and do not fire on their own. Effects include: extra on-hit effects, mana refund, damage multipliers.
 
 **Alchemy Spells** are secret result spells produced by successful alchemy fusions. They cannot be found as loot — they must be discovered through experimentation.
 
@@ -282,6 +282,10 @@ All three mages share a single mana pool that persists between battles.
 - [x] Charged chains: spells only stack along a `next_id` chain — parallel slots fire separately; an uncharged slot ends a chain; when charged branches merge, each branch fires the shared segment as part of its own chain
 - [x] Bone kill refund returns the zap's mana to the shared pool; the mage's spend allowance stays used
 - [x] Tipless wands fire as a single-cell hit
+- [x] Modifiers cost no mana: they are always charged, always active in their chain and never break it
+- [x] Sunder (modifier): the next spell strips 2 armor per damage point; damage left after the armor breaks hits shield/HP normally (Troll drop)
+- [x] Harmony (modifier): fuses every spell after it in its chain into one blast — 2 damage per different spell plus each different spell's single-cast damage and effects; duplicates add nothing; modifiers before and after it apply to the blast (Treant drop)
+- [x] Detonate (projectile, 0 dmg): consumes the target's fire stacks and deals that much damage to every occupant in the surrounding cells; stacked Detonates multiply the burst by count²; resolves in cast order, so it can explode fire applied earlier in the same zap (Scorpion drop)
 
 ### Monsters
 - [x] Cleave: damages all mages equally; respects attack multiplier

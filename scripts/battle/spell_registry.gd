@@ -12,6 +12,7 @@ static func all_body_spells() -> Array[SpellData]:
 		SpellVenom.create(),
 		SpellBone.create(),
 		SpellLightning.create(),
+		SpellDetonate.create(),
 		# Catalysts
 		SpellFireCatalyst.create(),
 		SpellForcePush.create(),
@@ -21,6 +22,8 @@ static func all_body_spells() -> Array[SpellData]:
 		SpellCorrupted.create(),
 		SpellReactive.create(),
 		SpellDistillation.create(),
+		SpellSunder.create(),
+		SpellHarmony.create(),
 	]
 
 

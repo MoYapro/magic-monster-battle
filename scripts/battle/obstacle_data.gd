@@ -16,6 +16,7 @@ func on_hit(_state: BattleState, _setup: BattleSetup, _ev: CastEvent) -> void:
 	pass
 
 
+# ev is null when destroyed by collision or explosion damage instead of a spell hit.
 func on_destroyed(_state: BattleState, _setup: BattleSetup, _ev: CastEvent) -> void:
 	pass
 

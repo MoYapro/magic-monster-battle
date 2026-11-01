@@ -75,3 +75,19 @@ func test_remove_mana_does_nothing_when_slot_is_empty() -> void:
 	var setup := _make_setup()
 	var result := ActionRemoveMana.new(0, "s0").apply(_make_state(), setup).state
 	assert_eq(result.mana, 10)
+
+
+# --- zero-cost modifiers ---
+
+func test_add_mana_on_zero_cost_slot_is_noop() -> void:
+	var setup := _make_setup()
+	setup.wands[0].get_slot("s0").spell = SpellAmplify.create()
+	var result := ActionAddMana.new(0, "s0").apply(_make_state(), setup).state
+	assert_eq((result.mages[0] as MageState).slot_charges.get("s0", 0), 0)
+	assert_eq(result.mana, 10)
+
+
+func test_all_modifiers_cost_no_mana() -> void:
+	for spell: SpellData in SpellRegistry.all_body_spells():
+		if spell.spell_type == "modifier":
+			assert_eq(spell.mana_cost, 0, spell.display_name)

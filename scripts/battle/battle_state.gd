@@ -41,6 +41,16 @@ func kill_enemy(enemy_id: String, setup: BattleSetup = null) -> void:
 		_notify_monster_died(setup, enemy_id)
 
 
+# Every obstacle removal goes through here so on_destroyed always fires.
+func destroy_obstacle(obstacle_id: String, setup: BattleSetup, ev: CastEvent = null) -> void:
+	if not obstacles.has(obstacle_id):
+		return
+	obstacles.erase(obstacle_id)
+	var obstacle := setup.get_obstacle(obstacle_id)
+	if obstacle != null:
+		obstacle.on_destroyed(self, setup, ev)
+
+
 func _notify_monster_died(setup: BattleSetup, dead_enemy_id: String) -> void:
 	for enemy: EnemyData in setup.enemies:
 		if not enemies.has(enemy.id):

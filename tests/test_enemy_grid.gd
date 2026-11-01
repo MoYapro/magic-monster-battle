@@ -174,3 +174,24 @@ func test_pattern_deduplicates_overlapping_offsets() -> void:
 	var cells := grid.get_hit_cells(Vector2i(0, 0), pattern)
 	assert_eq(cells.size(), 1)
 	grid.free()
+
+
+# --- get_surrounding_cells ---
+
+func test_surrounding_cells_of_1x1_in_middle_are_eight() -> void:
+	var cells := EnemyGrid.get_surrounding_cells(Vector2i(2, 3), Vector2i(1, 1))
+	assert_eq(cells.size(), 8)
+	assert_false(Vector2i(2, 3) in cells)
+	assert_true(Vector2i(1, 2) in cells)
+
+
+func test_surrounding_cells_clip_at_grid_corner() -> void:
+	var cells := EnemyGrid.get_surrounding_cells(Vector2i(0, 0), Vector2i(1, 1))
+	assert_eq(cells.size(), 3)
+
+
+func test_surrounding_cells_of_1x2_exclude_own_cells() -> void:
+	var cells := EnemyGrid.get_surrounding_cells(Vector2i(2, 2), Vector2i(1, 2))
+	assert_eq(cells.size(), 10)
+	assert_false(Vector2i(2, 3) in cells)
+	assert_true(Vector2i(3, 4) in cells)

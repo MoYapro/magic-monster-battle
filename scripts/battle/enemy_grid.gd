@@ -98,6 +98,18 @@ static func get_cells_for_enemy(grid_pos: Vector2i, grid_size: Vector2i) -> Arra
 	return cells
 
 
+# In-bounds cells touching the occupant (including diagonals), excluding its own cells.
+static func get_surrounding_cells(grid_pos: Vector2i, grid_size: Vector2i) -> Array[Vector2i]:
+	var own := get_cells_for_enemy(grid_pos, grid_size)
+	var result: Array[Vector2i] = []
+	for row in range(grid_pos.y - 1, grid_pos.y + grid_size.y + 1):
+		for col in range(grid_pos.x - 1, grid_pos.x + grid_size.x + 1):
+			var cell := Vector2i(col, row)
+			if not own.has(cell) and is_within_bounds(cell, Vector2i.ONE):
+				result.append(cell)
+	return result
+
+
 static func is_within_bounds(grid_pos: Vector2i, grid_size: Vector2i) -> bool:
 	if grid_pos.x < 0 or grid_pos.y < 0:
 		return false
