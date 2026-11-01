@@ -319,7 +319,8 @@ func _generate_loot() -> void:
 	GameState.pending_loot.clear()
 	GameState.pending_loot_wands.clear()
 	GameState.pending_loot_wands.append(WandGenerator.generate_biome_wand(rng, biome.layer))
-	GameState.pending_loot.append_array(LootRoller.roll_spell_offers(_setup.enemies, rng))
+	GameState.battle_drops = LootRoller.roll_drops(_setup.enemies, rng)
+	GameState.pending_loot.append_array(GameState.battle_drops)
 
 
 func _refresh_enemy_grid(state: BattleState) -> void:

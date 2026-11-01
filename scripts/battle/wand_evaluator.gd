@@ -7,8 +7,46 @@ class_name WandEvaluator
 # Alchemy fusion happens at wand-build time (loot screen), not here.
 # Catalyst spells that were not fused fire as plain projectiles.
 #
-# Input:  Array[SpellData] — charged body spells in column order (no tip spells).
+# Input:  Array[SpellData] — one chain of charged body spells, root first (no tip spells).
 # Output: Array[CastEvent] — resolved events to apply to the battle.
+
+
+# Splits charged body slots into chains along next_id. A chain starts at a charged
+# slot with no charged predecessor and ends at the tip or the first uncharged slot.
+# Branches merging into a shared segment each fire that segment as part of their chain.
+static func charged_chains(wand: WandData, charged_ids: Dictionary) -> Array[Array]:
+	var chains: Array[Array] = []
+	for root: SpellSlotData in _chain_roots(wand, charged_ids):
+		var chain: Array[SpellData] = []
+		var slot := root
+		while slot != null and charged_ids.has(slot.id):
+			chain.append(slot.spell)
+			slot = wand.get_slot(slot.next_id)
+		chains.append(chain)
+	return chains
+
+
+static func _chain_roots(wand: WandData, charged_ids: Dictionary) -> Array[SpellSlotData]:
+	var fed: Dictionary = {}
+	for slot: SpellSlotData in wand.slots:
+		if charged_ids.has(slot.id):
+			fed[slot.next_id] = true
+	var roots: Array[SpellSlotData] = []
+	for slot: SpellSlotData in wand.slots:
+		if charged_ids.has(slot.id) and not fed.has(slot.id):
+			roots.append(slot)
+	roots.sort_custom(func(a: SpellSlotData, b: SpellSlotData) -> bool:
+		return a.grid_col < b.grid_col if a.grid_col != b.grid_col else a.grid_row < b.grid_row)
+	return roots
+
+
+static func evaluate_chains(chains: Array[Array], zap_mana_cost: int = 0) -> Array[CastEvent]:
+	var events: Array[CastEvent] = []
+	for chain: Array in chains:
+		var spells: Array[SpellData] = []
+		spells.assign(chain)
+		events.append_array(evaluate(spells, zap_mana_cost))
+	return events
 
 
 static func evaluate(spells: Array[SpellData], zap_mana_cost: int = 0) -> Array[CastEvent]:

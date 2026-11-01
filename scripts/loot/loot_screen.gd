@@ -136,6 +136,10 @@ func _try_start_drag(pos: Vector2) -> void:
 
 	# Spell cards in loot panel
 	var loot_idx := _card_index_at(pos, LOOT_X, GameState.pending_loot.size())
+	if loot_idx >= 0 and not LootRoller.can_pick(
+			GameState.pending_loot[loot_idx], GameState.battle_drops, GameState.pending_loot):
+		get_viewport().set_input_as_handled()
+		return
 	if loot_idx >= 0:
 		_dragging = GameState.pending_loot[loot_idx]
 		GameState.pending_loot.remove_at(loot_idx)
@@ -374,7 +378,7 @@ func _draw_drop_highlight(panel_x: float) -> void:
 # --- loot panel ---
 
 func _draw_loot_panel() -> void:
-	_draw_panel_frame(LOOT_X, "Battle Loot")
+	_draw_panel_frame(LOOT_X, _loot_panel_title())
 	_draw_drop_highlight(LOOT_X)
 	if GameState.pending_loot.is_empty() and GameState.pending_loot_wands.is_empty():
 		draw_string(ThemeDB.fallback_font,
@@ -388,6 +392,13 @@ func _draw_loot_panel() -> void:
 		draw_string(ThemeDB.fallback_font,
 				Vector2(LOOT_X + 12.0, _loot_wand_section_y() + 13.0),
 				"Wands", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Palette.COLOR_SECTION)
+
+
+func _loot_panel_title() -> String:
+	if GameState.battle_drops.is_empty():
+		return "Battle Loot"
+	var used := LootRoller.picks_used(GameState.battle_drops, GameState.pending_loot)
+	return "Battle Loot — picks %d / %d" % [used, LootRoller.MAX_PICKS]
 
 
 # --- backpack panel ---
@@ -762,6 +773,7 @@ func _on_auto_assign_pressed() -> void:
 func _on_continue_pressed() -> void:
 	var was_initial := GameState.is_initial_setup
 	GameState.pending_loot.clear()
+	GameState.battle_drops.clear()
 	GameState.pending_loot_wands.clear()
 	GameState.is_initial_setup = false
 	get_tree().change_scene_to_file("res://scenes/battle/battle_scene.tscn")

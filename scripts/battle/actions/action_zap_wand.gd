@@ -3,6 +3,7 @@ class_name ActionZapWand extends BattleAction
 var mage_index: int
 var target_cell: Vector2i
 var target_mage_index: int = -1  # >= 0 when targeting a mage instead of an enemy cell
+var _refunded := false
 
 
 func _init(p_mage_index: int, p_target_cell: Vector2i, p_target_mage: int = -1) -> void:
@@ -30,7 +31,9 @@ func apply(state: BattleState, setup: BattleSetup) -> ActionResult:
 	var wand := setup.wands[mage_index]
 	var pattern := _get_hit_pattern(wand, new_state)
 	var zap_mana_cost := _sum_slot_charges(wand, new_state)
-	var cast_events := WandEvaluator.evaluate(_get_charged_body_spells(wand, new_state), zap_mana_cost)
+	var chains := WandEvaluator.charged_chains(wand, _get_charged_body_ids(wand, new_state))
+	var cast_events := WandEvaluator.evaluate_chains(chains, zap_mana_cost)
+	_refunded = false
 	for ev: CastEvent in cast_events:
 		match ev.type:
 			CastEvent.Type.PROJECTILE:
@@ -62,21 +65,16 @@ func _get_hit_pattern(wand: WandData, state: BattleState) -> Array[Vector2i]:
 	return [Vector2i(0, 0)]
 
 
-func _get_charged_body_spells(wand: WandData, state: BattleState) -> Array[SpellData]:
+func _get_charged_body_ids(wand: WandData, state: BattleState) -> Dictionary:
 	var ms := state.mages[mage_index] as MageState
-	var body_slots: Array[SpellSlotData] = []
+	var ids: Dictionary = {}
 	for slot: SpellSlotData in wand.slots:
 		if slot.is_tip or slot.spell == null:
 			continue
 		if ms.webbed_slots.has(slot.id) or ms.slot_charges.get(slot.id, 0) < slot.spell.mana_cost:
 			continue
-		body_slots.append(slot)
-	body_slots.sort_custom(func(a: SpellSlotData, b: SpellSlotData) -> bool:
-		return a.grid_col < b.grid_col if a.grid_col != b.grid_col else a.grid_row < b.grid_row)
-	var spells: Array[SpellData] = []
-	for slot: SpellSlotData in body_slots:
-		spells.append(slot.spell)
-	return spells
+		ids[slot.id] = true
+	return ids
 
 
 func _sum_slot_charges(wand: WandData, state: BattleState) -> int:
@@ -91,10 +89,10 @@ func _apply_on_kill_effects(state: BattleState, setup: BattleSetup, ev: CastEven
 	for effect: Dictionary in ev.on_kill_effects:
 		match effect.get("type", ""):
 			"refund_zap_mana":
-				# Mana returns to the shared pool; the mage's spend allowance stays used.
-				var refund := ev.zap_mana_cost
-				ev.zap_mana_cost = 0
-				state.mana = mini(state.mana + refund, setup.max_mana)
+				# Mana returns to the shared pool once per zap; the mage's spend allowance stays used.
+				if not _refunded:
+					_refunded = true
+					state.mana = mini(state.mana + ev.zap_mana_cost, setup.max_mana)
 
 
 func _apply_projectile(

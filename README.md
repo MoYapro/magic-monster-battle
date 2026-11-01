@@ -279,6 +279,7 @@ All three mages share a single mana pool that persists between battles.
 - [x] Spell modifiers: apply to the next projectile — damage multipliers, extra on-hit effects
 - [x] Backfire: resolves against the casting mage; amplified if a modifier precedes it
 - [x] Multi-cast: consecutive identical spells merge into one projectile scaling quadratically (`damage × count²`, e.g. 5× Bone = 100)
+- [x] Charged chains: spells only stack along a `next_id` chain — parallel slots fire separately; an uncharged slot ends a chain; when charged branches merge, each branch fires the shared segment as part of its own chain
 - [x] Bone kill refund returns the zap's mana to the shared pool; the mage's spend allowance stays used
 - [x] Tipless wands fire as a single-cell hit
 
@@ -292,7 +293,7 @@ All three mages share a single mana pool that persists between battles.
 
 ### Loot
 - [x] Each killed monster drops one spell from its own pool (2–3 spells); 1% chance of any spell instead, tips included
-- [x] Up to 3 spell offers per battle (one per killed monster); the player may take all of them
+- [x] Every killed monster drops a spell into the loot area; the player may pick up at most 3 of them per battle (putting one back frees the pick)
 - [x] One empty wand dropped per battle by the biome; longest body chain capped by layer (3 / 5 / 10), 50% chance of a tip spell
 - [x] Tip spells only come from biome wands and the rare random drop
 

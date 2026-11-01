@@ -7,6 +7,7 @@ var wands: Array[WandData] = []        # parallel to mages; null = no wand equip
 var backpack: Array[SpellData] = []
 var backpack_wands: Array[WandData] = []
 var pending_loot: Array[SpellData] = []
+var battle_drops: Array[SpellData] = []  # monster drops of the last battle; limited by LootRoller.MAX_PICKS
 var pending_loot_wands: Array[WandData] = []
 var current_biome: BiomeData = null
 var is_initial_setup: bool = true
@@ -25,6 +26,7 @@ func reset_to_new_game() -> void:
 	backpack.clear()
 	backpack_wands.clear()
 	pending_loot.clear()
+	battle_drops.clear()
 	pending_loot_wands.clear()
 	current_biome = null
 	is_initial_setup = true
@@ -37,6 +39,7 @@ func reroll_spell_loot() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	pending_loot.clear()
+	battle_drops.clear()
 	pending_loot_wands.clear()
 	pending_loot_wands.append(WandGenerator.generate(rng))
 	var all_body := SpellRegistry.all_body_spells()

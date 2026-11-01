@@ -175,3 +175,117 @@ func test_modifier_between_identical_spells_breaks_merge() -> void:
 	assert_eq(events.size(), 2)
 	assert_eq((events[0] as CastEvent).total_damage, 5)
 	assert_eq((events[1] as CastEvent).total_damage, 15)
+
+
+# --- charged chains (stacking follows next_id, parallel slots don't stack) ---
+
+func _slot(id: String, col: int, row: int, next_id: String, spell: SpellData) -> SpellSlotData:
+	var s := SpellSlotData.new(id, col, row, next_id)
+	s.spell = spell
+	return s
+
+
+func _charged(ids: Array) -> Dictionary:
+	var d: Dictionary = {}
+	for id: String in ids:
+		d[id] = true
+	return d
+
+
+func _total_damage(events: Array[CastEvent]) -> int:
+	var total := 0
+	for ev: CastEvent in events:
+		total += ev.total_damage
+	return total
+
+
+# Em → Em ↘
+# Em → Em → tip
+func _two_parallel_ember_pairs() -> WandData:
+	return WandData.new([
+		_slot("a0", 0, 0, "a1", SpellEmber.create()),
+		_slot("b0", 0, 1, "b1", SpellEmber.create()),
+		_slot("a1", 1, 0, "tip", SpellEmber.create()),
+		_slot("b1", 1, 1, "tip", SpellEmber.create()),
+		_slot("tip", 2, 1, "", SpellSingle.create()),
+	])
+
+
+# Vn → Vn → tip
+# Lt ↗
+# __ ↗
+func _venom_lightning_merge() -> WandData:
+	return WandData.new([
+		_slot("vn0", 0, 0, "vn1", SpellVenom.create()),
+		_slot("lt", 0, 1, "vn1", SpellLightning.create()),
+		_slot("empty", 0, 2, "vn1", null),
+		_slot("vn1", 1, 0, "tip", SpellVenom.create()),
+		_slot("tip", 2, 0, "", null),
+	])
+
+
+# Amp → Fr → Fr → tip
+# Fr  ↗
+func _frost_merge() -> WandData:
+	return WandData.new([
+		_slot("amp", 0, 0, "fa", SpellAmplify.create()),
+		_slot("fc", 0, 1, "fa", SpellFrost.create()),
+		_slot("fa", 1, 0, "fb", SpellFrost.create()),
+		_slot("fb", 2, 0, "tip", SpellFrost.create()),
+		_slot("tip", 3, 1, "", SpellBoltSW.create()),
+	])
+
+
+func test_parallel_pairs_stack_only_within_their_chain() -> void:
+	var chains := WandEvaluator.charged_chains(_two_parallel_ember_pairs(), _charged(["a0", "b0", "a1", "b1"]))
+	assert_eq(chains.size(), 2)
+	var events := WandEvaluator.evaluate_chains(chains)
+	assert_eq(events.size(), 2)
+	assert_eq(_total_damage(events), 24)  # 2 × (3 · 2²)
+
+
+func test_merging_branch_with_same_spell_stacks() -> void:
+	var events := WandEvaluator.evaluate_chains(
+			WandEvaluator.charged_chains(_venom_lightning_merge(), _charged(["vn0", "vn1"])))
+	assert_eq(events.size(), 1)
+	assert_eq(events[0].total_damage, 8)  # 2 · 2²
+
+
+func test_alternate_branch_swaps_element() -> void:
+	var events := WandEvaluator.evaluate_chains(
+			WandEvaluator.charged_chains(_venom_lightning_merge(), _charged(["lt", "vn1"])))
+	assert_eq(events.size(), 2)
+	assert_eq(events[0].spell.spell_id, "lightning")
+	assert_eq(events[1].spell.spell_id, "venom")
+
+
+func test_both_branches_fire_shared_segment_each() -> void:
+	var chains := WandEvaluator.charged_chains(_venom_lightning_merge(), _charged(["vn0", "lt", "vn1"]))
+	assert_eq(chains.size(), 2)
+	assert_eq(_total_damage(WandEvaluator.evaluate_chains(chains)), 12)  # Vn×2 = 8, Lt 2 + Vn 2
+
+
+func test_three_frosts_in_chain_stack() -> void:
+	var events := WandEvaluator.evaluate_chains(
+			WandEvaluator.charged_chains(_frost_merge(), _charged(["fc", "fa", "fb"])))
+	assert_eq(events.size(), 1)
+	assert_eq(events[0].total_damage, 18)  # 2 · 3²
+
+
+func test_amp_branch_amplifies_frost_pair() -> void:
+	var events := WandEvaluator.evaluate_chains(
+			WandEvaluator.charged_chains(_frost_merge(), _charged(["amp", "fa", "fb"])))
+	assert_eq(events.size(), 1)
+	assert_eq(events[0].total_damage, 16)  # (2 · 2²) × 2
+
+
+func test_all_frost_branches_charged_fire_both_paths() -> void:
+	var events := WandEvaluator.evaluate_chains(
+			WandEvaluator.charged_chains(_frost_merge(), _charged(["amp", "fc", "fa", "fb"])))
+	assert_eq(_total_damage(events), 34)  # 16 + 18
+
+
+func test_uncharged_slot_breaks_stack() -> void:
+	var chains := WandEvaluator.charged_chains(_frost_merge(), _charged(["fc", "fb"]))
+	assert_eq(chains.size(), 2)
+	assert_eq(_total_damage(WandEvaluator.evaluate_chains(chains)), 4)  # 2 + 2

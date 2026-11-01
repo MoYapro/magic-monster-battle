@@ -271,3 +271,19 @@ func test_bone_multi_kill_does_not_double_refund_mana() -> void:
 	assert_false(result.enemies.has("e1"), "e1 should be dead")
 	assert_false(result.enemies.has("e2"), "e2 should be dead")
 	assert_eq(result.mana, 10, "refund happens only once, capped at max_mana")
+
+
+func test_parallel_identical_spells_do_not_stack_on_zap() -> void:
+	var a := SpellSlotData.new("a", 0, 0, "tip")
+	a.spell = SpellBone.create()
+	var b := SpellSlotData.new("b", 0, 1, "tip")
+	b.spell = SpellBone.create()
+	var tip := SpellSlotData.new("tip", 1, 0)
+	tip.spell = SpellSingle.create()
+	var enemy := EnemyData.new("e1", "Target", 100, Vector2i(1, 1), Color.WHITE)
+	var setup := BattleSetup.new([enemy] as Array[EnemyData], [Vector2i(0, 0)] as Array[Vector2i],
+			[MageData.new("Mage", 30)] as Array[MageData], [WandData.new([a, b, tip])] as Array[WandData], 10)
+	var state := _make_state(setup)
+	(state.mages[0] as MageState).slot_charges = {"a": 1, "b": 1, "tip": 1}
+	var result := ActionZapWand.new(0, Vector2i(0, 0)).apply(state, setup).state
+	assert_eq((result.enemies["e1"] as EnemyState).combatant.hp, 92, "two separate Bone hits of 4, not 4 · 2²")
