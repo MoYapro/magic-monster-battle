@@ -7,8 +7,8 @@ func _init() -> void:
 	super("Revenge Revive", 3)
 
 
-func apply_on_monster_dies(state: BattleState, setup: BattleSetup, trait_owner_id: String, _dead_enemy_id: String) -> void:
-	var best_id := _strongest_dead(state, setup, trait_owner_id)
+func apply_on_monster_dies(state: BattleState, setup: BattleSetup, _trait_owner_id: String, _dead_enemy_id: String) -> void:
+	var best_id := _strongest_dead(state, setup)
 	if best_id.is_empty():
 		return
 	var enemy := setup.get_enemy(best_id)
@@ -26,17 +26,21 @@ func apply_on_monster_dies(state: BattleState, setup: BattleSetup, trait_owner_i
 	state.dead_enemies.erase(best_id)
 
 
-func _strongest_dead(state: BattleState, setup: BattleSetup, exclude_id: String) -> String:
+func _strongest_dead(state: BattleState, setup: BattleSetup) -> String:
 	var best_id := ""
 	var best_hp := -1
 	for dead_id: String in state.dead_enemies:
 		var dead_enemy := setup.get_enemy(dead_id)
-		if dead_id == exclude_id or dead_enemy == null:
+		if dead_enemy == null or _is_reviver(dead_enemy):
 			continue
 		if dead_enemy.max_hp > best_hp:
 			best_hp = dead_enemy.max_hp
 			best_id = dead_id
 	return best_id
+
+
+func _is_reviver(enemy: EnemyData) -> bool:
+	return enemy.traits.any(func(t: MonsterTraitData) -> bool: return t is MonsterTraitRevengeRevive)
 
 
 func _last_pos(dead_id: String, snapshot: EnemyState, setup: BattleSetup) -> Vector2i:

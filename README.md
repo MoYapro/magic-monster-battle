@@ -285,6 +285,7 @@ All three mages share a single mana pool that persists between battles.
 - [x] Summon Skeleton: spawn count scales with drummer HP (1 at full health, up to 3 at low HP); respects grid capacity; blocks respawn of already-alive skeletons
 - [x] War Drummer (boss): forces Raise Fallen when no skeletons are alive or dead; otherwise selects randomly from action pool
 - [x] Wet Healing trait: heals the monster each round by its current wet stack count; does not consume wet stacks
+- [x] Revenge Revive trait (Bone Caller): when a monster dies, revives the strongest dead ally at full HP in its last cell (or a random free cell); monsters with Revenge Revive cannot be revived
 
 ### Path Selection
 - [x] Path selection screen showing 2 random unlocked biomes with name, tagline, and current level
