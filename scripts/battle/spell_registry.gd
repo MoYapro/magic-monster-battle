@@ -24,6 +24,10 @@ static func all_body_spells() -> Array[SpellData]:
 		SpellDistillation.create(),
 		SpellSunder.create(),
 		SpellHarmony.create(),
+		SpellScorchMark.create(),
+		SpellConductor.create(),
+		SpellToxinEdge.create(),
+		SpellSplash.create(),
 	]
 
 

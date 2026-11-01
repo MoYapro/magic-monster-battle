@@ -6,7 +6,7 @@ func _init() -> void:
 	description = "A scrappy little pest that bites and scratches anything in its way."
 	main_role = MonsterRole.Type.BRUISER
 	difficulty_rating = 12
-	drop_pool = [SpellEmber.create(), SpellVenom.create()]
+	drop_pool = [SpellEmber.create(), SpellVenom.create(), SpellScorchMark.create()]
 	action_pool = [
 		MonsterActionAttack.new("Scratch", 3),
 		MonsterActionAttack.new("Bite", 5),

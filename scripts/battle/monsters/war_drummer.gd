@@ -6,7 +6,7 @@ func _init() -> void:
 	main_role = MonsterRole.Type.BUFFER
 	off_role = MonsterRole.Type.BRUISER
 	difficulty_rating = 30
-	drop_pool = [SpellAmplify.create(), SpellEmber.create()]
+	drop_pool = [SpellAmplify.create(), SpellEmber.create(), SpellSplash.create()]
 	action_pool = [
 		MonsterActionDrumsOfWar.new(),
 		MonsterActionHeal.new("War Cry", 20),

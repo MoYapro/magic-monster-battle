@@ -110,6 +110,26 @@ static func get_surrounding_cells(grid_pos: Vector2i, grid_size: Vector2i) -> Ar
 	return result
 
 
+# In-bounds cells next to any hit cell, excluding the hit cells: orthogonal at level 1, all 8 at level 2+.
+static func get_splash_cells(hit_cells: Array[Vector2i], level: int) -> Array[Vector2i]:
+	var result: Array[Vector2i] = []
+	if level <= 0:
+		return result
+	for cell: Vector2i in hit_cells:
+		for offset: Vector2i in _splash_offsets(level):
+			var n := cell + offset
+			if not hit_cells.has(n) and not result.has(n) and is_within_bounds(n, Vector2i.ONE):
+				result.append(n)
+	return result
+
+
+static func _splash_offsets(level: int) -> Array[Vector2i]:
+	var offsets: Array[Vector2i] = [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
+	if level >= 2:
+		offsets.append_array([Vector2i(-1, -1), Vector2i(1, -1), Vector2i(1, 1), Vector2i(-1, 1)])
+	return offsets
+
+
 static func is_within_bounds(grid_pos: Vector2i, grid_size: Vector2i) -> bool:
 	if grid_pos.x < 0 or grid_pos.y < 0:
 		return false

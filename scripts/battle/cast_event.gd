@@ -15,6 +15,8 @@ var bounces: int = 0  # number of additional targets to chain to after initial h
 var corrupted: bool = false  # consume existing status stacks on target as bonus damage
 var reactive: bool = false   # branch on target's existing conditions at hit time
 var sunder: bool = false     # each damage point strips two armor
+var status_amps: Array[String] = []  # distinct statuses ("fire"/"wet"/"poison") that double damage
+var splash: int = 0          # 1: orthogonal neighbours, 2+: all 8 surrounding cells
 
 # BACKFIRE fields
 var backfire_damage: int

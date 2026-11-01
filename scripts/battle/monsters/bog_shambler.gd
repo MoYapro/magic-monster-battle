@@ -6,7 +6,7 @@ func _init() -> void:
 	main_role = MonsterRole.Type.CROWD_CONTROLLER
 	difficulty_rating = 26
 	traits = [MonsterTraitWetHealing.new(15)]
-	drop_pool = [SpellVenom.create(), SpellFrost.create()]
+	drop_pool = [SpellVenom.create(), SpellFrost.create(), SpellConductor.create()]
 	action_pool = [
 		MonsterActionAttack.new("Mudslap", 6),
 		MonsterActionAttack.new("Entangle", 5, 2),

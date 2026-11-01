@@ -286,6 +286,8 @@ All three mages share a single mana pool that persists between battles.
 - [x] Sunder (modifier): the next spell strips 2 armor per damage point; damage left after the armor breaks hits shield/HP normally (Troll drop)
 - [x] Harmony (modifier): fuses every spell after it in its chain into one blast — 2 damage per different spell plus each different spell's single-cast damage and effects; duplicates add nothing; modifiers before and after it apply to the blast (Treant drop)
 - [x] Detonate (projectile, 0 dmg): consumes the target's fire stacks and deals that much damage to every occupant in the surrounding cells; stacked Detonates multiply the burst by count²; resolves in cast order, so it can explode fire applied earlier in the same zap (Scorpion drop)
+- [x] Status amplifiers (modifiers): Scorch Mark / Conductor / Toxin Edge — the next spell deals double damage (before armor/shield) to a burning / wet / poisoned enemy; the status is checked as each event hits, so a spell doesn't amplify itself but a later spell in the same zap does; different amps stack (×2 each), duplicates don't (Goblin / Bog Shambler / Shadow Panther drops)
+- [x] Splash (modifier): the next spell also hits the cells orthogonally next to its hit cells for half damage (rounded down); two or more Splashes widen it to all 8 surrounding cells; splash goes through block/armor/shield and can kill or destroy obstacles, but applies no on-hit effects or bounces (War Drummer drop)
 
 ### Monsters
 - [x] Cleave: damages all mages equally; respects attack multiplier

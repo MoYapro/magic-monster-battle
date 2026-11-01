@@ -6,7 +6,7 @@ func _init() -> void:
 	main_role = MonsterRole.Type.STALKER
 	difficulty_rating = 22
 	traits = [MonsterTraitVenom.new(2)]
-	drop_pool = [SpellVenom.create(), SpellLightning.create()]
+	drop_pool = [SpellVenom.create(), SpellLightning.create(), SpellToxinEdge.create()]
 	action_pool = [
 		MonsterActionAttack.new("Stalk", 4),
 		MonsterActionAttack.new("Pounce", 12),

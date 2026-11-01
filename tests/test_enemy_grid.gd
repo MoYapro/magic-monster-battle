@@ -195,3 +195,42 @@ func test_surrounding_cells_of_1x2_exclude_own_cells() -> void:
 	assert_eq(cells.size(), 10)
 	assert_false(Vector2i(2, 3) in cells)
 	assert_true(Vector2i(3, 4) in cells)
+
+
+# --- get_splash_cells ---
+
+func _cells(arr: Array) -> Array[Vector2i]:
+	var typed: Array[Vector2i] = []
+	typed.assign(arr)
+	return typed
+
+
+func test_splash_level_zero_is_empty() -> void:
+	assert_eq(EnemyGrid.get_splash_cells(_cells([Vector2i(2, 3)]), 0).size(), 0)
+
+
+func test_splash_level_one_is_plus_shape() -> void:
+	var cells := EnemyGrid.get_splash_cells(_cells([Vector2i(2, 3)]), 1)
+	assert_eq(cells.size(), 4)
+	for c: Vector2i in [Vector2i(2, 2), Vector2i(3, 3), Vector2i(2, 4), Vector2i(1, 3)]:
+		assert_true(c in cells)
+
+
+func test_splash_level_two_is_full_ring() -> void:
+	var cells := EnemyGrid.get_splash_cells(_cells([Vector2i(2, 3)]), 2)
+	assert_eq(cells.size(), 8)
+	assert_true(Vector2i(1, 2) in cells)
+	assert_true(Vector2i(3, 4) in cells)
+	assert_false(Vector2i(2, 3) in cells)
+
+
+func test_splash_clips_to_grid() -> void:
+	assert_eq(EnemyGrid.get_splash_cells(_cells([Vector2i(0, 0)]), 2).size(), 3)
+
+
+func test_splash_of_line_excludes_hit_cells_and_dedupes() -> void:
+	var cells := EnemyGrid.get_splash_cells(_cells([Vector2i(2, 2), Vector2i(2, 3), Vector2i(2, 4)]), 1)
+	assert_eq(cells.size(), 8)  # 3 left + 3 right + top + bottom
+	assert_false(Vector2i(2, 3) in cells)
+	assert_true(Vector2i(2, 1) in cells)
+	assert_true(Vector2i(3, 4) in cells)

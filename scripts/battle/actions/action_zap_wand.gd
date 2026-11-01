@@ -118,6 +118,7 @@ func _apply_projectile(
 		if _try_consume_block(state, eid):
 			continue
 		_apply_damage_to_enemy(state, setup, eid, ev, push_dir)
+	_apply_splash(state, setup, ev, hit_cells, hit_ids)
 	if ev.bounces > 0:
 		_apply_bounces(state, setup, ev, hit_ids, push_dir, bounce_dir)
 
@@ -192,18 +193,73 @@ func _apply_damage_to_enemy(
 		state: BattleState, setup: BattleSetup, eid: String,
 		ev: CastEvent, push_dir: Vector2i) -> void:
 	var es := state.enemies[eid] as EnemyState
+	var amp := status_amp_mult(es.combatant.statuses, ev.status_amps)
 	var corruption_bonus := _consume_status_stacks(state, eid) if ev.corrupted else 0
 	var reactive_result := _resolve_reactive(state, eid, ev) if ev.reactive else {"bonus": 0, "effects": ev.on_hit_effects}
-	var total := ev.total_damage + corruption_bonus + reactive_result.get("bonus", 0) as int
-	var remaining := _absorb_armor(es, total, 2 if ev.sunder else 1)
-	remaining = es.combatant.absorb_shield(remaining)
-	es.combatant.hp -= remaining
-	if es.combatant.hp <= 0:
-		state.kill_enemy(eid, setup)
-		_apply_on_kill_effects(state, setup, ev)
-	else:
+	var total := (ev.total_damage + corruption_bonus + reactive_result.get("bonus", 0) as int) * amp
+	if _deal_spell_damage(state, setup, eid, ev, total):
 		var effects: Array[Dictionary] = reactive_result.get("effects", ev.on_hit_effects)
 		_apply_on_hit_effects(state, setup, eid, effects, total, push_dir)
+
+
+# Armor, shield, HP and kill handling; returns true when the enemy survives.
+func _deal_spell_damage(
+		state: BattleState, setup: BattleSetup, eid: String, ev: CastEvent, damage: int) -> bool:
+	var es := state.enemies[eid] as EnemyState
+	var remaining := _absorb_armor(es, damage, 2 if ev.sunder else 1)
+	remaining = es.combatant.absorb_shield(remaining)
+	es.combatant.hp -= remaining
+	if es.combatant.hp > 0:
+		return true
+	state.kill_enemy(eid, setup)
+	_apply_on_kill_effects(state, setup, ev)
+	return false
+
+
+# ×2 per distinct amplified status the target currently carries.
+static func status_amp_mult(statuses: Array, amps: Array[String]) -> int:
+	var mult := 1
+	for amp: String in amps:
+		if statuses.any(func(s: StatusData) -> bool: return status_key(s) == amp):
+			mult *= 2
+	return mult
+
+
+static func status_key(status: StatusData) -> String:
+	if status is StatusFire:
+		return "fire"
+	if status is StatusWet:
+		return "wet"
+	if status is StatusPoison:
+		return "poison"
+	return ""
+
+
+# Splash hits occupants next to the hit cells for half damage, without on-hit effects or bounces.
+func _apply_splash(
+		state: BattleState, setup: BattleSetup, ev: CastEvent,
+		hit_cells: Array[Vector2i], hit_ids: Dictionary) -> void:
+	var damage := floori(ev.total_damage / 2.0)
+	if damage <= 0:
+		return
+	var splashed: Dictionary = {}
+	for cell: Vector2i in EnemyGrid.get_splash_cells(hit_cells, ev.splash):
+		var eid: String = setup.get_occupant_at(cell, state)
+		if eid.is_empty() or hit_ids.has(eid) or splashed.has(eid):
+			continue
+		splashed[eid] = true
+		_splash_occupant(state, setup, eid, ev, damage)
+
+
+func _splash_occupant(
+		state: BattleState, setup: BattleSetup, eid: String, ev: CastEvent, damage: int) -> void:
+	if state.obstacles.has(eid):
+		var os := state.obstacles[eid] as ObstacleState
+		os.combatant.hp -= damage
+		if os.combatant.hp <= 0:
+			state.destroy_obstacle(eid, setup, ev)
+	elif state.enemies.has(eid) and not _try_consume_block(state, eid):
+		_deal_spell_damage(state, setup, eid, ev, damage)
 
 
 func _score_bounce_candidate(target: Vector2i, from: Vector2i, bounce_dir: Vector2i) -> int:

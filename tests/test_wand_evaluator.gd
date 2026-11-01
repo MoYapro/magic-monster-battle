@@ -407,3 +407,51 @@ func test_harmony_in_each_branch_counts_its_own_spells() -> void:
 	assert_eq(events.size(), 2)
 	assert_eq(events[0].total_damage, 9)  # 2·2 + (2 + 3)
 	assert_eq(events[1].total_damage, 5)  # 2·1 + 3
+
+
+# --- status amplifiers ---
+
+func test_status_amp_flags_next_projectile() -> void:
+	var events := _eval([SpellScorchMark.create(), SpellEmber.create()])
+	assert_eq(events[0].status_amps, ["fire"] as Array[String])
+
+
+func test_different_status_amps_collect() -> void:
+	var events := _eval([SpellConductor.create(), SpellToxinEdge.create(), SpellEmber.create()])
+	assert_eq(events[0].status_amps, ["wet", "poison"] as Array[String])
+
+
+func test_duplicate_status_amp_counts_once() -> void:
+	var events := _eval([SpellScorchMark.create(), SpellScorchMark.create(), SpellEmber.create()])
+	assert_eq(events[0].status_amps, ["fire"] as Array[String])
+
+
+func test_status_amp_only_affects_next_group() -> void:
+	var events := _eval([SpellEmber.create(), SpellScorchMark.create(), SpellVenom.create()])
+	assert_true(events[0].status_amps.is_empty())
+	assert_eq(events[1].status_amps, ["fire"] as Array[String])
+
+
+func test_status_amp_applies_to_harmony_blast() -> void:
+	var events := _eval([SpellHarmony.create(), SpellEmber.create(), SpellToxinEdge.create(), SpellVenom.create()])
+	assert_eq(events[0].status_amps, ["poison"] as Array[String])
+
+
+# --- splash ---
+
+func test_splash_sets_level_one() -> void:
+	assert_eq(_eval([SpellSplash.create(), SpellEmber.create()])[0].splash, 1)
+
+
+func test_consecutive_splashes_add_up() -> void:
+	assert_eq(_eval([SpellSplash.create(), SpellSplash.create(), SpellEmber.create()])[0].splash, 2)
+
+
+func test_trailing_splash_applies_back() -> void:
+	var events := _eval([SpellSplash.create(), SpellEmber.create(), SpellSplash.create()])
+	assert_eq(events.size(), 1)
+	assert_eq(events[0].splash, 2)
+
+
+func test_no_splash_by_default() -> void:
+	assert_eq(_eval([SpellEmber.create()])[0].splash, 0)

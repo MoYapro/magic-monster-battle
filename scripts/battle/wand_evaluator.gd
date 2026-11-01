@@ -198,6 +198,12 @@ static func _apply_mod(ev: CastEvent, mod: Dictionary) -> void:
 			ev.reactive = true
 		"sunder":
 			ev.sunder = true
+		"status_amp":
+			var status: String = mod.get("status", "")
+			if not ev.status_amps.has(status):
+				ev.status_amps.append(status)
+		"splash":
+			ev.splash += 1
 		"distillation":
 			var bonus := ev.total_damage
 			for effect: Dictionary in ev.on_hit_effects:
