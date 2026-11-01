@@ -1,7 +1,5 @@
 extends Node2D
 
-var _monsters: Array = []
-
 const SCREEN_W := 1280.0
 const SCREEN_H := 720.0
 const MARGIN := 40.0
@@ -24,7 +22,6 @@ var _panel_height: float = 0.0
 
 var _setup: BattleSetup = null
 var _history: BattleHistory = null
-var _undo_button: Button = null
 
 var _targeting_wand: WandDisplay = null
 var _hovered_mage: MageDisplay = null
@@ -35,167 +32,49 @@ var _intent_hover_mage: int = -1
 var _intent_hover_all_mages: bool = false
 var _current_state: BattleState
 
-const TOOLTIP_DELAY := 1.0
-var _hover_enemy: EnemyData = null
-var _hover_timer: float = 0.0
-var _enemy_cursor_pos: Vector2 = Vector2.ZERO
-var _monster_tooltip_layer: CanvasLayer = null
-var _monster_tooltip_panel: PanelContainer = null
-var _monster_tooltip_name: Label = null
-var _monster_tooltip_desc: Label = null
-var _monster_tooltip_stats: Label = null
-var _monster_tooltip_traits: Label = null
-var _monster_tooltip_attacks: Label = null
-
-var _spell_tooltip: SpellTooltip = null
-var _floating_damage: FloatingDamage = null
-
 # debug placement
 var _battle_enemies: Array[EnemyData] = []
 var _battle_positions: Array[Vector2i] = []
+var _battle_obstacles: Array[ObstacleData] = []
+var _battle_obstacle_positions: Array[Vector2i] = []
 var _place_cls: Variant = null
+var _place_obstacle_cls: Variant = null
 var _place_size: Vector2i = Vector2i(1, 1)
 var _place_id_counter: Dictionary = {}
-var _place_dropdown: OptionButton = null
-var _level_spinbox: SpinBox = null
+
+var _debug_bar: BattleDebugBar = null
+var _tooltip_manager: BattleTooltipManager = null
+var _floating_damage: FloatingDamage = null
 
 
 func _ready() -> void:
-	_build_monsters_list()
-	_build_bottom_bar()
+	_debug_bar = BattleDebugBar.new()
+	add_child(_debug_bar)
+	_debug_bar.setup(self)
+	_debug_bar.end_turn_requested.connect(_on_end_turn_pressed)
+	_debug_bar.undo_requested.connect(_on_undo_pressed)
+	_debug_bar.win_requested.connect(_on_battle_won)
+	_debug_bar.reroll_requested.connect(_on_reroll_pressed)
+	_debug_bar.clear_requested.connect(_on_clear_pressed)
+	_debug_bar.level_changed.connect(_on_level_changed)
+	_debug_bar.enemy_selected.connect(_on_enemy_selected)
+	_debug_bar.obstacle_selected.connect(_on_obstacle_selected)
 	_setup_mage_wand_rows()
 	_build_setup()
-	_build_monster_tooltip()
-	_spell_tooltip = SpellTooltip.new()
-	add_child(_spell_tooltip)
+	_tooltip_manager = BattleTooltipManager.new()
+	add_child(_tooltip_manager)
+	_tooltip_manager.setup(self, _mage_displays, enemy_grid, _wand_displays)
 	_floating_damage = FloatingDamage.new()
 	add_child(_floating_damage)
 
 
-func _build_monsters_list() -> void:
-	var classes: Array = [
-		preload("res://scripts/battle/monsters/banshee.gd"),
-		preload("res://scripts/battle/monsters/bog_shambler.gd"),
-		preload("res://scripts/battle/monsters/bone_caller.gd"),
-		preload("res://scripts/battle/monsters/cave_spider.gd"),
-		preload("res://scripts/battle/monsters/cursed_knight.gd"),
-		preload("res://scripts/battle/monsters/fallen_paladin.gd"),
-		preload("res://scripts/battle/monsters/fire_elemental.gd"),
-		preload("res://scripts/battle/monsters/frost_mage.gd"),
-		preload("res://scripts/battle/monsters/goblin.gd"),
-		preload("res://scripts/battle/monsters/grove_tender.gd"),
-		preload("res://scripts/battle/monsters/scorpion.gd"),
-		preload("res://scripts/battle/monsters/shadow_panther.gd"),
-		preload("res://scripts/battle/monsters/shield_ogre.gd"),
-		preload("res://scripts/battle/monsters/skeleton.gd"),
-		preload("res://scripts/battle/monsters/stone_giant.gd"),
-		preload("res://scripts/battle/monsters/treant.gd"),
-		preload("res://scripts/battle/monsters/troll.gd"),
-		preload("res://scripts/battle/monsters/war_drummer.gd"),
-		preload("res://scripts/battle/monsters/witch.gd"),
-		preload("res://scripts/battle/monsters/wraith_blade.gd"),
-	]
-	for cls in classes:
-		var instance := cls.new() as EnemyData
-		if instance != null:
-			_monsters.append([instance.display_name, cls])
-	_monsters.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
-
-
-# --- bottom bar ---
-
-func _build_bottom_bar() -> void:
-	var layer := CanvasLayer.new()
-	add_child(layer)
-
-	var bg := ColorRect.new()
-	bg.color = Color(0.08, 0.09, 0.10)
-	bg.position = Vector2(0, SCREEN_H - BOTTOM_BAR_H)
-	bg.size = Vector2(SCREEN_W, BOTTOM_BAR_H)
-	layer.add_child(bg)
-
-	var sep := ColorRect.new()
-	sep.color = Color(0.25, 0.28, 0.32)
-	sep.position = Vector2(0, SCREEN_H - BOTTOM_BAR_H)
-	sep.size = Vector2(SCREEN_W, 1)
-	layer.add_child(sep)
-
-	var clear_button := Button.new()
-	clear_button.text = "Clear"
-	clear_button.size = Vector2(70, BOTTOM_BAR_H - 10)
-	clear_button.position = Vector2(220, SCREEN_H - BOTTOM_BAR_H + 5)
-	clear_button.pressed.connect(_on_clear_pressed)
-	layer.add_child(clear_button)
-
-	_place_dropdown = OptionButton.new()
-	_place_dropdown.size = Vector2(175, BOTTOM_BAR_H - 10)
-	_place_dropdown.position = Vector2(298, SCREEN_H - BOTTOM_BAR_H + 5)
-	_place_dropdown.add_item("Place...")
-	for entry in _monsters:
-		_place_dropdown.add_item(entry[0])
-	_place_dropdown.item_selected.connect(_on_place_item_selected)
-	layer.add_child(_place_dropdown)
-
-	var level_label := Label.new()
-	level_label.text = "Lvl"
-	level_label.position = Vector2(482, SCREEN_H - BOTTOM_BAR_H)
-	level_label.size = Vector2(28, BOTTOM_BAR_H)
-	level_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	level_label.add_theme_color_override("font_color", Color(0.55, 0.62, 0.70))
-	layer.add_child(level_label)
-
-	_level_spinbox = SpinBox.new()
-	_level_spinbox.min_value = 1
-	_level_spinbox.max_value = BattleComposer.MAX_LEVEL
-	_level_spinbox.step = 1
-	_level_spinbox.value = mini(_current_biome_level(), BattleComposer.MAX_LEVEL)
-	_level_spinbox.size = Vector2(66, BOTTOM_BAR_H - 10)
-	_level_spinbox.position = Vector2(510, SCREEN_H - BOTTOM_BAR_H + 5)
-	_level_spinbox.value_changed.connect(_on_level_changed)
-	layer.add_child(_level_spinbox)
-
-	var battle_label := Label.new()
-	battle_label.text = "Battle %d" % (GameState.battle_count + 1)
-	battle_label.position = Vector2(16, SCREEN_H - BOTTOM_BAR_H)
-	battle_label.size = Vector2(200, BOTTOM_BAR_H)
-	battle_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	battle_label.add_theme_color_override("font_color", Color(0.55, 0.62, 0.70))
-	layer.add_child(battle_label)
-
-	var end_turn_button := Button.new()
-	end_turn_button.text = "End Turn"
-	end_turn_button.size = Vector2(100, BOTTOM_BAR_H - 10)
-	end_turn_button.position = Vector2(SCREEN_W - 420, SCREEN_H - BOTTOM_BAR_H + 5)
-	end_turn_button.pressed.connect(_on_end_turn_pressed)
-	layer.add_child(end_turn_button)
-
-	var win_button := Button.new()
-	win_button.text = "🏆 Win"
-	win_button.size = Vector2(90, BOTTOM_BAR_H - 10)
-	win_button.position = Vector2(SCREEN_W - 310, SCREEN_H - BOTTOM_BAR_H + 5)
-	win_button.pressed.connect(_on_battle_won)
-	layer.add_child(win_button)
-
-	var reroll_button := Button.new()
-	reroll_button.text = "↺ Reroll"
-	reroll_button.size = Vector2(90, BOTTOM_BAR_H - 10)
-	reroll_button.position = Vector2(SCREEN_W - 210, SCREEN_H - BOTTOM_BAR_H + 5)
-	reroll_button.pressed.connect(_on_reroll_pressed)
-	layer.add_child(reroll_button)
-
-	_undo_button = Button.new()
-	_undo_button.text = "↩ Undo  Ctrl+Z"
-	_undo_button.size = Vector2(148, BOTTOM_BAR_H - 10)
-	_undo_button.position = Vector2(SCREEN_W - 112, SCREEN_H - BOTTOM_BAR_H + 5)
-	_undo_button.pressed.connect(_on_undo_pressed)
-	layer.add_child(_undo_button)
-
+# --- bottom bar handlers ---
 
 func _on_end_turn_pressed() -> void:
 	_cancel_targeting()
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	_apply_state(_history.push(ActionEndTurn.new(rng.seed)))
+	_apply_state(_history.push(ActionEndTurn.new(rng.seed)).state)
 
 
 func _on_undo_pressed() -> void:
@@ -213,56 +92,36 @@ func _on_level_changed(_value: float) -> void:
 	_build_setup()
 
 
-func _current_biome_level() -> int:
-	var biome := GameState.current_biome if GameState.current_biome != null else BiomesData.all()[0]
-	return GameState.battle_count_by_biome.get(biome.name, 0) + 1
-
-
 func _on_clear_pressed() -> void:
 	_cancel_targeting()
 	_place_cls = null
+	_place_obstacle_cls = null
 	_battle_enemies.clear()
 	_battle_positions.clear()
+	_battle_obstacles.clear()
+	_battle_obstacle_positions.clear()
 	_place_id_counter.clear()
 	_rebuild_battle()
 
 
-func _on_place_item_selected(index: int) -> void:
-	if index == 0:
+func _on_enemy_selected(cls: Variant, size: Vector2i) -> void:
+	if cls == null:
 		_place_cls = null
 		return
 	_cancel_targeting()
-	var entry: Array = _monsters[index - 1]
-	_place_cls = entry[1]
-	_place_size = (_place_cls.new() as EnemyData).grid_size
+	_place_obstacle_cls = null
+	_place_cls = cls
+	_place_size = size
 
 
-func _place_enemy_at(cell: Vector2i) -> void:
-	var occupied: Dictionary = {}
-	for i in _battle_positions.size():
-		var sz: Vector2i = _battle_enemies[i].grid_size
-		for dx in range(sz.x):
-			for dy in range(sz.y):
-				occupied[_battle_positions[i] + Vector2i(dx, dy)] = true
-	for dx in range(_place_size.x):
-		for dy in range(_place_size.y):
-			var c := cell + Vector2i(dx, dy)
-			if c.x >= EnemyGrid.COLS or c.y >= EnemyGrid.ROWS or occupied.has(c):
-				return
-	var enemy: EnemyData = _place_cls.new()
-	var base_id := enemy.display_name.to_lower().replace(" ", "_")
-	_place_id_counter[base_id] = _place_id_counter.get(base_id, 0) + 1
-	enemy.id = base_id + "_" + str(_place_id_counter[base_id])
-	_battle_enemies.append(enemy)
-	_battle_positions.append(cell)
-	_rebuild_battle()
-	_place_dropdown.select(0)
+func _on_obstacle_selected(cls: Variant, size: Vector2i) -> void:
+	if cls == null:
+		_place_obstacle_cls = null
+		return
+	_cancel_targeting()
 	_place_cls = null
-
-
-func _refresh_ui() -> void:
-	if _undo_button != null and _history != null:
-		_undo_button.disabled = not _history.can_undo()
+	_place_obstacle_cls = cls
+	_place_size = size
 
 
 # --- layout ---
@@ -339,16 +198,17 @@ func _build_setup() -> void:
 	var biome: BiomeData = GameState.current_biome
 	if biome == null:
 		biome = BiomesData.all()[0]
-	var biome_level: int = int(_level_spinbox.value) if _level_spinbox != null \
-			else GameState.battle_count_by_biome.get(biome.name, 0) + 1
+	var biome_level: int = _debug_bar.get_level()
 	var composition := BattleComposer.compose(biome, biome_level, rng)
 	_battle_enemies = composition["enemies"]
 	_battle_positions = composition["positions"]
+	_battle_obstacles = composition["obstacles"]
+	_battle_obstacle_positions = composition["obstacle_positions"]
 	_place_id_counter.clear()
 	var wands: Array[WandData] = []
 	for wd: WandDisplay in _wand_displays:
 		wands.append(wd.get_wand_data())
-	_setup = BattleSetup.new(_battle_enemies, _battle_positions, _mages, wands, 10, composition["obstacles"], composition["obstacle_positions"])
+	_setup = BattleSetup.new(_battle_enemies, _battle_positions, _mages, wands, 10, _battle_obstacles, _battle_obstacle_positions)
 	_history = BattleHistory.new(_setup.make_initial_state(), _setup)
 	_apply_state(_history.current_state())
 
@@ -358,13 +218,15 @@ func _rebuild_battle() -> void:
 	var wands: Array[WandData] = []
 	for wd: WandDisplay in _wand_displays:
 		wands.append(wd.get_wand_data())
-	_setup = BattleSetup.new(_battle_enemies, _battle_positions, _mages, wands, _setup.max_mana, _setup.obstacles, _setup.obstacle_positions)
+	_setup = BattleSetup.new(_battle_enemies, _battle_positions, _mages, wands, _setup.max_mana, _battle_obstacles, _battle_obstacle_positions)
 	var new_state := _setup.make_initial_state()
-	for i in new_state.mage_hp.size():
-		new_state.mage_hp[i] = prev.mage_hp[i]
+	for i in new_state.mages.size():
+		var prev_ms := prev.mages[i] as MageState
+		var new_ms := new_state.mages[i] as MageState
+		new_ms.combatant.hp = prev_ms.combatant.hp
+		new_ms.slot_charges = prev_ms.slot_charges.duplicate()
+		new_ms.mana_spent = prev_ms.mana_spent
 	new_state.mana = prev.mana
-	new_state.slot_charges = prev.slot_charges.duplicate()
-	new_state.mage_mana_spent = prev.mage_mana_spent.duplicate()
 	_history = BattleHistory.new(new_state, _setup)
 	_apply_state(_history.current_state())
 
@@ -373,20 +235,22 @@ func _apply_state(state: BattleState) -> void:
 	_current_state = state
 	_refresh_enemy_grid(state)
 	for i in _setup.mages.size():
-		_setup.mages[i].current_hp = state.mage_hp[i]
+		var ms := state.mages[i] as MageState
+		_setup.mages[i].current_hp = ms.combatant.hp
 		var incoming_attack := 0
-		for enemy_id: String in state.monster_intents:
-			var intent: Dictionary = state.monster_intents[enemy_id]
-			var targets_mage: bool = intent.get("target", -1) == i or intent.get("all_mages", false)
-			if not targets_mage or not state.enemy_hp.has(enemy_id):
+		for enemy_id: String in state.enemies:
+			var es := state.enemies[enemy_id] as EnemyState
+			if es.intent.is_empty():
 				continue
-			var _es: Array = state.enemy_statuses.get(enemy_id, [])
-			if _es.any(func(s: StatusData) -> bool: return s.blocks_action()):
+			var targets_mage: bool = es.intent.get("target", -1) == i or es.intent.get("all_mages", false)
+			if not targets_mage:
+				continue
+			if es.combatant.statuses.any(func(s: StatusData) -> bool: return s.blocks_action()):
 				continue
 			var enemy := _setup.get_enemy(enemy_id)
 			if enemy == null:
 				continue
-			var action_index: int = intent.get("action_index", 0)
+			var action_index: int = es.intent.get("action_index", 0)
 			if action_index >= enemy.action_pool.size():
 				continue
 			var action := enemy.action_pool[action_index]
@@ -394,38 +258,38 @@ func _apply_state(state: BattleState) -> void:
 				incoming_attack += (action as MonsterActionAttack).damage
 			elif action is MonsterActionCleave:
 				incoming_attack += (action as MonsterActionCleave).damage
-		_mage_displays[i].set_status(incoming_attack, state.mage_statuses[i], state.mage_shield[i])
+		_mage_displays[i].set_status(incoming_attack, ms.combatant.statuses, ms.combatant.shield)
 	_mana_display.setup(state.mana, _setup.max_mana, _panel_height)
 	_refresh_wand_charges(state)
-	_refresh_ui()
+	_debug_bar.set_undo_enabled(_history.can_undo())
 	var all_mages_dead := true
-	for hp: int in state.mage_hp:
-		if hp > 0:
+	for ms: MageState in state.mages:
+		if ms.combatant.hp > 0:
 			all_mages_dead = false
 			break
 	if all_mages_dead:
 		_on_battle_lost()
 		return
-	if _history.can_undo() and state.enemy_hp.is_empty():
+	if _history.can_undo() and state.enemies.is_empty():
 		_on_battle_won()
 
 
 func _refresh_wand_charges(state: BattleState) -> void:
 	for i in _wand_displays.size():
+		var ms := state.mages[i] as MageState
 		var charges := {}
 		var committed := 0
 		for slot: SpellSlotData in _setup.wands[i].slots:
-			var key := "%d/%s" % [i, slot.id]
-			var c: int = state.slot_charges.get(key, 0)
+			var c: int = ms.slot_charges.get(slot.id, 0)
 			charges[slot.id] = c
 			committed += c
 		_wand_displays[i].set_charges(charges)
 		var webbed := {}
 		for slot: SpellSlotData in _setup.wands[i].slots:
-			if state.webbed_slots.has("%d/%s" % [i, slot.id]):
+			if ms.webbed_slots.has(slot.id):
 				webbed[slot.id] = true
 		_wand_displays[i].set_webbed(webbed)
-		_mage_displays[i].set_mana(state.mage_mana_spent[i], _setup.mages[i].mana_allowance)
+		_mage_displays[i].set_mana(ms.mana_spent, _setup.mages[i].mana_allowance)
 
 
 func _on_battle_lost() -> void:
@@ -463,18 +327,45 @@ func _generate_loot() -> void:
 
 func _refresh_enemy_grid(state: BattleState) -> void:
 	enemy_grid.clear_enemies()
+	var intents: Dictionary = {}
+	var armors: Dictionary = {}
+	var blocks: Dictionary = {}
+	var shields: Dictionary = {}
+	var statuses: Dictionary = {}
 	for i in _setup.enemies.size():
 		var enemy := _setup.enemies[i]
-		if not state.enemy_hp.has(enemy.id):
+		if not state.enemies.has(enemy.id):
 			continue
-		enemy.current_hp = state.enemy_hp[enemy.id]
+		var es := state.enemies[enemy.id] as EnemyState
+		enemy.current_hp = es.combatant.hp
 		enemy_grid.place_enemy(enemy, _setup.get_enemy_pos(i, state))
-	enemy_grid.set_obstacles(_setup.obstacles, _setup.obstacle_positions, state.obstacle_hp)
-	enemy_grid.set_intents(state.monster_intents)
-	enemy_grid.set_armors(state.enemy_armor)
-	enemy_grid.set_blocks(state.enemy_block)
-	enemy_grid.set_statuses(state.enemy_statuses)
-	enemy_grid.set_ground(state.ground)
+		if not es.intent.is_empty():
+			intents[enemy.id] = es.intent
+		if es.armor > 0:
+			armors[enemy.id] = es.armor
+		if es.block > 0:
+			blocks[enemy.id] = es.block
+		if es.combatant.shield > 0:
+			shields[enemy.id] = es.combatant.shield
+		if not es.combatant.statuses.is_empty():
+			statuses[enemy.id] = es.combatant.statuses
+	var effective_obstacle_positions: Array[Vector2i] = []
+	var obstacle_hp: Dictionary = {}
+	for i in _setup.obstacles.size():
+		effective_obstacle_positions.append(_setup.get_obstacle_pos(i, state))
+		var oid := _setup.obstacles[i].id
+		if state.obstacles.has(oid):
+			obstacle_hp[oid] = (state.obstacles[oid] as ObstacleState).combatant.hp
+	enemy_grid.set_obstacles(_setup.obstacles, effective_obstacle_positions, obstacle_hp)
+	enemy_grid.set_intents(intents)
+	enemy_grid.set_armors(armors)
+	enemy_grid.set_blocks(blocks)
+	enemy_grid.set_shields(shields)
+	enemy_grid.set_statuses(statuses)
+	var ground: Dictionary = {}
+	for pos: Vector2i in state.cells:
+		ground[pos] = (state.cells[pos] as CellState).ground
+	enemy_grid.set_ground(ground)
 
 
 # --- targeting ---
@@ -484,18 +375,18 @@ func _on_body_slot_clicked(wand: WandDisplay, slot_id: String) -> void:
 		_cancel_targeting()
 		return
 	var mage_index := _wand_displays.find(wand)
-	if _history.current_state().mage_hp[mage_index] <= 0:
+	if (_history.current_state().mages[mage_index] as MageState).combatant.hp <= 0:
 		return
-	_apply_state(_history.push(ActionAddMana.new(mage_index, slot_id)))
+	_apply_state(_history.push(ActionAddMana.new(mage_index, slot_id)).state)
 
 
 func _on_body_slot_right_clicked(wand: WandDisplay, slot_id: String) -> void:
 	if _targeting_wand != null:
 		return
 	var mage_index := _wand_displays.find(wand)
-	if _history.current_state().mage_hp[mage_index] <= 0:
+	if (_history.current_state().mages[mage_index] as MageState).combatant.hp <= 0:
 		return
-	_apply_state(_history.push(ActionRemoveMana.new(mage_index, slot_id)))
+	_apply_state(_history.push(ActionRemoveMana.new(mage_index, slot_id)).state)
 
 
 func _on_tip_pressed(wand: WandDisplay) -> void:
@@ -503,16 +394,16 @@ func _on_tip_pressed(wand: WandDisplay) -> void:
 		_cancel_targeting()
 		return
 	var mage_index := _wand_displays.find(wand)
-	if _history.current_state().mage_hp[mage_index] <= 0:
+	var cur := _history.current_state()
+	if (cur.mages[mage_index] as MageState).combatant.hp <= 0:
 		return
 	var tip := _setup.wands[mage_index].get_tip_slot()
 	if tip == null or tip.spell == null:
 		return
-	var key := "%d/%s" % [mage_index, tip.id]
-	var charges: int = _history.current_state().slot_charges.get(key, 0)
+	var charges: int = (cur.mages[mage_index] as MageState).slot_charges.get(tip.id, 0)
 	if charges < tip.spell.mana_cost:
-		_apply_state(_history.push(ActionAddMana.new(mage_index, tip.id)))
-	elif _history.current_state().mage_mana_spent[mage_index] < _setup.mages[mage_index].mana_allowance:
+		_apply_state(_history.push(ActionAddMana.new(mage_index, tip.id)).state)
+	elif (cur.mages[mage_index] as MageState).mana_spent < _setup.mages[mage_index].mana_allowance:
 		_start_targeting(wand)
 
 
@@ -560,7 +451,8 @@ func _update_intent_hover(mouse: Vector2) -> void:
 	_clear_intent_hover()
 	_intent_hover_enemy = hovered_id
 	if hovered_id != "":
-		var intent: Dictionary = _history.current_state().monster_intents.get(hovered_id, {})
+		var es := _history.current_state().enemies.get(hovered_id) as EnemyState
+		var intent: Dictionary = es.intent if es != null else {}
 		if intent.get("all_mages", false):
 			_intent_hover_all_mages = true
 			for d: MageDisplay in _mage_displays:
@@ -596,7 +488,7 @@ func _draw() -> void:
 	if targets.is_empty():
 		return
 	var from := _get_enemy_scene_center(_intent_hover_enemy)
-	var color := Color(1.0, 0.45, 0.1, 0.9)
+	var color := Palette.COLOR_TARGET_FLASH
 	for t in targets:
 		var to := _mage_displays[t].position + _mage_displays[t].get_rect().get_center()
 		draw_line(from, to, color, 2.5, true)
@@ -641,146 +533,55 @@ func _update_hover(mouse: Vector2) -> void:
 			return
 
 
-func _process(delta: float) -> void:
-	if _hover_enemy != null and not _monster_tooltip_layer.visible:
-		_hover_timer += delta
-		if _hover_timer >= TOOLTIP_DELAY:
-			_show_monster_tooltip(_hover_enemy, _enemy_cursor_pos)
+func _place_obstacle_at(cell: Vector2i) -> void:
+	var occupied: Dictionary = {}
+	for i in _battle_positions.size():
+		var sz: Vector2i = _battle_enemies[i].grid_size
+		for dx in range(sz.x):
+			for dy in range(sz.y):
+				occupied[_battle_positions[i] + Vector2i(dx, dy)] = true
+	for i in _battle_obstacle_positions.size():
+		var sz: Vector2i = _battle_obstacles[i].grid_size
+		for dx in range(sz.x):
+			for dy in range(sz.y):
+				occupied[_battle_obstacle_positions[i] + Vector2i(dx, dy)] = true
+	for dx in range(_place_size.x):
+		for dy in range(_place_size.y):
+			var c := cell + Vector2i(dx, dy)
+			if c.x >= EnemyGrid.COLS or c.y >= EnemyGrid.ROWS or occupied.has(c):
+				return
+	var obstacle: ObstacleData = _place_obstacle_cls.new()
+	var base_id := obstacle.display_name.to_lower().replace(" ", "_")
+	_place_id_counter[base_id] = _place_id_counter.get(base_id, 0) + 1
+	obstacle.id = base_id + "_" + str(_place_id_counter[base_id])
+	_battle_obstacles.append(obstacle)
+	_battle_obstacle_positions.append(cell)
+	_rebuild_battle()
+	_debug_bar.reset_obstacle_dropdown()
+	_place_obstacle_cls = null
 
 
-func _update_enemy_hover(pos: Vector2) -> void:
-	_enemy_cursor_pos = pos
-	var cell := enemy_grid.get_cell_at(enemy_grid.to_local(pos))
-	var enemy: EnemyData = null
-	if cell.x >= 0:
-		enemy = enemy_grid.get_enemy_at(cell)
-	if enemy != _hover_enemy:
-		_hover_enemy = enemy
-		_hover_timer = 0.0
-		_monster_tooltip_layer.visible = false
-
-
-func _get_ground_labels_for_enemy(enemy: EnemyData) -> Array[String]:
-	var idx := _setup.enemies.find(enemy)
-	if idx < 0:
-		return []
-	var grid_pos := _setup.get_enemy_pos(idx, _current_state)
-	var cells := EnemyGrid.get_cells_for_enemy(grid_pos, enemy.grid_size)
-	var puddles := cells.filter(
-		func(c: Vector2i) -> bool:
-			return _current_state.ground.get(c, GroundType.Type.SOIL) == GroundType.Type.PUDDLE)
-	var labels: Array[String] = []
-	if puddles.size() > 0:
-		labels.append("Puddle (%d cells) — Wet +%d/round" % [puddles.size(), puddles.size() * 2])
-	return labels
-
-
-func _show_monster_tooltip(enemy: EnemyData, pos: Vector2) -> void:
-	_monster_tooltip_name.text = enemy.display_name
-	_monster_tooltip_desc.text = enemy.description
-	_monster_tooltip_desc.visible = not enemy.description.is_empty()
-	var stats_lines: Array[String] = ["HP: %d / %d" % [enemy.current_hp, enemy.max_hp]]
-	stats_lines.append_array(_get_ground_labels_for_enemy(enemy))
-	_monster_tooltip_stats.text = "\n".join(stats_lines)
-	if not enemy.traits.is_empty():
-		var labels: Array = enemy.traits.map(func(t: MonsterTraitData) -> String: return t.label)
-		_monster_tooltip_traits.text = "Traits: " + ", ".join(labels)
-		_monster_tooltip_traits.visible = true
-	else:
-		_monster_tooltip_traits.visible = false
-	if not enemy.action_pool.is_empty():
-		var lines: Array = enemy.action_pool.map(
-				func(a: MonsterActionData) -> String: return _format_action(a))
-		_monster_tooltip_attacks.text = "\n".join(lines)
-		_monster_tooltip_attacks.visible = true
-	else:
-		_monster_tooltip_attacks.visible = false
-	var tp := pos + Vector2(18.0, 18.0)
-	tp.x = clampf(tp.x, 0.0, SCREEN_W - 260.0)
-	tp.y = clampf(tp.y, 0.0, SCREEN_H - 240.0)
-	_monster_tooltip_panel.position = tp
-	_monster_tooltip_layer.visible = true
-
-
-func _format_action(action: MonsterActionData) -> String:
-	if action is MonsterActionAttack:
-		var atk := action as MonsterActionAttack
-		var parts: Array[String] = ["%s  %d dmg" % [atk.name, atk.damage]]
-		if atk.wet_stacks > 0:
-			parts.append("Wet %d" % atk.wet_stacks)
-		if atk.applies_frozen:
-			parts.append("Freeze")
-		if atk.applies_web:
-			parts.append("Web")
-		return "  ".join(parts)
-	if action is MonsterActionHeal:
-		return "%s  heals %d (lowest HP ally)" % [action.name, (action as MonsterActionHeal).amount]
-	if action is MonsterActionDrumsOfWar:
-		return "Drums of War  ×2 attack for adjacent allies"
-	if action is MonsterActionVineSnare:
-		return "Vine Snare  blocks attack; breaking costs 50% HP (heals caster)"
-	if action is MonsterActionLeech:
-		return "Leech  each mana you spend heals caster by 1"
-	return action.name
-
-
-func _build_monster_tooltip() -> void:
-	_monster_tooltip_layer = CanvasLayer.new()
-	_monster_tooltip_layer.layer = 10
-	_monster_tooltip_layer.visible = false
-	add_child(_monster_tooltip_layer)
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.07, 0.09, 0.11, 0.97)
-	style.border_color = Color(0.25, 0.30, 0.35)
-	style.set_border_width_all(1)
-	style.set_content_margin_all(10)
-	_monster_tooltip_panel = PanelContainer.new()
-	_monster_tooltip_panel.custom_minimum_size = Vector2(240, 0)
-	_monster_tooltip_panel.add_theme_stylebox_override("panel", style)
-	_monster_tooltip_layer.add_child(_monster_tooltip_panel)
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 5)
-	_monster_tooltip_panel.add_child(vbox)
-	_monster_tooltip_name = Label.new()
-	_monster_tooltip_name.add_theme_font_size_override("font_size", 14)
-	_monster_tooltip_name.modulate = Color(0.92, 0.92, 0.88)
-	vbox.add_child(_monster_tooltip_name)
-	_monster_tooltip_desc = Label.new()
-	_monster_tooltip_desc.add_theme_font_size_override("font_size", 11)
-	_monster_tooltip_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_monster_tooltip_desc.modulate = Color(0.65, 0.70, 0.75)
-	vbox.add_child(_monster_tooltip_desc)
-	vbox.add_child(HSeparator.new())
-	_monster_tooltip_stats = Label.new()
-	_monster_tooltip_stats.add_theme_font_size_override("font_size", 11)
-	_monster_tooltip_stats.modulate = Color(0.82, 0.82, 0.82)
-	vbox.add_child(_monster_tooltip_stats)
-	_monster_tooltip_traits = Label.new()
-	_monster_tooltip_traits.add_theme_font_size_override("font_size", 11)
-	_monster_tooltip_traits.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_monster_tooltip_traits.modulate = Color(0.65, 0.70, 0.75)
-	vbox.add_child(_monster_tooltip_traits)
-	vbox.add_child(HSeparator.new())
-	var attacks_header := Label.new()
-	attacks_header.text = "Attacks"
-	attacks_header.add_theme_font_size_override("font_size", 11)
-	attacks_header.modulate = Color(0.55, 0.62, 0.70)
-	vbox.add_child(attacks_header)
-	_monster_tooltip_attacks = Label.new()
-	_monster_tooltip_attacks.add_theme_font_size_override("font_size", 11)
-	_monster_tooltip_attacks.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_monster_tooltip_attacks.modulate = Color(0.82, 0.82, 0.82)
-	vbox.add_child(_monster_tooltip_attacks)
-
-
-func _update_spell_hover(pos: Vector2) -> void:
-	var spell: SpellData = null
-	for wd: WandDisplay in _wand_displays:
-		var slot := wd.get_slot_at(wd.to_local(pos))
-		if slot != null and slot.spell != null:
-			spell = slot.spell
-			break
-	_spell_tooltip.notify_hover(pos, spell)
+func _place_enemy_at(cell: Vector2i) -> void:
+	var occupied: Dictionary = {}
+	for i in _battle_positions.size():
+		var sz: Vector2i = _battle_enemies[i].grid_size
+		for dx in range(sz.x):
+			for dy in range(sz.y):
+				occupied[_battle_positions[i] + Vector2i(dx, dy)] = true
+	for dx in range(_place_size.x):
+		for dy in range(_place_size.y):
+			var c := cell + Vector2i(dx, dy)
+			if c.x >= EnemyGrid.COLS or c.y >= EnemyGrid.ROWS or occupied.has(c):
+				return
+	var enemy: EnemyData = _place_cls.new()
+	var base_id := enemy.display_name.to_lower().replace(" ", "_")
+	_place_id_counter[base_id] = _place_id_counter.get(base_id, 0) + 1
+	enemy.id = base_id + "_" + str(_place_id_counter[base_id])
+	_battle_enemies.append(enemy)
+	_battle_positions.append(cell)
+	_rebuild_battle()
+	_debug_bar.reset_place_dropdown()
+	_place_cls = null
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -790,11 +591,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
-	if _place_cls != null:
+	if _place_cls != null or _place_obstacle_cls != null:
 		if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
 			enemy_grid.set_hovered_cells([])
-			_place_dropdown.select(0)
+			_debug_bar.reset_place_dropdown()
+			_debug_bar.reset_obstacle_dropdown()
 			_place_cls = null
+			_place_obstacle_cls = null
 			get_viewport().set_input_as_handled()
 			return
 		if event is InputEventMouseMotion:
@@ -811,7 +614,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			var cell := enemy_grid.get_cell_at(enemy_grid.to_local((event as InputEventMouseButton).position))
 			if cell.x >= 0:
 				enemy_grid.set_hovered_cells([])
-				_place_enemy_at(cell)
+				if _place_cls != null:
+					_place_enemy_at(cell)
+				else:
+					_place_obstacle_at(cell)
 				get_viewport().set_input_as_handled()
 			return
 
@@ -819,15 +625,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event is InputEventMouseMotion:
 			var pos := (event as InputEventMouseMotion).position
 			_update_intent_hover(pos)
-			_update_enemy_hover(pos)
-			_update_spell_hover(pos)
+			_tooltip_manager.update(pos, _current_state, _setup)
 		return
 
 	if event is InputEventMouseMotion:
 		var pos := (event as InputEventMouseMotion).position
 		_update_hover(pos)
-		_update_enemy_hover(pos)
-		_update_spell_hover(pos)
+		_tooltip_manager.update(pos, _current_state, _setup)
 		return
 	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
 		_cancel_targeting()
@@ -864,18 +668,18 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _fire_at_cell(cell: Vector2i) -> void:
 	var mage_index := _wand_displays.find(_targeting_wand)
-	var new_state := _history.push(ActionZapWand.new(mage_index, cell))
-	if not new_state.cast_events.is_empty():
-		_floating_damage.spawn_events(new_state.cast_events, get_global_mouse_position())
-	_apply_state(new_state)
+	var result := _history.push(ActionZapWand.new(mage_index, cell))
+	if not result.cast_events.is_empty():
+		_floating_damage.spawn_events(result.cast_events, get_global_mouse_position())
+	_apply_state(result.state)
 
 
 func _fire_at_mage(target_mage_index: int) -> void:
 	var mage_index := _wand_displays.find(_targeting_wand)
-	var new_state := _history.push(ActionZapWand.new(mage_index, Vector2i(-1, -1), target_mage_index))
-	if not new_state.cast_events.is_empty():
-		_floating_damage.spawn_events(new_state.cast_events, get_global_mouse_position())
-	_apply_state(new_state)
+	var result := _history.push(ActionZapWand.new(mage_index, Vector2i(-1, -1), target_mage_index))
+	if not result.cast_events.is_empty():
+		_floating_damage.spawn_events(result.cast_events, get_global_mouse_position())
+	_apply_state(result.state)
 
 
 # --- data factories ---

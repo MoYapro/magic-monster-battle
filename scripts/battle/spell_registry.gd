@@ -18,6 +18,9 @@ static func all_body_spells() -> Array[SpellData]:
 		# Modifiers
 		SpellAmplify.create(),
 		SpellShield.create(),
+		SpellCorrupted.create(),
+		SpellReactive.create(),
+		SpellDistillation.create(),
 	]
 
 

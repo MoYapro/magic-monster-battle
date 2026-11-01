@@ -17,10 +17,17 @@ func _raise_fallen_index() -> int:
 	return -1
 
 
+func _make_state_with_drummer() -> BattleState:
+	var s := BattleState.new()
+	var es := EnemyState.new()
+	es.combatant.hp = 65
+	s.enemies["war_drummer_1"] = es
+	return s
+
+
 func test_forces_raise_fallen_when_no_skeletons_alive() -> void:
 	var setup := _make_setup()
-	var state := BattleState.new()
-	state.enemy_hp["war_drummer_1"] = 65
+	var state := _make_state_with_drummer()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 0
 	var idx := WarDrummer.new().pick_action_index(state, setup, rng)
@@ -30,10 +37,10 @@ func test_forces_raise_fallen_when_no_skeletons_alive() -> void:
 func test_rolls_randomly_when_skeleton_alive() -> void:
 	var skeleton := Skeleton.new()
 	var setup := _make_setup([skeleton], [Vector2i(0, 0)])
-	var state := BattleState.new()
-	state.enemy_hp["war_drummer_1"] = 65
-	state.enemy_hp["skeleton_1"] = 30
-	# Run many rolls — should not always return the raise fallen index
+	var state := _make_state_with_drummer()
+	var ses := EnemyState.new()
+	ses.combatant.hp = 30
+	state.enemies["skeleton_1"] = ses
 	var raise_idx := _raise_fallen_index()
 	var seen_other := false
 	var rng := RandomNumberGenerator.new()
@@ -49,9 +56,7 @@ func test_rolls_randomly_when_skeleton_alive() -> void:
 func test_forces_raise_fallen_when_skeleton_dead() -> void:
 	var skeleton := Skeleton.new()
 	var setup := _make_setup([skeleton], [Vector2i(0, 0)])
-	var state := BattleState.new()
-	state.enemy_hp["war_drummer_1"] = 65
-	# skeleton_1 absent from enemy_hp = dead
+	var state := _make_state_with_drummer()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 0
 	var idx := WarDrummer.new().pick_action_index(state, setup, rng)

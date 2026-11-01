@@ -293,3 +293,7 @@ All three mages share a single mana pool that persists between battles.
 - [x] Per-biome difficulty scaling: biome level = wins in that biome + 1 (max 10), scaling difficulty budget and elite chance
 - [x] Battles composed from the selected biome's monster and obstacle pools
 - [x] Codex biomes tab listing every biome and its monsters
+
+## Architecture
+
+See [`docs/architecture.puml`](docs/architecture.puml) for the high-level component diagram.

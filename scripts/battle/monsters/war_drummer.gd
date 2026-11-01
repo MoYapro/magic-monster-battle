@@ -31,6 +31,6 @@ func pick_action_index(state: BattleState, setup: BattleSetup, rng: RandomNumber
 
 func _any_skeleton_alive(state: BattleState, setup: BattleSetup) -> bool:
 	for enemy: EnemyData in setup.enemies:
-		if enemy is Skeleton and state.enemy_hp.has(enemy.id):
+		if enemy is Skeleton and state.enemies.has(enemy.id):
 			return true
 	return false

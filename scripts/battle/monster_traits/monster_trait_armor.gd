@@ -10,5 +10,6 @@ func _init(p_amount: int) -> void:
 
 func apply_end_of_round(state: BattleState, _setup: BattleSetup, enemy_id: String) -> BattleState:
 	var new_state := state.duplicate()
-	new_state.enemy_armor[enemy_id] = armor_amount
+	if new_state.enemies.has(enemy_id):
+		(new_state.enemies[enemy_id] as EnemyState).armor = armor_amount
 	return new_state

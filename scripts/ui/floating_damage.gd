@@ -25,7 +25,7 @@ func _spawn(text: String, color: Color, pos: Vector2) -> void:
 	label.position = pos
 	label.add_theme_font_size_override("font_size", 15)
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.85))
+	label.add_theme_color_override("font_shadow_color", Palette.COLOR_TEXT_SHADOW)
 	label.add_theme_constant_override("shadow_offset_x", 1)
 	label.add_theme_constant_override("shadow_offset_y", 1)
 	add_child(label)
@@ -54,9 +54,9 @@ static func _text_for(ev: CastEvent) -> String:
 static func _color_for(ev: CastEvent) -> Color:
 	match ev.type:
 		CastEvent.Type.PROJECTILE:
-			return Color(1.0, 0.95, 0.7)
+			return Palette.COLOR_DAMAGE_HIT
 		CastEvent.Type.FIZZLE:
-			return Color(0.6, 0.6, 0.6)
+			return Palette.COLOR_DAMAGE_FIZZLE
 		CastEvent.Type.BACKFIRE:
-			return Color(1.0, 0.3, 0.2)
+			return Palette.COLOR_DAMAGE_BACKFIRE
 	return Color.WHITE

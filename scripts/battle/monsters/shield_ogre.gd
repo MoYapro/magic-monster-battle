@@ -10,5 +10,5 @@ func _init() -> void:
 	drop_pool = [SpellShield.create(), SpellEmber.create()]
 	action_pool = [
 		MonsterActionAttack.new("Punch", 14),
-		MonsterActionHeal.new("Shield Up", 45),
+		MonsterActionAttack.new("Ogre Slam", 18),
 	]

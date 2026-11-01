@@ -5,17 +5,18 @@ func _init(enemy_id: String) -> void:
 	source_enemy_id = enemy_id
 	display_name = "VINE SNARE"
 	display_color = Color(0.20, 0.55, 0.15)
+	icon = "◆"
 
 
 func on_zap(target: StatusTarget, setup: BattleSetup) -> void:
 	var penalty := ceili(target.get_hp() / 2.0)
 	target.set_hp(maxi(0, target.get_hp() - penalty))
 	var state := target.get_state()
-	if state.enemy_hp.has(source_enemy_id):
+	if state.enemies.has(source_enemy_id):
 		var snarer := setup.get_enemy(source_enemy_id)
 		if snarer != null:
-			state.enemy_hp[source_enemy_id] = mini(
-					state.enemy_hp[source_enemy_id] + penalty, snarer.max_hp)
+			var es := state.enemies[source_enemy_id] as EnemyState
+			es.combatant.hp = mini(es.combatant.hp + penalty, snarer.max_hp)
 	target.remove_status(self)
 
 

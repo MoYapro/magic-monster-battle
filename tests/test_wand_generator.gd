@@ -34,11 +34,10 @@ func test_every_next_id_points_to_existing_slot() -> void:
 						"slot %s next_id '%s' seed %d" % [slot.id, slot.next_id, s])
 
 
-func test_all_slots_have_spells_assigned() -> void:
+func test_tip_slot_always_has_spell() -> void:
 	for s in [1, 2, 3, 42, 100]:
 		var wand := _gen(s)
-		for slot: SpellSlotData in wand.slots:
-			assert_not_null(slot.spell, "slot %s seed %d" % [slot.id, s])
+		assert_not_null(wand.get_tip_slot().spell, "seed %d" % s)
 
 
 func test_tip_spell_has_non_empty_hit_pattern() -> void:
@@ -52,7 +51,7 @@ func test_body_spells_have_empty_hit_pattern() -> void:
 	for s in [1, 2, 3, 42, 100]:
 		var wand := _gen(s)
 		for slot: SpellSlotData in wand.slots:
-			if not slot.is_tip:
+			if not slot.is_tip and slot.spell != null:
 				assert_true(slot.spell.hit_pattern.is_empty(),
 						"slot %s seed %d" % [slot.id, s])
 

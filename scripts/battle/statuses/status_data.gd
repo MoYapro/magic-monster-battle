@@ -3,6 +3,7 @@ class_name StatusData extends RefCounted
 var stacks: int = -1
 var display_name: String = ""
 var display_color: Color = Color.WHITE
+var icon: String = "●"
 var source_enemy_id: String = ""
 
 

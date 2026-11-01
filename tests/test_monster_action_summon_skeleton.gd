@@ -9,7 +9,9 @@ func _make_setup(drummer_pos: Vector2i = Vector2i(2, 3)) -> BattleSetup:
 
 func _make_state(drummer_hp: int) -> BattleState:
 	var s := BattleState.new()
-	s.enemy_hp["war_drummer_1"] = drummer_hp
+	var es := EnemyState.new()
+	es.combatant.hp = drummer_hp
+	s.enemies["war_drummer_1"] = es
 	return s
 
 
@@ -19,20 +21,20 @@ func test_spawns_one_skeleton_at_full_hp() -> void:
 	var action := MonsterActionSummonSkeleton.new()
 	var result := action.execute(state, setup, "war_drummer_1", -1)
 	assert_eq(setup.enemies.size(), 2)
-	assert_true(result.enemy_hp.has(setup.enemies[1].id))
+	assert_true(result.enemies.has(setup.enemies[1].id))
 
 
 func test_spawns_three_skeletons_below_25_percent() -> void:
 	var setup := _make_setup()
-	var state := _make_state(10)  # 10/65 = 15%, below 25%
+	var state := _make_state(10)
 	var action := MonsterActionSummonSkeleton.new()
 	action.execute(state, setup, "war_drummer_1", -1)
-	assert_eq(setup.enemies.size(), 4)  # drummer + 3 skeletons
+	assert_eq(setup.enemies.size(), 4)
 
 
 func test_spawns_one_skeleton_above_25_percent() -> void:
 	var setup := _make_setup()
-	var state := _make_state(50)  # 50/65 = 77%, above 25%
+	var state := _make_state(50)
 	var action := MonsterActionSummonSkeleton.new()
 	action.execute(state, setup, "war_drummer_1", -1)
 	assert_eq(setup.enemies.size(), 2)
@@ -44,7 +46,7 @@ func test_skeleton_spawns_with_full_hp() -> void:
 	var action := MonsterActionSummonSkeleton.new()
 	var result := action.execute(state, setup, "war_drummer_1", -1)
 	var skeleton_id := setup.enemies[1].id
-	assert_eq(result.enemy_hp[skeleton_id], Skeleton.new().max_hp)
+	assert_eq((result.enemies[skeleton_id] as EnemyState).combatant.hp, Skeleton.new().max_hp)
 
 
 func test_skeletons_placed_on_distinct_cells() -> void:
@@ -67,10 +69,12 @@ func test_no_spawn_when_grid_full() -> void:
 		for col in EnemyGrid.COLS:
 			if col == 0 and row == 0:
 				continue
-			var id := "filler_%d_%d" % [col, row]
-			enemies.append(EnemyData.new(id, "Filler", 10, Vector2i(1, 1), Color.WHITE))
+			var fid := "filler_%d_%d" % [col, row]
+			enemies.append(EnemyData.new(fid, "Filler", 10, Vector2i(1, 1), Color.WHITE))
 			positions.append(Vector2i(col, row))
-			state.enemy_hp[id] = 10
+			var fes := EnemyState.new()
+			fes.combatant.hp = 10
+			state.enemies[fid] = fes
 	var setup := BattleSetup.new(enemies, positions, [], [], 10)
 	var initial_count := setup.enemies.size()
 	var action := MonsterActionSummonSkeleton.new()
@@ -95,4 +99,4 @@ func test_does_nothing_if_drummer_not_in_setup() -> void:
 	var action := MonsterActionSummonSkeleton.new()
 	var result := action.execute(state, setup, "nonexistent_id", -1)
 	assert_eq(setup.enemies.size(), 1)
-	assert_eq(result.enemy_hp.size(), state.enemy_hp.size())
+	assert_eq(result.enemies.size(), state.enemies.size())

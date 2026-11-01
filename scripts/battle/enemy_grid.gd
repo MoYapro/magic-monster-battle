@@ -5,17 +5,6 @@ const COLS: int = 5
 const ROWS: int = 7
 var cell_size := Vector2(80.0, 80.0)
 
-const COLOR_CELL := Color(0.18, 0.20, 0.22)
-const COLOR_BORDER := Color(0.45, 0.50, 0.55)
-const COLOR_LABEL := Color(1.0, 1.0, 1.0)
-const COLOR_HP := Color(0.8, 0.95, 0.8)
-const COLOR_TARGET_AVAILABLE := Color(1.0, 0.85, 0.2)
-const COLOR_TARGET_HOVER := Color(0.95, 0.18, 0.18)
-const COLOR_POISON := Color(0.50, 0.20, 0.65)
-const COLOR_FIRE   := Color(0.95, 0.42, 0.05)
-const COLOR_PUDDLE := Color(0.20, 0.45, 0.75, 0.35)
-const COLOR_WET    := Color(0.25, 0.55, 0.90)
-
 # cell position -> EnemyData (one entry per occupied cell)
 var _cells: Dictionary = {}
 # enemy id -> top-left grid position
@@ -29,6 +18,7 @@ var _hovered_cells: Array[Vector2i] = []
 var _intents: Dictionary = {}
 var _armors: Dictionary = {}
 var _blocks: Dictionary = {}
+var _shields: Dictionary = {}
 var _enemy_statuses: Dictionary = {}  # enemy_id -> Array[StatusData]
 
 
@@ -39,6 +29,11 @@ func set_armors(armors: Dictionary) -> void:
 
 func set_blocks(blocks: Dictionary) -> void:
 	_blocks = blocks
+	queue_redraw()
+
+
+func set_shields(shields: Dictionary) -> void:
+	_shields = shields
 	queue_redraw()
 
 
@@ -171,14 +166,14 @@ func _draw_grid() -> void:
 	for row in ROWS:
 		for col in COLS:
 			var rect := Rect2(Vector2(col, row) * cell_size, cell_size)
-			draw_rect(rect, COLOR_CELL, true)
+			draw_rect(rect, Palette.COLOR_GRID_CELL, true)
 			if _ground.get(Vector2i(col, row), GroundType.Type.SOIL) == GroundType.Type.PUDDLE:
-				draw_rect(rect, COLOR_PUDDLE, true)
-			draw_rect(rect, COLOR_BORDER, false)
+				draw_rect(rect, Palette.COLOR_STATUS_PUDDLE, true)
+			draw_rect(rect, Palette.COLOR_GRID_BORDER, false)
 			if _hovered_cells.has(Vector2i(col, row)):
-				draw_rect(rect, COLOR_TARGET_HOVER, false, 3.0)
+				draw_rect(rect, Palette.COLOR_TARGET_HOVER, false, 3.0)
 			elif _highlighted:
-				draw_rect(rect, COLOR_TARGET_AVAILABLE, false, 2.5)
+				draw_rect(rect, Palette.COLOR_TARGET_AVAILABLE, false, 2.5)
 
 
 func _draw_obstacles() -> void:
@@ -196,7 +191,7 @@ func _draw_obstacles() -> void:
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
 		draw_string(font, pixel_pos + Vector2(5, 32),
 				"%d / %d" % [_obstacle_hp[obs.id], obs.max_hp],
-				HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COLOR_HP)
+				HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Palette.COLOR_GRID_HP)
 
 
 func _draw_enemies() -> void:
@@ -220,8 +215,8 @@ func _draw_enemies() -> void:
 			if occupied.has(hc):
 				is_hovered = true
 				break
-		var border_color := COLOR_TARGET_HOVER if is_hovered \
-				else (COLOR_TARGET_AVAILABLE if _highlighted else Color.WHITE)
+		var border_color := Palette.COLOR_TARGET_HOVER if is_hovered \
+				else (Palette.COLOR_TARGET_AVAILABLE if _highlighted else Color.WHITE)
 		var border_width := 3.0 if (is_hovered or _highlighted) else 2.0
 		draw_rect(enemy_rect, border_color, false, border_width)
 
@@ -230,30 +225,29 @@ func _draw_enemies() -> void:
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 13, enemy.label_color)
 		draw_string(font, pixel_pos + Vector2(5, 32),
 				"%d / %d" % [enemy.current_hp, enemy.max_hp],
-				HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COLOR_HP)
+				HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Palette.COLOR_GRID_HP)
 		if _armors.has(enemy.id) and _armors[enemy.id] > 0:
 			draw_string(font, pixel_pos + Vector2(5, 44),
 					"🛡 %d" % _armors[enemy.id],
-					HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1.0, 0.85, 0.3))
-		if _blocks.has(enemy.id) and _blocks[enemy.id] > 0:
+					HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Palette.COLOR_GRID_INTENT)
+		if _shields.has(enemy.id) and _shields[enemy.id] > 0:
 			draw_string(font, pixel_pos + Vector2(pixel_size.x - 5, 44),
+					"◇ %d" % _shields[enemy.id],
+					HORIZONTAL_ALIGNMENT_RIGHT, -1, 11, Palette.COLOR_GRID_FROZEN)
+		if _blocks.has(enemy.id) and _blocks[enemy.id] > 0:
+			draw_string(font, pixel_pos + Vector2(pixel_size.x - 5, 56),
 					"🔲 %d" % _blocks[enemy.id],
-					HORIZONTAL_ALIGNMENT_RIGHT, -1, 11, Color(0.5, 0.8, 1.0))
-		var pills: Array = (_enemy_statuses.get(enemy.id, []) as Array).filter(
+					HORIZONTAL_ALIGNMENT_RIGHT, -1, 11, Palette.COLOR_GRID_BLOCK)
+		var status_icons: Array = (_enemy_statuses.get(enemy.id, []) as Array).filter(
 				func(s: StatusData) -> bool: return s.display_name != "")
-		if not pills.is_empty():
-			var pill_h := 12.0
-			var pill_gap := 3.0
-			var pill_w := pixel_size.x - 10.0
-			var pill_count := pills.size()
+		if not status_icons.is_empty():
 			var intent_reserve := 16.0 if _intents.has(enemy.id) else 4.0
-			var pills_bottom := pixel_size.y - intent_reserve
-			var pill_y := maxf(34.0, pills_bottom - pill_count * pill_h - (pill_count - 1) * pill_gap)
-			for pill: StatusData in pills:
-				draw_rect(Rect2(pixel_pos + Vector2(5.0, pill_y), Vector2(pill_w, pill_h)), pill.display_color, true)
-				draw_string(font, pixel_pos + Vector2(5.0, pill_y + 10.0),
-						pill.get_label(), HORIZONTAL_ALIGNMENT_CENTER, pill_w, 9, Color.WHITE)
-				pill_y += pill_h + pill_gap
+			var icon_y := pixel_size.y - intent_reserve - 2.0
+			var icon_x := 5.0
+			for status: StatusData in status_icons:
+				draw_string(font, pixel_pos + Vector2(icon_x, icon_y),
+						status.icon, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, status.display_color)
+				icon_x += 12.0
 		if _intents.has(enemy.id):
 			var intent: Dictionary = _intents[enemy.id]
 			var action_name: String = intent.get("action_name", "")
@@ -261,4 +255,4 @@ func _draw_enemies() -> void:
 			var label := action_name + (" → " + target_name if target_name != "" else "")
 			draw_string(font, pixel_pos + Vector2(5, pixel_size.y - 6),
 					label, HORIZONTAL_ALIGNMENT_LEFT, pixel_size.x - 10, 10,
-					Color(1.0, 0.75, 0.35))
+					Palette.COLOR_GRID_SHIELD_TEXT)

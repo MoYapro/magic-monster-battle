@@ -26,8 +26,8 @@ func _ready() -> void:
 
 func _build() -> void:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.07, 0.09, 0.11, 0.97)
-	style.border_color = Color(0.22, 0.26, 0.30)
+	style.bg_color = Palette.COLOR_TOOLTIP_BG
+	style.border_color = Palette.COLOR_BORDER
 	style.set_border_width_all(1)
 	style.set_content_margin_all(10)
 
@@ -43,25 +43,25 @@ func _build() -> void:
 
 	_name_label = Label.new()
 	_name_label.add_theme_font_size_override("font_size", 14)
-	_name_label.modulate = Color(0.85, 0.90, 0.95)
+	_name_label.modulate = Palette.COLOR_TEXT_BRIGHT
 	vbox.add_child(_name_label)
 
 	_desc_label = Label.new()
 	_desc_label.add_theme_font_size_override("font_size", 11)
 	_desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_desc_label.modulate = Color(0.45, 0.52, 0.60)
+	_desc_label.modulate = Palette.COLOR_SECTION
 	vbox.add_child(_desc_label)
 
 	vbox.add_child(HSeparator.new())
 
 	_stats_label = Label.new()
 	_stats_label.add_theme_font_size_override("font_size", 11)
-	_stats_label.modulate = Color(0.85, 0.90, 0.95)
+	_stats_label.modulate = Palette.COLOR_TEXT_BRIGHT
 	vbox.add_child(_stats_label)
 
 	_effects_label = Label.new()
 	_effects_label.add_theme_font_size_override("font_size", 11)
-	_effects_label.modulate = Color(0.45, 0.52, 0.60)
+	_effects_label.modulate = Palette.COLOR_SECTION
 	vbox.add_child(_effects_label)
 
 

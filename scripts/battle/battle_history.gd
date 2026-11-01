@@ -10,9 +10,12 @@ func _init(initial_state: BattleState, setup: BattleSetup) -> void:
 	_setup = setup
 
 
-func push(action: BattleAction) -> BattleState:
+func push(action: BattleAction) -> ActionResult:
 	_actions.append(action)
-	return current_state()
+	var state := _initial_state.duplicate()
+	for i in range(_actions.size() - 1):
+		state = _actions[i].apply(state, _setup).state
+	return _actions[-1].apply(state, _setup)
 
 
 func undo() -> BattleState:
@@ -28,5 +31,5 @@ func can_undo() -> bool:
 func current_state() -> BattleState:
 	var state := _initial_state.duplicate()
 	for action: BattleAction in _actions:
-		state = action.apply(state, _setup)
+		state = action.apply(state, _setup).state
 	return state

@@ -6,9 +6,9 @@ const SNARER_MAX_HP := 50
 
 func _make_state() -> BattleState:
 	var s := BattleState.new()
-	s.mage_hp.append(30)
-	s.mage_mana_spent.append(0)
-	s.mage_statuses.append([])
+	var ms := MageState.new()
+	ms.combatant.hp = 30
+	s.mages.append(ms)
 	return s
 
 
@@ -21,9 +21,15 @@ func _make_setup_with_snarer() -> BattleSetup:
 	return BattleSetup.new([snarer], [Vector2i(0, 0)], [], [], 10)
 
 
+func _add_enemy(state: BattleState, id: String, hp: int) -> void:
+	var es := EnemyState.new()
+	es.combatant.hp = hp
+	state.enemies[id] = es
+
+
 func _state_with_live_snarer() -> BattleState:
 	var state := _make_state()
-	state.enemy_hp[SNARER_ID] = 20
+	_add_enemy(state, SNARER_ID, 20)
 	return state
 
 
@@ -32,50 +38,50 @@ func _state_with_live_snarer() -> BattleState:
 func test_vine_snare_applies_half_hp_penalty_on_zap() -> void:
 	var state := _state_with_live_snarer()
 	var snare := StatusVineSnare.new(SNARER_ID)
-	state.mage_statuses[0].append(snare)
+	(state.mages[0] as MageState).combatant.statuses.append(snare)
 	snare.on_zap(StatusTarget.for_mage(state, 0), _make_setup_with_snarer())
-	assert_eq(state.mage_hp[0], 15)  # ceil(30/2) = 15 penalty
+	assert_eq((state.mages[0] as MageState).combatant.hp, 15)
 
 
 func test_vine_snare_heals_snarer_by_penalty_amount() -> void:
 	var state := _state_with_live_snarer()
 	var snare := StatusVineSnare.new(SNARER_ID)
-	state.mage_statuses[0].append(snare)
+	(state.mages[0] as MageState).combatant.statuses.append(snare)
 	snare.on_zap(StatusTarget.for_mage(state, 0), _make_setup_with_snarer())
-	assert_eq(state.enemy_hp[SNARER_ID], 35)  # 20 + 15
+	assert_eq((state.enemies[SNARER_ID] as EnemyState).combatant.hp, 35)
 
 
 func test_vine_snare_heal_does_not_exceed_snarer_max_hp() -> void:
 	var state := _make_state()
-	state.enemy_hp[SNARER_ID] = 45  # close to max
+	_add_enemy(state, SNARER_ID, 45)
 	var snare := StatusVineSnare.new(SNARER_ID)
-	state.mage_statuses[0].append(snare)
+	(state.mages[0] as MageState).combatant.statuses.append(snare)
 	snare.on_zap(StatusTarget.for_mage(state, 0), _make_setup_with_snarer())
-	assert_eq(state.enemy_hp[SNARER_ID], SNARER_MAX_HP)
+	assert_eq((state.enemies[SNARER_ID] as EnemyState).combatant.hp, SNARER_MAX_HP)
 
 
 func test_vine_snare_self_removes_after_zap() -> void:
 	var state := _state_with_live_snarer()
 	var snare := StatusVineSnare.new(SNARER_ID)
-	state.mage_statuses[0].append(snare)
+	(state.mages[0] as MageState).combatant.statuses.append(snare)
 	snare.on_zap(StatusTarget.for_mage(state, 0), _make_setup_with_snarer())
-	assert_eq(state.mage_statuses[0].size(), 0)
+	assert_eq((state.mages[0] as MageState).combatant.statuses.size(), 0)
 
 
 func test_vine_snare_still_applies_penalty_when_snarer_is_dead() -> void:
-	var state := _make_state()  # snarer not in enemy_hp
+	var state := _make_state()
 	var snare := StatusVineSnare.new(SNARER_ID)
-	state.mage_statuses[0].append(snare)
+	(state.mages[0] as MageState).combatant.statuses.append(snare)
 	snare.on_zap(StatusTarget.for_mage(state, 0), _make_setup())
-	assert_eq(state.mage_hp[0], 15)
+	assert_eq((state.mages[0] as MageState).combatant.hp, 15)
 
 
 func test_vine_snare_no_heal_when_snarer_is_dead() -> void:
 	var state := _make_state()
 	var snare := StatusVineSnare.new(SNARER_ID)
-	state.mage_statuses[0].append(snare)
+	(state.mages[0] as MageState).combatant.statuses.append(snare)
 	snare.on_zap(StatusTarget.for_mage(state, 0), _make_setup())
-	assert_false(state.enemy_hp.has(SNARER_ID))
+	assert_false(state.enemies.has(SNARER_ID))
 
 
 # --- on_turn_end ---
@@ -83,6 +89,6 @@ func test_vine_snare_no_heal_when_snarer_is_dead() -> void:
 func test_vine_snare_self_removes_on_turn_end_without_zapping() -> void:
 	var state := _make_state()
 	var snare := StatusVineSnare.new(SNARER_ID)
-	state.mage_statuses[0].append(snare)
+	(state.mages[0] as MageState).combatant.statuses.append(snare)
 	snare.on_turn_end(StatusTarget.for_mage(state, 0), _make_setup())
-	assert_eq(state.mage_statuses[0].size(), 0)
+	assert_eq((state.mages[0] as MageState).combatant.statuses.size(), 0)

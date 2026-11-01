@@ -6,7 +6,7 @@ func _init() -> void:
 
 
 func apply_on_hit(state: BattleState, _setup: BattleSetup, _enemy_id: String, target_mage: int, damage: int) -> BattleState:
-	if target_mage < 0 or target_mage >= state.mage_statuses.size():
+	if target_mage < 0 or target_mage >= state.mages.size():
 		return state
 	var fire_to_apply := maxi(0, damage - 1)
 	if fire_to_apply == 0:

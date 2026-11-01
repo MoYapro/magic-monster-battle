@@ -9,7 +9,7 @@ func _init(p_stacks: int) -> void:
 
 
 func apply_on_hit(state: BattleState, _setup: BattleSetup, _enemy_id: String, target_mage: int, _damage: int) -> BattleState:
-	if target_mage < 0 or target_mage >= state.mage_statuses.size():
+	if target_mage < 0 or target_mage >= state.mages.size():
 		return state
 	var new_state := state.duplicate()
 	new_state.add_mage_status(target_mage, StatusPoison.new(stacks))

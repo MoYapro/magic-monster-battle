@@ -1,155 +1,108 @@
-@startuml Wand Magic - System Overview
+@startuml Architecture
+title Wand Magic — High-Level Architecture
 
-skinparam packageStyle rectangle
-skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam ranksep 60
+skinparam nodesep 40
 
-package "Battle" {
+' --- Global State ---
+component "GameState\n(Autoload)" as GameState
 
-  class BattleScene {
-    +_ready()
-    --
-    -_fire_at_cell(cell: Vector2i)
-    -_start_targeting(wand: WandDisplay)
-    -_cancel_targeting()
-    -_update_hover(mouse: Vector2)
-  }
-
-  class EnemyGrid {
-    +COLS: int = 3
-    +ROWS: int = 5
-    --
-    +place_enemy(enemy, pos): bool
-    +remove_enemy(id)
-    +get_enemy_at(pos): EnemyData
-    +apply_damage(cell, amount)
-    +get_hit_cells(target, pattern): Array
-    +can_place_enemy(pos, size): bool
-    ..static..
-    +get_cells_for_enemy(pos, size): Array
-    +is_within_bounds(pos, size): bool
-  }
-
-  class EnemyData {
-    +id: String
-    +display_name: String
-    +max_hp: int
-    +current_hp: int
-    +grid_size: Vector2i
-    +color: Color
-  }
-
-  class MageDisplay {
-    +setup(mage: MageData, height: float)
-    +set_highlighted(on: bool)
-    +set_hovered(on: bool)
-    +get_rect(): Rect2
-  }
-
-  class MageData {
-    +name: String
-    +max_hp: int
-    +current_hp: int
-  }
-
-  class ManaDisplay {
-    +WIDTH: float
-    +setup(current, max, height)
-  }
-
-  class TurnManager <<planned>> {
-    +start_round()
-    +end_player_turn()
-    +resolve_enemy_actions()
-  }
-
-  class ManaPool <<planned>> {
-    +current: int
-    +max: int
-    +replenish_per_turn()
-    +spend(amount): bool
-  }
-
+' --- Screens / Game Loop ---
+package "Game Loop" {
+  [LootScreen]
+  [BattleScene]
+  [LevelUpScreen]
+  [PathSelectionScreen]
+  [GameOverScreen]
 }
 
+' --- Battle Engine ---
+package "Battle Engine" {
+  [BattleComposer]
+  [BattleSetup]
+  [BattleHistory]
+  [BattleState]
+  [EnemyGrid]
+  [Actions]
+}
+
+' --- Wand System ---
 package "Wand System" {
-
-  class WandDisplay {
-    +setup(wand: WandData)
-    +get_wand_data(): WandData
-    +get_tip_spell(): SpellData
-    +get_display_size(): Vector2
-    +set_highlighted(on: bool)
-    +set_hovered(on: bool)
-    --
-    signal tip_pressed(wand)
-  }
-
-  class WandData {
-    +slots: Array[SpellSlotData]
-    --
-    +get_tip_slot(): SpellSlotData
-    +get_slot(id): SpellSlotData
-    +get_total_damage(): int
-  }
-
-  class SpellSlotData {
-    +id: String
-    +grid_col: int
-    +grid_row: int
-    +next_id: String
-    +is_tip: bool
-    +spell: SpellData
-  }
-
-  class SpellData {
-    +display_name: String
-    +abbreviation: String
-    +tags: Array[String]
-    +element_color: Color
-    +hit_pattern: Array[Vector2i]
-    +icon: String
-    +damage: int
-  }
-
-  class WandGenerator {
-    ..static..
-    +generate(rng): WandData
-  }
-
-  class SpellInteraction <<planned>> {
-    +tags_a: Array[String]
-    +tags_b: Array[String]
-    +interaction_type: String
-  }
-
+  [WandData / SpellSlotData]
+  [SpellData]
+  [SpellRegistry]
+  [WandGenerator]
+  [WandEvaluator]
+  [AlchemyTable]
 }
 
-package "Progression" <<planned>> {
-
-  class LootScreen <<planned>>
-  class LevelUpScreen <<planned>>
-  class PathSelection <<planned>>
-  class Biome <<planned>> {
-    +monster_roster: Array
-    +loot_table: Array
-    +battle_count: int
-  }
-
+' --- Enemies ---
+package "Enemies" {
+  [EnemyData / Monsters]
+  [MonsterActions]
+  [MonsterTraits]
+  [ObstacleData / Obstacles]
+  [StatusData]
 }
 
-BattleScene --> EnemyGrid
-BattleScene "1" *-- "3" WandDisplay
-BattleScene "1" *-- "3" MageDisplay
-BattleScene "1" *-- "1" ManaDisplay
-BattleScene --> TurnManager
+' --- World / Progression ---
+package "World" {
+  [BiomeData / BiomesData]
+}
 
-EnemyGrid "1" *-- "0..*" EnemyData
-MageDisplay --> MageData
+' --- UI ---
+package "UI" {
+  [WandDisplay]
+  [MageDisplay / ManaDisplay]
+  [BattleTooltipManager]
+  [FloatingDamage]
+}
 
-WandDisplay --> WandData
-WandData "1" *-- "2..10" SpellSlotData
-SpellSlotData --> SpellData
-WandGenerator ..> WandData : creates
-SpellData --> SpellInteraction
+' --- Game Loop transitions ---
+[LootScreen] --> [BattleScene] : Continue →
+[BattleScene] --> [LevelUpScreen] : win
+[BattleScene] --> [GameOverScreen] : all mages dead
+[LevelUpScreen] --> [PathSelectionScreen] : Confirm →
+[PathSelectionScreen] --> [LootScreen] : pick biome
+
+' --- GameState shared by all screens ---
+[LootScreen] --> GameState : read/write mages\nwands, backpack
+[BattleScene] --> GameState : read mages/wands\nwrite battle_count, loot
+[LevelUpScreen] --> GameState : write mages
+[PathSelectionScreen] --> GameState : write current_biome
+GameState --> [BattleScene] : mages, wands,\ncurrent_biome
+
+' --- Battle Engine internals ---
+[BattleScene] --> [BattleComposer] : compose(biome, level)
+[BattleComposer] --> [BattleSetup] : populates
+[BattleScene] --> [BattleHistory] : push / undo actions
+[BattleHistory] --> [BattleState] : stack of states
+[BattleScene] --> [Actions] : ActionZapWand\nActionAddMana\nActionEndTurn
+[Actions] --> [BattleState] : pure state transition
+[BattleScene] --> [EnemyGrid] : display / hit-test
+[BattleSetup] --> [EnemyData / Monsters] : enemy instances
+[BattleSetup] --> [ObstacleData / Obstacles] : obstacle instances
+
+' --- Wand System ---
+[BattleScene] --> [WandDisplay] : per-mage wand UI
+[WandDisplay] --> [WandData / SpellSlotData] : renders
+[WandData / SpellSlotData] --> [SpellData] : contains spells
+[LootScreen] --> [WandGenerator] : generate loot wands
+[LootScreen] --> [SpellRegistry] : list all spells
+[LootScreen] --> [AlchemyTable] : catalyst fusion
+[Actions] --> [WandData / SpellSlotData] : read spell/mana cost
+
+' --- Enemies ---
+[BattleComposer] --> [BiomeData / BiomesData] : monster & obstacle pools
+[EnemyData / Monsters] --> [MonsterActions] : action pool
+[EnemyData / Monsters] --> [MonsterTraits] : passive traits
+[Actions] --> [StatusData] : apply / tick statuses
+[BattleState] --> [StatusData] : stores active statuses
+
+' --- UI ---
+[BattleScene] --> [MageDisplay / ManaDisplay] : per-mage HP/mana UI
+[BattleScene] --> [BattleTooltipManager] : spell / status tooltips
+[BattleScene] --> [FloatingDamage] : combat text popups
 
 @enduml

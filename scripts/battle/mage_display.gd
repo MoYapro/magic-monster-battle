@@ -5,17 +5,6 @@ const WIDTH := 80.0
 const PAD := 9.0
 const BAR_HEIGHT := 9.0
 
-const COLOR_BG      := Color(0.15, 0.17, 0.19)
-const COLOR_BG_DEAD := Color(0.35, 0.06, 0.06)
-const COLOR_BORDER := Color(0.38, 0.42, 0.48)
-const COLOR_HP_FULL := Color(0.20, 0.75, 0.30)
-const COLOR_HP_LOW := Color(0.85, 0.20, 0.15)
-const COLOR_HP_BG := Color(0.10, 0.11, 0.13)
-const COLOR_TARGET_AVAILABLE := Color(1.0, 0.85, 0.2)
-const COLOR_TARGET_HOVER     := Color(0.95, 0.18, 0.18)
-const COLOR_MANA             := Color(0.35, 0.70, 1.00)
-const COLOR_MANA_LABEL       := Color(0.40, 0.50, 0.65)
-
 var _mage: MageData = null
 var _height: float = 70.0
 var _highlighted := false
@@ -64,8 +53,8 @@ func _draw() -> void:
 	if _mage == null:
 		return
 	var is_dead := _mage.current_hp <= 0
-	draw_rect(Rect2(Vector2.ZERO, Vector2(WIDTH, _height)), COLOR_BG_DEAD if is_dead else COLOR_BG, true)
-	draw_rect(Rect2(Vector2.ZERO, Vector2(WIDTH, _height)), COLOR_BORDER, false, 1.0)
+	draw_rect(Rect2(Vector2.ZERO, Vector2(WIDTH, _height)), Palette.COLOR_WIDGET_DEAD if is_dead else Palette.COLOR_WIDGET_BG, true)
+	draw_rect(Rect2(Vector2.ZERO, Vector2(WIDTH, _height)), Palette.COLOR_WIDGET_BORDER, false, 1.0)
 
 	# vertically centre the content block
 	var has_status := not _statuses.is_empty()
@@ -81,7 +70,7 @@ func _draw() -> void:
 
 	var bar_y := y + 24.0
 	var bar_w := WIDTH - PAD * 2.0
-	draw_rect(Rect2(Vector2(PAD, bar_y), Vector2(bar_w, BAR_HEIGHT)), COLOR_HP_BG, true)
+	draw_rect(Rect2(Vector2(PAD, bar_y), Vector2(bar_w, BAR_HEIGHT)), Palette.COLOR_HP_BG, true)
 
 	var hp_frac := float(_mage.current_hp) / float(_mage.max_hp)
 	var status_dmg := 0
@@ -90,14 +79,14 @@ func _draw() -> void:
 	var total_dmg := _incoming_attack + status_dmg
 	var hp_after := maxi(0, _mage.current_hp - total_dmg)
 	var hp_after_frac := float(hp_after) / float(_mage.max_hp)
-	var hp_color := COLOR_HP_FULL.lerp(COLOR_HP_LOW, 1.0 - hp_frac)
+	var hp_color := Palette.COLOR_HP_FULL.lerp(Palette.COLOR_HP_LOW, 1.0 - hp_frac)
 	draw_rect(Rect2(Vector2(PAD, bar_y), Vector2(bar_w * hp_after_frac, BAR_HEIGHT)), hp_color, true)
 
 	var dx := PAD + bar_w * hp_after_frac
 	var max_x := PAD + bar_w * hp_frac
 	var atk_w := minf(bar_w * float(_incoming_attack) / float(_mage.max_hp), max_x - dx)
 	if atk_w > 0.5:
-		draw_rect(Rect2(Vector2(dx, bar_y), Vector2(atk_w, BAR_HEIGHT)), Color(0.85, 0.15, 0.12, 0.88), true)
+		draw_rect(Rect2(Vector2(dx, bar_y), Vector2(atk_w, BAR_HEIGHT)), Palette.COLOR_HP_LOSS, true)
 		dx += atk_w
 	for status: StatusData in _statuses:
 		var dmg := status.get_turn_damage()
@@ -113,9 +102,9 @@ func _draw() -> void:
 		var shield_w := minf(bar_w * float(_shield) / float(_mage.max_hp), bar_w)
 		var shield_x := PAD + bar_w - shield_w
 		draw_rect(Rect2(Vector2(shield_x, bar_y), Vector2(shield_w, BAR_HEIGHT)),
-				Color(0.40, 0.65, 1.00, 0.70), true)
+				Palette.COLOR_SHIELD_FILL, true)
 		draw_rect(Rect2(Vector2(shield_x, bar_y), Vector2(shield_w, BAR_HEIGHT)),
-				Color(0.55, 0.80, 1.00), false, 1.0)
+				Palette.COLOR_SHIELD_EDGE, false, 1.0)
 
 	var hp_text_y := bar_y + BAR_HEIGHT + 13.0
 	var hp_label := "%d/%d" % [_mage.current_hp, _mage.max_hp]
@@ -123,14 +112,14 @@ func _draw() -> void:
 		hp_label += " +%d" % _shield
 	draw_string(font, Vector2(PAD, hp_text_y),
 			hp_label,
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.65, 0.80, 0.65))
+			HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Palette.COLOR_HP_LABEL)
 
 	if _mana_max > 0:
 		draw_string(font, Vector2(PAD, hp_text_y + 18.0),
 				"%d/%d" % [_mana_committed, _mana_max],
-				HORIZONTAL_ALIGNMENT_LEFT, -1, 11, COLOR_MANA_LABEL)
+				HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Palette.COLOR_MANA_LABEL)
 		draw_string(font, Vector2(WIDTH - PAD, hp_text_y + 18.0),
-				"uses", HORIZONTAL_ALIGNMENT_RIGHT, -1, 11, COLOR_MANA_LABEL)
+				"uses", HORIZONTAL_ALIGNMENT_RIGHT, -1, 11, Palette.COLOR_MANA_LABEL)
 	if has_status:
 		var pill_y := hp_text_y + 18.0 + 5.0
 		var pill_h := 12.0
@@ -143,6 +132,6 @@ func _draw() -> void:
 
 	var r := get_rect()
 	if _hovered:
-		draw_rect(r, COLOR_TARGET_HOVER, false, 3.0)
+		draw_rect(r, Palette.COLOR_TARGET_HOVER, false, 3.0)
 	elif _highlighted:
-		draw_rect(r, COLOR_TARGET_AVAILABLE, false, 2.5)
+		draw_rect(r, Palette.COLOR_TARGET_AVAILABLE, false, 2.5)

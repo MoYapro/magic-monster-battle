@@ -22,12 +22,12 @@ func _is_in_cover(setup: BattleSetup, state: BattleState, enemy_id: String) -> b
 	for row in my_size.y:
 		var front_cell := Vector2i(front_col, my_pos.y + row)
 		for i in setup.obstacles.size():
-			if not state.obstacle_hp.has(setup.obstacles[i].id):
+			if not state.obstacles.has(setup.obstacles[i].id):
 				continue
-			if EnemyGrid.get_cells_for_enemy(setup.obstacle_positions[i], setup.obstacles[i].grid_size).has(front_cell):
+			if EnemyGrid.get_cells_for_enemy(setup.get_obstacle_pos(i, state), setup.obstacles[i].grid_size).has(front_cell):
 				return true
 		for i in setup.enemies.size():
-			if setup.enemies[i].id == enemy_id or not state.enemy_hp.has(setup.enemies[i].id):
+			if setup.enemies[i].id == enemy_id or not state.enemies.has(setup.enemies[i].id):
 				continue
 			if EnemyGrid.get_cells_for_enemy(setup.get_enemy_pos(i, state), setup.enemies[i].grid_size).has(front_cell):
 				return true
@@ -44,7 +44,7 @@ func execute(state: BattleState, setup: BattleSetup, enemy_id: String, _target: 
 	var occupied := _occupied_cells(setup, new_state, enemy_id)
 	var best_pos := _find_best_behind(setup, new_state, enemy_id, my_pos, my_size, occupied)
 	if best_pos != Vector2i(-1, -1):
-		new_state.enemy_positions[enemy_id] = best_pos
+		(new_state.enemies[enemy_id] as EnemyState).position = best_pos
 	return new_state
 
 
@@ -55,16 +55,16 @@ func _find_best_behind(
 	var best := Vector2i(-1, -1)
 	var best_dist := INF
 	for i in setup.obstacles.size():
-		if not state.obstacle_hp.has(setup.obstacles[i].id):
+		if not state.obstacles.has(setup.obstacles[i].id):
 			continue
-		var pos := _behind_pos(setup.obstacle_positions[i], setup.obstacles[i].grid_size)
+		var pos := _behind_pos(setup.get_obstacle_pos(i, state), setup.obstacles[i].grid_size)
 		if _can_place(pos, my_size, occupied):
-			var d := _dist(my_pos, setup.obstacle_positions[i])
+			var d := _dist(my_pos, setup.get_obstacle_pos(i, state))
 			if d < best_dist:
 				best_dist = d
 				best = pos
 	for i in setup.enemies.size():
-		if setup.enemies[i].id == enemy_id or not state.enemy_hp.has(setup.enemies[i].id):
+		if setup.enemies[i].id == enemy_id or not state.enemies.has(setup.enemies[i].id):
 			continue
 		var cover_pos: Vector2i = setup.get_enemy_pos(i, state)
 		var pos := _behind_pos(cover_pos, setup.enemies[i].grid_size)
@@ -92,14 +92,14 @@ func _can_place(pos: Vector2i, size: Vector2i, occupied: Dictionary) -> bool:
 func _occupied_cells(setup: BattleSetup, state: BattleState, exclude_id: String) -> Dictionary:
 	var cells := {}
 	for i in setup.enemies.size():
-		if setup.enemies[i].id == exclude_id or not state.enemy_hp.has(setup.enemies[i].id):
+		if setup.enemies[i].id == exclude_id or not state.enemies.has(setup.enemies[i].id):
 			continue
 		for cell: Vector2i in EnemyGrid.get_cells_for_enemy(setup.get_enemy_pos(i, state), setup.enemies[i].grid_size):
 			cells[cell] = true
 	for i in setup.obstacles.size():
-		if not state.obstacle_hp.has(setup.obstacles[i].id):
+		if not state.obstacles.has(setup.obstacles[i].id):
 			continue
-		for cell: Vector2i in EnemyGrid.get_cells_for_enemy(setup.obstacle_positions[i], setup.obstacles[i].grid_size):
+		for cell: Vector2i in EnemyGrid.get_cells_for_enemy(setup.get_obstacle_pos(i, state), setup.obstacles[i].grid_size):
 			cells[cell] = true
 	return cells
 

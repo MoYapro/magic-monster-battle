@@ -12,5 +12,5 @@ func _init() -> void:
 	action_pool = [
 		MonsterActionAttack.new("Crush", 28),
 		MonsterActionAttack.new("Boulder Throw", 20),
-		MonsterActionHeal.new("Mend Stone", 60),
+		MonsterActionAttack.new("Ground Slam", 35),
 	]

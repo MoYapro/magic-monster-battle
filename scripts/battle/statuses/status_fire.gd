@@ -5,6 +5,7 @@ func _init(p_stacks: int) -> void:
 	stacks = p_stacks
 	display_name = "FIRE"
 	display_color = Color(0.95, 0.42, 0.05)
+	icon = "▲"
 
 
 func get_label() -> String:
@@ -21,6 +22,10 @@ func on_add_status(target: StatusTarget, incoming: StatusData) -> void:
 		incoming.stacks -= absorbed
 		if stacks <= 0:
 			target.remove_status(self)
+	elif incoming is StatusFrozen:
+		incoming.stacks = 0
+		target.remove_status(self)
+		target.add_status(StatusWet.new(2))
 
 
 func on_turn_end(target: StatusTarget, setup: BattleSetup) -> void:

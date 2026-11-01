@@ -14,11 +14,11 @@ func execute(state: BattleState, setup: BattleSetup, enemy_id: String, _target: 
 	var my_cells := _build_cells(setup.get_enemy_pos(my_idx, new_state), setup.enemies[my_idx].grid_size)
 	for i in setup.enemies.size():
 		var other := setup.enemies[i]
-		if other.id == enemy_id or not new_state.enemy_hp.has(other.id):
+		if other.id == enemy_id or not new_state.enemies.has(other.id):
 			continue
 		var other_cells := _build_cells(setup.get_enemy_pos(i, new_state), other.grid_size)
 		if _are_adjacent(my_cells, other_cells):
-			new_state.enemy_attack_mult[other.id] = 2.0
+			(new_state.enemies[other.id] as EnemyState).attack_mult = 2.0
 	return new_state
 
 
