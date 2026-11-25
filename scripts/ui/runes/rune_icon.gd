@@ -54,18 +54,4 @@ func _draw_alchemy(c: Vector2, r: float) -> void:
 
 
 func _draw_rune(text: String, center: Vector2, box: float, width: float) -> void:
-	if RuneGeometry.normalize(text).is_empty():
-		return
-	var segs := RuneGeometry.fit(RuneGeometry.segments(text), center, box)
-	_stroke(segs, Color(color, 0.12), width * 4.0)
-	_stroke(segs, Color(color, 0.25), width * 2.4)
-	_stroke(segs, color, width)
-	_stroke(segs, Color(CORE_COLOR, 0.9), width * 0.38)
-
-
-func _stroke(segs: Array[PackedVector2Array], col: Color, width: float) -> void:
-	for s in segs:
-		draw_line(s[0], s[1], col, width, true)
-		if col.a >= 0.9:  # round caps; skipped on translucent glow layers to avoid bright dots
-			draw_circle(s[0], width / 2.0, col)
-			draw_circle(s[1], width / 2.0, col)
+	EmberDraw.rune(self, text, center, box, width, color)
