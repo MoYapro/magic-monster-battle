@@ -16,26 +16,30 @@ func setup(current: int, max_mana: int, height: float) -> void:
 	queue_redraw()
 
 
-func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, Vector2(WIDTH, _height)), Palette.COLOR_WIDGET_BG, true)
-	draw_rect(Rect2(Vector2.ZERO, Vector2(WIDTH, _height)), Palette.COLOR_WIDGET_BORDER, false, 1.0)
+const LABEL_H := 22.0
 
+
+## A tall vial of mana drops: filled drops are mana left to place this turn.
+func _draw() -> void:
+	var vial := Rect2(Vector2.ZERO, Vector2(WIDTH, _height - LABEL_H))
+	EmberDraw.rounded_rect(self, vial, Palette.COLOR_PANEL, Palette.COLOR_BORDER, 1, int(WIDTH / 2.0))
+	EmberDraw.rounded_rect(self, vial.grow(-5), Color.TRANSPARENT, Palette.COLOR_INNER_BORDER, 1, int(WIDTH / 2.0) - 5)
+	EmberDraw.text_centered(self, WIDTH / 2.0, _height - 5.0, "%d/%d" % [_current, _max], 13, Palette.COLOR_MANA_BORDER, true)
 	if _max <= 0:
 		return
+	var step := minf(30.0, (vial.size.y - PAD * 4.0) / float(_max))
+	var top := (vial.size.y - step * _max) / 2.0
+	for i in _max:
+		var filled := i >= _max - _current  # drops drain from the top
+		_draw_drop(Vector2(WIDTH / 2.0, top + step * (i + 0.5)), minf(10.0, step * 0.36), filled)
 
-	var radius := (WIDTH - PAD * 2.0) * 0.5
-	var cx := WIDTH * 0.5
-	var natural_step := radius * 2.0 + 4.0
-	var min_step := maxf(radius * 0.4, 4.0)
 
-	var step := natural_step
-	if _max > 1:
-		var ideal := (_height - PAD * 2.0 - radius * 2.0) / float(_max - 1)
-		step = clampf(ideal, min_step, natural_step)
-
-	# Draw bottom-to-top so index 0 (the next-to-grab) renders on top
-	for i in range(_max - 1, -1, -1):
-		var cy := PAD + radius + float(i) * step
-		var filled := i < _current
-		draw_circle(Vector2(cx, cy), radius, Palette.COLOR_MANA_DROPLET if filled else Palette.COLOR_MANA_EMPTY)
-		draw_arc(Vector2(cx, cy), radius, 0.0, TAU, 24, Palette.COLOR_MANA_BORDER, 1.0)
+func _draw_drop(c: Vector2, r: float, filled: bool) -> void:
+	var pts := PackedVector2Array([c + Vector2(0, -r * 1.9)])
+	for i in 13:
+		pts.append(c + Vector2.from_angle(-0.25 * PI + i * 1.5 * PI / 12.0) * r)
+	if filled:
+		draw_colored_polygon(pts, Palette.COLOR_MANA)
+		EmberDraw.glow(self, c, r * 2.2, 0.35)
+	pts.append(pts[0])
+	draw_polyline(pts, Palette.COLOR_MANA_BORDER if filled else Palette.COLOR_MANA_DROPLET.darkened(0.2), 1.2, true)

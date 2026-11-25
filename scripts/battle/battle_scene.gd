@@ -129,6 +129,7 @@ func _on_obstacle_selected(cls: Variant, size: Vector2i) -> void:
 func _setup_mage_wand_rows() -> void:
 	_mages = _make_mage_data()
 	var wand_displays := _create_wand_displays(_make_wand_data())
+	_equalize_wand_widths(wand_displays)
 	var total_h := _measure_total_height(wand_displays)
 	var usable_h := SCREEN_H - BOTTOM_BAR_H
 	var start_y := MARGIN + (usable_h - MARGIN * 2.0 - total_h) / 2.0
@@ -145,6 +146,14 @@ func _create_wand_displays(wands: Array[WandData]) -> Array[WandDisplay]:
 		wand.setup(wand_data)
 		result.append(wand)
 	return result
+
+
+func _equalize_wand_widths(wand_displays: Array[WandDisplay]) -> void:
+	var widest := 0.0
+	for wand in wand_displays:
+		widest = maxf(widest, wand.get_display_size().x)
+	for wand in wand_displays:
+		wand.min_width = widest
 
 
 func _measure_total_height(wand_displays: Array[WandDisplay]) -> float:

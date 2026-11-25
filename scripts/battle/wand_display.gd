@@ -15,6 +15,7 @@ var _highlighted := false
 var _hovered := false
 var _charges: Dictionary = {}  # slot_id -> int
 var _webbed: Dictionary = {}   # slot_id -> true
+var min_width := 0.0  # rows share one panel width
 
 
 func setup(wand_data: WandData) -> void:
@@ -70,10 +71,6 @@ func _slot_pixel_pos(slot: SpellSlotData) -> Vector2:
 	return Vector2(float(slot.grid_col), float(slot.grid_row)) * CELL_SPACING + PAD
 
 
-func _slot_center(slot: SpellSlotData) -> Vector2:
-	return _slot_pixel_pos(slot) + SLOT_SIZE * 0.5
-
-
 func _compute_bounds() -> Rect2:
 	if _data == null or _data.slots.is_empty():
 		return Rect2(Vector2.ZERO, Vector2(120.0, 70.0))
@@ -84,7 +81,7 @@ func _compute_bounds() -> Rect2:
 		max_row = maxi(max_row, slot.grid_row)
 	var w := float(max_col) * CELL_SPACING.x + SLOT_SIZE.x + PAD.x * 2.0
 	var h := float(max_row) * CELL_SPACING.y + SLOT_SIZE.y + PAD.y + PAD_BOTTOM
-	return Rect2(Vector2.ZERO, Vector2(w, h))
+	return Rect2(Vector2.ZERO, Vector2(maxf(w, min_width), h))
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -109,126 +106,69 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 
+const SOCKET_R := 19.0
+const WEB := Color("#d8cfc0", 0.75)
+
+
 func _draw() -> void:
 	if _data == null:
 		return
 	var bounds := _compute_bounds()
-	draw_rect(bounds, Palette.COLOR_WAND_BG, true)
-	draw_rect(bounds, Palette.COLOR_WAND_BG_BORDER, false, 1.5)
+	EmberDraw.panel(self, bounds, _highlighted or _hovered, Palette.COLOR_WAND_BG)
+	if _hovered:
+		EmberDraw.rounded_rect(self, bounds.grow(2), Color.TRANSPARENT, Palette.COLOR_TARGET_AVAILABLE, 2, 5)
+	_draw_staff()
 	_draw_edges()
 	for slot: SpellSlotData in _data.slots:
 		_draw_slot(slot)
-	if _hovered:
-		draw_rect(bounds, Palette.COLOR_TARGET_HOVER, false, 3.0)
-	elif _highlighted:
-		draw_rect(bounds, Palette.COLOR_TARGET_AVAILABLE, false, 2.5)
+
+
+## Socket centre: the upper part of the slot cell; the cost pips sit below it.
+func _socket_center(slot: SpellSlotData) -> Vector2:
+	return _slot_pixel_pos(slot) + Vector2(SLOT_SIZE.x * 0.5, SOCKET_R + 2.0)
+
+
+## Wooden staff along the tip's row, from the first column to just past the tip.
+func _draw_staff() -> void:
+	var tip := _data.get_tip_slot()
+	if tip == null:
+		return
+	var y := _socket_center(tip).y - 7.0
+	var x0 := PAD.x - 4.0
+	EmberDraw.staff(self, Vector2(x0, y), _socket_center(tip).x + SOCKET_R + 14.0 - x0)
 
 
 func _draw_edges() -> void:
 	for slot: SpellSlotData in _data.slots:
-		if slot.next_id.is_empty():
-			continue
-		var next := _data.get_slot(slot.next_id)
+		var next := _data.get_slot(slot.next_id) if not slot.next_id.is_empty() else null
 		if next == null:
 			continue
-		var from := _slot_center(slot)
-		var to := _slot_center(next)
+		var from := _socket_center(slot)
+		var to := _socket_center(next)
 		var dir := (to - from).normalized()
-		var half := SLOT_SIZE.x * 0.5
-		draw_line(from + dir * (half + 1.0), to - dir * (half + 1.0), Palette.COLOR_WAND_EDGE, 1.5)
-		_draw_arrowhead(from, to)
-
-
-func _draw_arrowhead(from: Vector2, to: Vector2) -> void:
-	var dir := (to - from).normalized()
-	var tip := to - dir * (SLOT_SIZE.x * 0.5 + 2.0)
-	var perp := Vector2(-dir.y, dir.x) * 4.5
-	var base := tip - dir * 7.0
-	draw_colored_polygon(PackedVector2Array([tip, base + perp, base - perp]), Palette.COLOR_WAND_EDGE)
-
-
-func _draw_icon(pos: Vector2, size: Vector2, icon_name: String) -> void:
-	if icon_name == "bomb":
-		_draw_bomb_icon(pos, size)
-
-
-func _draw_bomb_icon(pos: Vector2, size: Vector2) -> void:
-	var center := pos + Vector2(size.x * 0.44, size.y * 0.60)
-	var radius := size.x * 0.27
-
-	draw_circle(center, radius, Palette.COLOR_BOMB_BODY)
-	draw_arc(center, radius, 0.0, TAU, 32, Palette.COLOR_BOMB_RIM, 1.5)
-	# Shine
-	draw_circle(center + Vector2(-radius * 0.28, -radius * 0.32), radius * 0.22,
-			Palette.COLOR_BOMB_SHINE)
-
-	# Fuse
-	var fuse_base := center + Vector2(radius * 0.60, -radius * 0.78)
-	var fuse_tip := pos + Vector2(size.x * 0.76, size.y * 0.13)
-	draw_line(fuse_base, fuse_tip, Palette.COLOR_BOMB_FUSE, 1.5)
-
-	# Spark
-	draw_circle(fuse_tip, 3.2, Palette.COLOR_BOMB_SPARK)
-	draw_circle(fuse_tip, 1.6, Palette.COLOR_BOMB_SPARK_HOT)
+		var tip := to - dir * (SOCKET_R + 3.0)
+		draw_line(from + dir * (SOCKET_R + 2.0), tip, Palette.COLOR_WAND_EDGE, 2.0, true)
+		var perp := Vector2(-dir.y, dir.x) * 4.5
+		var base := tip - dir * 7.0
+		draw_colored_polygon(PackedVector2Array([tip, base + perp, base - perp]), Palette.COLOR_WAND_EDGE)
 
 
 func _draw_slot(slot: SpellSlotData) -> void:
-	var pos := _slot_pixel_pos(slot)
-	var rect := Rect2(pos, SLOT_SIZE)
-	if slot.is_tip:
-		draw_rect(rect, Palette.COLOR_WAND_SLOT_TIP, true)
-		draw_rect(rect, Palette.COLOR_WAND_BORDER_TIP, false, 1.5)
-	else:
-		draw_rect(rect, Palette.COLOR_WAND_SLOT_BODY, true)
-		draw_rect(rect, Palette.COLOR_WAND_BORDER_BODY, false, 1.0)
-
+	var c := _socket_center(slot)
 	if slot.spell == null:
+		EmberDraw.empty_socket(self, c, SOCKET_R, slot.is_tip)
 		return
-
 	var charges: int = _charges.get(slot.id, 0)
-	var cost := slot.spell.mana_cost
-	var active: bool = charges >= cost
-
-	if slot.spell.icon.is_empty():
-		draw_rect(rect, Color(slot.spell.element_color, 0.28), true)
-		draw_string(ThemeDB.fallback_font,
-				Vector2(pos.x, pos.y + SLOT_SIZE.y * 0.5 + 5.0),
-				slot.spell.abbreviation,
-				HORIZONTAL_ALIGNMENT_CENTER, SLOT_SIZE.x, 11, Color.WHITE)
-	else:
-		_draw_icon(pos, SLOT_SIZE, slot.spell.icon)
-
-	_draw_mana_pips(pos, charges, cost)
-	if active:
-		draw_rect(rect, Palette.COLOR_ACTIVE_BORDER, false, 2.0)
+	var active := slot.spell.mana_cost > 0 and charges >= slot.spell.mana_cost
+	EmberDraw.spell_socket(self, slot.spell, c, SOCKET_R, charges, slot.is_tip, active)
 	if _webbed.has(slot.id):
-		_draw_net_overlay(pos)
+		_draw_web(c)
 
 
-func _draw_net_overlay(pos: Vector2) -> void:
-	draw_rect(Rect2(pos, SLOT_SIZE), Palette.COLOR_BOMB_SLOT_FILL, true)
-	var c := Palette.COLOR_BOMB_SLOT_BORDER
-	const STEP := 9.0
-	var end_x := pos.x + SLOT_SIZE.x
-	var end_y := pos.y + SLOT_SIZE.y
-	var y := pos.y
-	while y <= end_y:
-		draw_line(Vector2(pos.x, y), Vector2(end_x, y), c, 1.2)
-		y += STEP
-	var x := pos.x
-	while x <= end_x:
-		draw_line(Vector2(x, pos.y), Vector2(x, end_y), c, 1.2)
-		x += STEP
-
-
-func _draw_mana_pips(pos: Vector2, charges: int, cost: int) -> void:
-	if cost <= 0:
-		return
-	const PIP := 5.0
-	const GAP := 2.0
-	var total_w := cost * PIP + (cost - 1) * GAP
-	var px := pos.x + (SLOT_SIZE.x - total_w) * 0.5
-	var py := pos.y + SLOT_SIZE.y - PIP - 3.0
-	for i in cost:
-		var color := Palette.COLOR_PIP_FILLED if i < charges else Palette.COLOR_PIP_EMPTY
-		draw_rect(Rect2(Vector2(px + i * (PIP + GAP), py), Vector2(PIP, PIP)), color, true)
+## Spider web over a socket: a ring plus spokes and a second ring.
+func _draw_web(c: Vector2) -> void:
+	draw_circle(c, SOCKET_R, Color(0, 0, 0, 0.35))
+	for i in 6:
+		draw_line(c, c + Vector2.from_angle(i * TAU / 6.0) * SOCKET_R, WEB, 1.0, true)
+	draw_arc(c, SOCKET_R * 0.5, 0.0, TAU, 6, WEB, 1.0, true)
+	draw_arc(c, SOCKET_R * 0.9, 0.0, TAU, 6, WEB, 1.0, true)
