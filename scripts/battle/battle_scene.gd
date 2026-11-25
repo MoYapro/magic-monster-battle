@@ -11,6 +11,7 @@ const MAGE_X := MANA_X + ManaDisplay.WIDTH + 8.0
 const WAND_X := MAGE_X + MageDisplay.WIDTH + 10.0
 const ROW_GAP := 14.0
 const BOTTOM_BAR_H := 38.0
+const TOP_RESERVE := 58.0  # room for the battle counter and the area banner above the grid
 
 @onready var enemy_grid: EnemyGrid = $EnemyGrid
 
@@ -207,7 +208,7 @@ func _setup_mage_wand_rows() -> void:
 	_equalize_wand_widths(wand_displays)
 	var total_h := _measure_total_height(wand_displays)
 	var usable_h := SCREEN_H - BOTTOM_BAR_H
-	var start_y := MARGIN + (usable_h - MARGIN * 2.0 - total_h) / 2.0
+	var start_y := maxf(TOP_RESERVE, MARGIN + (usable_h - MARGIN * 2.0 - total_h) / 2.0)
 	_place_mana_bar(start_y, total_h)
 	_place_rows(wand_displays, _mages, start_y)
 	_position_enemy_grid(start_y, total_h)
@@ -229,6 +230,7 @@ func _equalize_wand_widths(wand_displays: Array[WandDisplay]) -> void:
 		widest = maxf(widest, wand.get_display_size().x)
 	for wand in wand_displays:
 		wand.min_width = widest
+		wand.min_height = MageDisplay.MIN_HEIGHT
 
 
 func _measure_total_height(wand_displays: Array[WandDisplay]) -> float:

@@ -5,6 +5,7 @@ const WIDTH := 100.0
 const PAD := 12.0
 const BAR_HEIGHT := 8.0
 const PORTRAIT_R := 24.0
+const MIN_HEIGHT := 150.0  # portrait, name, HP and mana pips with some air
 
 var _mage: MageData = null
 var _height: float = 70.0

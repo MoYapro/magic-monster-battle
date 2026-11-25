@@ -193,7 +193,6 @@ func get_enemy_at(grid_pos: Vector2i) -> EnemyData:
 
 # --- rendering ---
 
-const OBSTACLE_TILES := {"stone": "stone_3", "boulder": "stone_3"}
 const CELL_LINE := Color(0.04, 0.03, 0.02, 0.85)
 
 var _ground_base: Array[String] = GroundTiles.DEFAULT_BASE
@@ -286,8 +285,7 @@ func _draw_obstacles() -> void:
 		if not _obstacle_hp.has(obs.id):
 			continue
 		var rect := Rect2(Vector2(_obstacle_positions[i]) * cell_size, Vector2(obs.grid_size) * cell_size)
-		var tile: String = OBSTACLE_TILES.get(_script_id(obs), "")
-		TokenDraw.obstacle(self, rect, obs, _obstacle_hp[obs.id], GroundTiles.texture(tile) if tile else null)
+		TokenDraw.obstacle(self, rect, obs, _obstacle_hp[obs.id], ObstacleArt.texture(obs))
 
 
 ## Monsters without exported art yet are drawn as a coloured token with their name.
@@ -388,8 +386,3 @@ func _defence_chips(enemy_id: String) -> Array:
 	if _blocks.get(enemy_id, 0) > 0:
 		out.append(["▣ %d" % _blocks[enemy_id], Palette.COLOR_GRID_BLOCK])
 	return out
-
-
-static func _script_id(obj: Object) -> String:
-	var script: Script = obj.get_script()
-	return script.resource_path.get_file().get_basename() if script else ""

@@ -16,6 +16,7 @@ var _hovered := false
 var _charges: Dictionary = {}  # slot_id -> int
 var _webbed: Dictionary = {}   # slot_id -> true
 var min_width := 0.0  # rows share one panel width
+var min_height := 0.0  # tall enough for the mage card beside it
 
 
 func setup(wand_data: WandData) -> void:
@@ -81,7 +82,7 @@ func _compute_bounds() -> Rect2:
 		max_row = maxi(max_row, slot.grid_row)
 	var w := float(max_col) * CELL_SPACING.x + SLOT_SIZE.x + PAD.x * 2.0
 	var h := float(max_row) * CELL_SPACING.y + SLOT_SIZE.y + PAD.y + PAD_BOTTOM
-	return Rect2(Vector2.ZERO, Vector2(maxf(w, min_width), h))
+	return Rect2(Vector2.ZERO, Vector2(maxf(w, min_width), maxf(h, min_height)))
 
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -1,6 +1,7 @@
 """Export the art drafts from layout-drafts/ into Godot assets.
 
 Grounds: every tile PNG is copied to assets/grounds/.
+Obstacles: every <id>.png is scaled to 256 px per cell into assets/obstacles/.
 Monsters: every <id>.svg is split into one PNG per body part (named <g> with data-pivot) plus the
 paper-rim layer of that part, and described in rig.json; full.png is the whole monster.
 
@@ -36,6 +37,16 @@ def export_grounds():
     for png in sorted((DRAFTS / "grounds").glob("*.png")):
         if not png.name.startswith("00_"):
             shutil.copyfile(png, dst / png.name)
+
+
+def export_obstacles():
+    dst = OUT / "obstacles"
+    dst.mkdir(parents=True, exist_ok=True)
+    for png in sorted((DRAFTS / "obstacles").glob("*.png")):
+        if png.name.startswith("00_"):
+            continue
+        img = Image.open(png)
+        img.resize((round(img.width * SCALE), round(img.height * SCALE)), Image.LANCZOS).save(dst / png.name)
 
 
 # ---------------------------------------------------------------- monster rig (pure on the XML tree)
@@ -191,6 +202,7 @@ def _stripped(root, layer):
 
 def main(ids):
     export_grounds()
+    export_obstacles()
     svgs = sorted((DRAFTS / "monsters").glob("*.svg"))
     for svg in svgs:
         if svg.stem.startswith("00_") or (ids and svg.stem not in ids):
