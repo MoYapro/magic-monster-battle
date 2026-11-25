@@ -11,8 +11,8 @@ The battlefield obstacles, printed in the same two-colour linocut style as the m
 | Footprint | Canvas | Obstacles |
 |---|---|---|
 | 1×1 | 512 × 512 | barrel, ice block, lava rock, pyre, rotted stump, spore vent, stone, thornbush, web cocoon |
-| 1×2 (tall) | 512 × 1024 | ancient pillar, bog pillar, broken pillar, cactus, crystal formation, frozen log, log, monolith, obelisk, obsidian spike, sarcophagus, stalactite pillar, stalagmite, tree |
-| 2×1 (wide) | 1024 × 512 | ash pile, bone pile, boulder, bramble patch, crumbling wall, fossilized bone, ice wall, mudpit, mushroom circle, sand dune, snow drift, tide pool |
+| 1×2 (tall) | 512 × 1024 | ancient pillar, bog pillar, broken pillar, cactus, crystal formation, monolith, obelisk, obsidian spike, sarcophagus, stalactite pillar, stalagmite, tree |
+| 2×1 (wide) | 1024 × 512 | ash pile, bone pile, boulder, bramble patch, crumbling wall, fossilized bone, frozen log, ice wall, log, mudpit, mushroom circle, sand dune, snow drift, tide pool |
 | 2×2 | 1024 × 1024 | altar, ancient stump, glacier chunk |
 
 Obstacles do not animate, so each is a single group `obstacle` with its pivot at the middle of the base (enough for a hit wobble later).

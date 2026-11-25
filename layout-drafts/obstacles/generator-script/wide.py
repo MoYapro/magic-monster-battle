@@ -4,7 +4,8 @@ import math
 
 from helpers_a import long_bone
 from helpers_d import leaf_cluster
-from kit import (EMBER, INK, PAPER, bezier, boulder, cast_shadow, crack, form, ink_line, jag, knob, leaf, lerp, mound,
+from helpers_g import drip
+from kit import (end_rings, grain_lines, EMBER, INK, PAPER, bezier, boulder, cast_shadow, crack, form, ink_line, jag, knob, leaf, lerp, mound,
                  oval, paper_line, path, pebbles, puff, rng, rock, sliver, smoke_wisps, taper, thread)
 
 FLOOR = 450
@@ -48,7 +49,9 @@ def bone_pile(p):
     for a, b in (((230, 400), (420, 330)), ((470, 410), (700, 360)), ((600, 330), (820, 410)), ((330, 300), (540, 350)),
                  ((690, 300), (870, 340)), ((160, 430), (300, 370))):
         long_bone(p, a, b, 20, color="#e0d4b0")
-    for x, y, s in ((330, 260, 1.4), (620, 280, 1.2), (780, 380, 1.0), (450, 380, 0.9)):
+    for x, y, s in ((330, 260, 1.4), (620, 280, 1.2), (780, 380, 1.0), (450, 380, 0.9), (200, 360, 1.0),
+                    (520, 300, 1.1), (720, 300, 0.9), (860, 390, 0.85), (390, 340, 0.8), (600, 410, 0.9),
+                    (260, 420, 0.75), (470, 250, 0.9)):
         _skull(p, x, y, s)
     for k in range(5):
         x = 520 + k * 24
@@ -87,29 +90,75 @@ def bramble_patch(p):
         form(p, leaf(x, y, 34, 18, ang), ((x, y), (x + 10, y + 4), (x + 30, y)), color="#7aa653", count=1, rows=0, sw=3)
 
 
+def _wall_height(x):
+    """Courses left standing at x: full at both ends, broken down in the middle."""
+    if x < 400 or x > 760:
+        return 5
+    return 1 + int(abs(x - 580) / 70)
+
+
 def crumbling_wall(p):
     cast_shadow(p, 520, FLOOR, 430)
-    rows_ = 6
-    for r in range(rows_):
-        y1 = FLOOR - 10 - r * 46
-        offset = 0 if r % 2 else 40
-        for k in range(10):
-            x0 = 90 + offset + k * 84
-            x1 = x0 + 78
-            height_left = 6 if x0 < 420 else (2 + int(abs(x0 - 560) / 90) if x0 < 700 else 6)
-            if r >= height_left or x1 > 950:
-                continue
-            brick = [(x0, y1 - 42), (x1, y1 - 42 + rng.uniform(-3, 3)), (x1, y1), (x0, y1)]
-            form(p, brick, ((x1 - 16, y1 - 42), (x1 - 10, y1 - 20), (x1 - 16, y1)), color="#b8885a", count=1, rows=0,
-                 sw=3.5, marks=[(crack((x0 + 10, y1 - 30), (x0 + 50, y1 - 12), kinks=1, w=2.5), INK)] if rng.random() < 0.3 else [])
-    for x, y, ang in ((520, 440, 0.3), (600, 436, -0.4), (680, 444, 0.1), (560, 410, 0.9)):
-        brick = [(x + math.cos(ang) * dx - math.sin(ang) * dy, y + math.sin(ang) * dx + math.cos(ang) * dy)
-                 for dx, dy in ((-36, -18), (36, -18), (36, 18), (-36, 18))]
-        form(p, brick, (brick[1], brick[2], brick[3]), color="#a8784a", count=1, rows=0, sw=3)
-    for x in (100, 140, 860, 900):
+    y = FLOOR - 4
+    for course in range(5):
+        x = 90 + rng.uniform(0, 30)
+        h = rng.uniform(46, 60)
+        while x < 920:
+            w = rng.uniform(60, 120)
+            if course < _wall_height(x + w / 2):
+                cx, cy = x + w / 2, y - h / 2
+                stone = [(cx + w / 2 * (1 + rng.uniform(-0.15, 0.05)) * math.cos(a), cy + h / 2 * (1 + rng.uniform(-0.2, 0.05)) * math.sin(a))
+                         for a in [k * 2 * math.pi / 9 + rng.uniform(-0.15, 0.15) for k in range(9)]]
+                rock(p, stone, ((cx + w * 0.2, cy - h / 2), (cx + w * 0.45, cy), (cx + w * 0.25, cy + h / 2)),
+                     color=rng.choice(("#a89878", "#b8a888", "#988a70")), cracks=1 if rng.random() < 0.3 else 0, count=1, sw=3.5)
+            x += w + rng.uniform(2, 8)
+        y -= h - 4
+    for x, y, r in ((560, 446, 30), (620, 440, 22), (680, 450, 26), (520, 450, 18), (600, 418, 20)):
+        rock(p, boulder(x, y - r * 0.4, r, 7, 0.75, rng.uniform(0, 1)), ((x, y - r), (x + r * 0.6, y - r * 0.4), (x + r, y)),
+             color="#988a70", cracks=0, count=1, sw=3)
+    for x in (100, 140, 860, 900, 640):
         for k in range(3):
             p.part([taper([(x + k * 8, FLOOR), (x + k * 8 + rng.uniform(-14, 14), FLOOR - rng.uniform(30, 60))], 7, 1)],
                    color="#7aa653", sw=2)
+
+
+def _lying_log(p, color, end_color, knots=True):
+    """A log lying on its side, its cut end facing the viewer on the left."""
+    body = [(150, 250), (860, 240), (900, 300), (880, 430), (150, 440)]
+    marks = grain_lines((200, 290), (860, 290), 4, 110, 4)
+    if knots:
+        marks += [(path(oval(x, y, 20, 13, 10)), INK) for x, y in ((420, 300), (680, 380))]
+        marks += [(path(oval(x - 4, y - 3, 8, 5, 8)), PAPER) for x, y in ((420, 300), (680, 380))]
+    form(p, body, ((300, 400), (600, 440), (880, 420)), toward=(0.3, 1), color=color, count=9, marks=marks)
+    form(p, oval(150, 345, 54, 96, 24), ((120, 260), (160, 345), (130, 436)), toward=(-1, 0.2), color=end_color, count=2,
+         rows=0, marks=end_rings(150, 345, 50, 90, 4, 3))
+    return body
+
+
+def log(p):
+    cast_shadow(p, 520, FLOOR, 400, 16)
+    _lying_log(p, "#a0703a", "#d2a060")
+    for a, b in (((520, 250), (560, 150)), ((760, 250), (820, 180))):
+        form(p, taper([a, b], 40, 30), (a, lerp(a, b, 0.5), b), color="#a0703a", count=2, rows=0,
+             marks=end_rings(b[0], b[1], 14, 14, 2, 2))
+    for x in (300, 600, 830):
+        for k in range(3):
+            p.part([taper([(x + k * 8, FLOOR), (x + k * 8 + rng.uniform(-14, 14), FLOOR - rng.uniform(26, 50))], 7, 1)],
+                   color="#7aa653", sw=2)
+
+
+def frozen_log(p):
+    cast_shadow(p, 520, FLOOR, 400, 16)
+    p.part([oval(560, FLOOR - 4, 380, 18, 24)], color="#bfe4f4", sw=3)
+    _lying_log(p, "#8a5a2a", "#c09060")
+    cap = taper([(140, 250), (300, 236), (500, 232), (700, 230), (900, 280)], 44, 26)
+    form(p, cap, ((300, 226), (600, 250), (880, 290)), toward=(0.3, 1), color="#e8f2f8", count=4, rows=0,
+         marks=[paper_line((200, 236), (500, 222), (800, 236), 4, 1)])
+    for x, L in ((220, 70), (300, 110), (380, 80), (470, 130), (560, 90), (650, 120), (740, 70), (820, 100)):
+        p.part([taper([(x, 430), (x - 3, 430 + L * 0.5), (x - 1, 430 + L * 0.55)], 20, 2)], color="#bfe4f4", sw=3,
+               marks=[paper_line((x - 5, 434), (x - 6, 430 + L * 0.2), (x - 4, 430 + L * 0.35), 3, 1)])
+    for x, y in ((360, 330), (620, 300), (760, 390)):
+        p.part([leaf(x, y, 30, 12, -1.2 + rng.uniform(-0.3, 0.3))], color="#e8f2f8", sw=2)
 
 
 def fossilized_bone(p):
@@ -141,12 +190,20 @@ def ice_wall(p):
 
 def mudpit(p):
     pit = [(x + rng.uniform(-14, 14), y + rng.uniform(-8, 8)) for x, y in oval(520, 390, 420, 80, 30)]
+    bubbles = [(380, 380, 26), (560, 400, 34), (700, 370, 22), (460, 420, 16), (300, 410, 14), (640, 430, 18)]
+    marks = [(path(oval(x, y, r, r * 0.4, 12)), INK) for x, y, r in bubbles]
+    marks += [(path(oval(x - r * 0.2, y - r * 0.15, r * 0.5, r * 0.14, 10)), PAPER) for x, y, r in bubbles]
+    marks += [(path(taper(oval(x, y, r * 1.6, r * 0.6, 18)[3:12], 3, 1)), PAPER) for x, y, r in bubbles[:4]]
+    pools = [(path(oval(x, y, rx, ry, 16)), "#6a7a72") for x, y, rx, ry in ((260, 380, 90, 20), (760, 400, 110, 22), (520, 350, 70, 14))]
+    gloss = [paper_line((x - rx * 0.7, y - 4), (x, y - ry * 0.6), (x + rx * 0.6, y - 2), 4, 1)
+             for x, y, rx, ry in ((260, 380, 90, 20), (760, 400, 110, 22), (520, 350, 70, 14))]
+    gloss += [paper_line((x, y), (x + 60, y - 6), (x + 130, y), 3, 1) for x, y in ((160, 360), (600, 450), (420, 440), (780, 350))]
     form(p, pit, ((180, 420), (520, 488), (880, 420)), toward=(0.2, 1), color="#8a6a3a", count=7,
-         marks=[(path(oval(x, y, r, r * 0.4, 12)), INK) for x, y, r in ((380, 380, 26), (560, 400, 34), (700, 370, 22), (460, 420, 16))]
-         + [(path(oval(x - r * 0.2, y - r * 0.15, r * 0.5, r * 0.15, 10)), PAPER) for x, y, r in ((380, 380, 26), (560, 400, 34))]
-         + _ripples(180, 860, 350, 440, 3, PAPER, 3))
-    for x, y in ((130, 440), (900, 430), (300, 470), (760, 470)):
-        p.part([oval(x, y, 26, 9, 12)], color="#8a6a3a", sw=3)
+         marks=pools + marks + gloss)
+    for x, y in ((130, 440), (900, 430), (300, 470), (760, 470), (80, 410), (960, 400)):
+        p.part([oval(x, y, 26, 9, 12)], color="#6a7a72", sw=3, marks=[paper_line((x - 14, y - 2), (x, y - 5), (x + 12, y - 2), 2.5, 1)])
+    for x, y, L in ((180, 330, 40), (840, 340, 34), (520, 312, 26)):
+        p.part(drip(x, y - L, L, 12)[1:], color="#8a6a3a", sw=3)
 
 
 def mushroom_circle(p):
@@ -201,7 +258,7 @@ def tide_pool(p):
 OBSTACLES = {
     "ash_pile": (ash_pile, "#8a8078"), "bone_pile": (bone_pile, "#e0d4b0"), "boulder": (boulder_, "#a8a090"),
     "bramble_patch": (bramble_patch, "#4a6a2a"), "crumbling_wall": (crumbling_wall, "#b8885a"),
-    "fossilized_bone": (fossilized_bone, "#d8c08a"), "ice_wall": (ice_wall, "#a8d8ee"), "mudpit": (mudpit, "#8a6a3a"),
+    "fossilized_bone": (fossilized_bone, "#d8c08a"), "log": (log, "#a0703a"), "frozen_log": (frozen_log, "#9fd4ee"), "ice_wall": (ice_wall, "#a8d8ee"), "mudpit": (mudpit, "#8a6a3a"),
     "mushroom_circle": (mushroom_circle, "#c86a4a"), "sand_dune": (sand_dune, "#e0b860"),
     "snow_drift": (snow_drift, "#e8eef4"), "tide_pool": (tide_pool, "#4a8ab0"),
 }

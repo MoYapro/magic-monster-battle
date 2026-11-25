@@ -138,43 +138,6 @@ def crystal_formation(p):
     rock(p, base, ((330, FLOOR - 70), (390, FLOOR - 40), (400, FLOOR)), color="#8a8a80", cracks=0, count=3)
 
 
-def frozen_log(p):
-    cast_shadow(p, 262, FLOOR, 160)
-    a, b = (320, FLOOR - 20), (200, 150)
-    log = taper([a, lerp(a, b, 0.5), b], 120, 104)
-    form(p, log, (lerp(a, b, 0.0), lerp(a, b, 0.5), (b[0] + 30, b[1])), color="#8a5a2a", count=7,
-         marks=grain_lines(a, b, 3, 60, 4) + [(path(oval(270, 560, 14, 20, 10)), INK)])
-    form(p, oval(200, 150, 54, 26, 20, -0.25), ((160, 160), (200, 168), (250, 140)), color="#c09060", count=2, rows=0,
-         marks=end_rings(200, 150, 50, 22, 3, 3))
-    top_edge = [lerp((150, 160), (262, FLOOR - 30), t) for t in (0, 0.25, 0.5, 0.75, 1.0)]
-    cap = taper([(x + rng.uniform(-3, 3), y) for x, y in top_edge], 34, 18)
-    form(p, cap, ((170, 150), (210, 500), (270, FLOOR - 40)), color="#e8f2f8", count=3, rows=0,
-         marks=[paper_line((150, 180), (190, 450), (240, 800), 3, 1)])
-    for t, L in ((0.12, 110), (0.3, 150), (0.48, 120), (0.64, 160), (0.8, 90)):
-        x, y = lerp((150, 160), (262, FLOOR - 30), t)
-        p.part([taper([(x - 10, y), (x - 14, y + L * 0.5), (x - 12, y + L)], 22, 2)], color="#bfe4f4", sw=3,
-               marks=[paper_line((x - 16, y + 4), (x - 17, y + L * 0.3), (x - 15, y + L * 0.5), 3, 1)])
-    p.part([oval(300, FLOOR - 6, 90, 14, 18)], color="#bfe4f4", sw=3)
-
-
-def log(p):
-    cast_shadow(p, 262, FLOOR, 180)
-    trunk = [(150, FLOOR), (180, 820), (190, 300), (196, 150), (316, 150), (322, 300), (330, 820), (366, FLOOR)]
-    knots = [(path(oval(x, y, 16, 22, 10)), INK) for x, y in ((240, 400), (290, 640))]
-    knots += [(path(oval(x - 3, y - 4, 6, 9, 8)), PAPER) for x, y in ((240, 400), (290, 640))]
-    form(p, trunk, ((290, 150), (300, 500), (320, FLOOR)), color="#a0703a", count=8,
-         marks=grain_lines((230, 200), (236, 900), 4, 70, 4) + knots)
-    for a, b in (((190, 380), (110, 320)), ((322, 560), (400, 500))):
-        form(p, taper([a, b], 40, 30), (a, lerp(a, b, 0.5), b), color="#a0703a", count=2, rows=0,
-             marks=end_rings(b[0], b[1], 14, 14, 2, 2))
-    form(p, oval(256, 152, 62, 24, 22), ((200, 160), (256, 170), (320, 150)), color="#d2a060", count=2, rows=0,
-         marks=end_rings(256, 152, 58, 20, 4, 3))
-    for side in (-1, 1):
-        root = taper(bezier((256 + side * 90, FLOOR - 40), (256 + side * 150, FLOOR - 10), (256 + side * 200, FLOOR), 8), 40, 8)
-        form(p, root, ((256 + side * 90, FLOOR - 50), (256 + side * 150, FLOOR - 20), (256 + side * 200, FLOOR)),
-             color="#a0703a", count=1, rows=0)
-
-
 def monolith(p):
     cast_shadow(p, 262, FLOOR, 160)
     slab = [(150, FLOOR - 10), (170, 400), (196, 170), (240, 110), (300, 130), (340, 300), (360, 700), (370, FLOOR - 10)]
@@ -262,17 +225,21 @@ def tree(p):
         root = taper(bezier((256 + side * 70, FLOOR - 30), (256 + side * 120, FLOOR - 6), (256 + side * 170, FLOOR), 8), 36, 6)
         form(p, root, ((256 + side * 70, FLOOR - 40), (256 + side * 130, FLOOR - 16), (256 + side * 170, FLOOR)),
              color="#8a5a2a", count=1, rows=0)
-    for cx, cy, r in ((256, 230, 150), (150, 330, 110), (362, 320, 116), (256, 380, 120), (180, 160, 90), (340, 150, 96)):
-        blob = leaf_cluster(cx, cy, r, 9, rng.uniform(0, 1), 0.82)
-        form(p, blob, ((cx + r * 0.2, cy - r), (cx + r * 0.7, cy), (cx + r * 0.2, cy + r)), color="#6a9a4a", count=4,
-             rows=0)
+    clumps = [(256, 300, 150), (130, 360, 110), (382, 350, 116), (256, 440, 120), (150, 220, 104), (360, 210, 110),
+              (256, 140, 120), (90, 300, 84), (424, 270, 84), (180, 440, 96), (330, 450, 96), (256, 60, 80),
+              (160, 120, 80), (350, 110, 84)]
+    for cx, cy, r in sorted(clumps, key=lambda c: c[1]):
+        blob = leaf_cluster(cx, cy, r, 11, rng.uniform(0, 1), 0.85)
+        tufts = [(path(leaf_cluster(cx + rng.uniform(-r, r) * 0.4, cy + rng.uniform(-r, r) * 0.3, r * 0.22, 6,
+                                    rng.uniform(0, 1), 0.8)), "#4a7a3a") for _ in range(3)]
+        form(p, blob, ((cx + r * 0.3, cy - r), (cx + r * 0.75, cy), (cx + r * 0.3, cy + r)), color="#6a9a4a", count=4,
+             rows=0, marks=tufts)
 
 
 OBSTACLES = {
     "ancient_pillar": (ancient_pillar, "#c8b48a"), "bog_pillar": (bog_pillar, "#6a8a4a"),
     "broken_pillar": (broken_pillar, "#c0b8a8"), "cactus": (cactus, "#7aa653"),
-    "crystal_formation": (crystal_formation, "#a8d8e8"), "frozen_log": (frozen_log, "#9fd4ee"), "log": (log, "#a0703a"),
-    "monolith": (monolith, "#8a8a80"), "obelisk": (obelisk, "#d8c08a"), "obsidian_spike": (obsidian_spike, "#6a4a8a"),
+    "crystal_formation": (crystal_formation, "#a8d8e8"),     "monolith": (monolith, "#8a8a80"), "obelisk": (obelisk, "#d8c08a"), "obsidian_spike": (obsidian_spike, "#6a4a8a"),
     "sarcophagus": (sarcophagus, "#c8a060"), "stalactite_pillar": (stalactite_pillar, "#a09080"),
     "stalagmite": (stalagmite, "#b0a088"), "tree": (tree, "#6a9a4a"),
 }
