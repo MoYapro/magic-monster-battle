@@ -2,23 +2,24 @@ extends Node2D
 
 const SCREEN_W := 1280.0
 const SCREEN_H := 720.0
-const HEADER_H := 48.0
-const BOTTOM_BAR_H := 38.0
+const BOTTOM_BAR_H := EmberDraw.BOTTOM_BAR_H
 
-const CARD_W := 340.0
-const CARD_H := 210.0
-const CARD_GAP := 30.0
-const CARD_Y := HEADER_H + (SCREEN_H - HEADER_H - BOTTOM_BAR_H - CARD_H) * 0.5
+const CARD_W := 360.0
+const CARD_H := 494.0
+const CARD_GAP := 40.0
+const CARD_Y := 116.0
 const CARDS_TOTAL_W := 3.0 * CARD_W + 2.0 * CARD_GAP
 const CARD_MARGIN := (SCREEN_W - CARDS_TOTAL_W) * 0.5
 
-const OPTION_H := 50.0
-const OPTION_PAD := 12.0
+const OPTION_H := 110.0
+const OPTION_PAD := 24.0
 const HP_GAIN := MageProgression.HP_GAIN
 const MANA_GAIN := MageProgression.MANA_GAIN
+const STATS := ["hp", "mana"]
 
 var _mages: Array[MageData] = []
 var _heal_button: Button = null
+var _hovered := Vector2i(-1, -1)  # (mage, stat index) under the mouse
 
 
 func _ready() -> void:
@@ -27,19 +28,13 @@ func _ready() -> void:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, Vector2(SCREEN_W, SCREEN_H)), Palette.COLOR_BG, true)
-	_draw_header()
+	EmberDraw.backdrop(self)
+	EmberDraw.title_plate(self, Rect2(440, 10, 400, 40), "The Embers Grow")
+	EmberDraw.text(self, Vector2(24, 36), "Battle %d won" % GameState.battle_count, 18, Palette.COLOR_TEXT_DIM, true)
+	EmberDraw.text_centered(self, SCREEN_W / 2.0, 92, "One mage may draw strength from the fire.", 17, Palette.COLOR_TEXT_DIM)
 	for i in _mages.size():
 		_draw_mage_card(i)
-	_draw_bottom_bar_bg()
-
-
-func _draw_header() -> void:
-	draw_rect(Rect2(Vector2.ZERO, Vector2(SCREEN_W, HEADER_H)), Palette.COLOR_HEADER_BG, true)
-	draw_rect(Rect2(Vector2(0, HEADER_H - 1), Vector2(SCREEN_W, 1)), Palette.COLOR_BORDER, true)
-	draw_string(ThemeDB.fallback_font,
-			Vector2(SCREEN_W * 0.5, HEADER_H * 0.5 + 9.0),
-			"Level Up", HORIZONTAL_ALIGNMENT_CENTER, -1, 22, Palette.COLOR_TEXT_BRIGHT)
+	EmberDraw.bottom_bar(self, "Pick one upgrade, or heal the whole party instead")
 
 
 func _card_x(i: int) -> float:
@@ -47,60 +42,67 @@ func _card_x(i: int) -> float:
 
 
 func _option_rect(mage_i: int, stat: String) -> Rect2:
-	var x := _card_x(mage_i) + OPTION_PAD
-	var w := CARD_W - OPTION_PAD * 2.0
-	var y := CARD_Y + 50.0 + (0.0 if stat == "hp" else OPTION_H + 8.0)
-	return Rect2(Vector2(x, y), Vector2(w, OPTION_H))
+	var y := CARD_Y + 230.0 + (0.0 if stat == "hp" else OPTION_H + 20.0)
+	return Rect2(Vector2(_card_x(mage_i) + OPTION_PAD, y), Vector2(CARD_W - OPTION_PAD * 2.0, OPTION_H))
 
 
 func _draw_mage_card(i: int) -> void:
 	var mage := _mages[i]
-	var x := _card_x(i)
-	draw_rect(Rect2(Vector2(x, CARD_Y), Vector2(CARD_W, CARD_H)), Palette.COLOR_PANEL, true)
-	draw_rect(Rect2(Vector2(x, CARD_Y), Vector2(CARD_W, CARD_H)), Palette.COLOR_BORDER, false, 1.0)
-	draw_string(ThemeDB.fallback_font,
-			Vector2(x + OPTION_PAD, CARD_Y + 26.0),
-			mage.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Palette.COLOR_TEXT_BRIGHT)
-	var hp_frac := clampf(float(mage.current_hp) / float(mage.max_hp), 0.0, 1.0)
-	var hp_color := Palette.COLOR_HP_FULL.lerp(Palette.COLOR_HP_LOW, 1.0 - hp_frac)
-	var name_w := ThemeDB.fallback_font.get_string_size(mage.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
-	draw_string(ThemeDB.fallback_font,
-			Vector2(x + OPTION_PAD + name_w + 8.0, CARD_Y + 24.0),
-			"%d / %d HP" % [mage.current_hp, mage.max_hp],
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 11, hp_color)
-	_draw_option(i, "hp",   "Max HP",    mage.max_hp,          HP_GAIN)
-	_draw_option(i, "mana", "Mana / turn", mage.mana_allowance, MANA_GAIN)
+	var card := Rect2(_card_x(i), CARD_Y, CARD_W, CARD_H)
+	var hot := _hovered.x == i
+	EmberDraw.panel(self, card, hot)
+	var cx := card.get_center().x
+	EmberDraw.medallion(self, Vector2(cx, CARD_Y + 74), 46, MageColors.color_for(mage.name), hot)
+	EmberDraw.text_centered(self, cx, CARD_Y + 152, mage.name, 26, Palette.COLOR_TEXT_BRIGHT, true)
+	EmberDraw.hp_bar(self, Rect2(cx - 100, CARD_Y + 166, 200, 9), mage.current_hp, mage.max_hp)
+	EmberDraw.text_centered(self, cx, CARD_Y + 196, "%d/%d" % [mage.current_hp, mage.max_hp], 14, Palette.COLOR_TEXT_DIM)
+	_draw_option(i, "hp", "♥", Palette.COLOR_HP_LOW, "Vitality", "Max HP", mage.max_hp, HP_GAIN)
+	_draw_option(i, "mana", "✦", Palette.COLOR_MANA, "Attunement", "Mana per turn", mage.mana_allowance, MANA_GAIN)
 
 
-func _draw_option(mage_i: int, stat: String, label: String, current: int, gain: int) -> void:
+func _draw_option(mage_i: int, stat: String, symbol: String, color: Color, title: String, label: String,
+		current: int, gain: int) -> void:
 	var r := _option_rect(mage_i, stat)
-	draw_rect(r, Palette.COLOR_OPTION_BG, true)
-	draw_rect(r, Palette.COLOR_BORDER, false, 1.0)
-	var font := ThemeDB.fallback_font
-	draw_string(font, Vector2(r.position.x + 8.0, r.position.y + 16.0),
-			label, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Palette.COLOR_SECTION)
-	draw_string(font, Vector2(r.position.x + 8.0, r.position.y + 36.0),
-			"%d  →  %d" % [current, current + gain],
-			HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Palette.COLOR_TEXT_STAT)
+	var hot := _hovered == Vector2i(mage_i, STATS.find(stat))
+	EmberDraw.rounded_rect(self, r, Palette.COLOR_SELECTED_BG.lerp(Color("#4a2a12"), 0.6) if hot else Palette.COLOR_PANEL_RAISED,
+			Palette.COLOR_ACCENT if hot else Palette.COLOR_BORDER, 2 if hot else 1, 3)
+	var icon := r.position + Vector2(42, r.size.y / 2.0)
+	if hot:
+		EmberDraw.glow(self, icon, 44, 0.7)
+	draw_circle(icon, 22, Palette.COLOR_HP_BG)
+	draw_arc(icon, 22, 0.0, TAU, 32, color, 1.5, true)
+	EmberDraw.text_centered(self, icon.x, icon.y + 7, symbol, 20, color)
+	var tx := r.position.x + 82
+	EmberDraw.text(self, Vector2(tx, r.position.y + 38), title, 20, Palette.COLOR_TEXT_BRIGHT, true)
+	EmberDraw.text(self, Vector2(tx, r.position.y + 60), label, 14, Palette.COLOR_TEXT_DIM)
+	EmberDraw.text(self, Vector2(tx, r.position.y + 90), "%d → %d" % [current, current + gain], 20, color, true)
 
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		_update_hover((event as InputEventMouseMotion).position)
+		return
 	if not (event is InputEventMouseButton and event.pressed
 			and event.button_index == MOUSE_BUTTON_LEFT):
 		return
 	var pos := (event as InputEventMouseButton).position
 	for i in _mages.size():
-		for stat in ["hp", "mana"]:
+		for stat in STATS:
 			if _option_rect(i, stat).has_point(pos):
 				get_viewport().set_input_as_handled()
 				_apply_upgrade(i, stat)
 				return
 
 
-func _draw_bottom_bar_bg() -> void:
-	var bar_y := SCREEN_H - BOTTOM_BAR_H
-	draw_rect(Rect2(Vector2(0, bar_y), Vector2(SCREEN_W, BOTTOM_BAR_H)), Palette.COLOR_HEADER_BG, true)
-	draw_rect(Rect2(Vector2(0, bar_y), Vector2(SCREEN_W, 1)), Palette.COLOR_BORDER, true)
+func _update_hover(pos: Vector2) -> void:
+	var hovered := Vector2i(-1, -1)
+	for i in _mages.size():
+		for k in STATS.size():
+			if _option_rect(i, STATS[k]).has_point(pos):
+				hovered = Vector2i(i, k)
+	if hovered != _hovered:
+		_hovered = hovered
+		queue_redraw()
 
 
 func _build_bottom_bar() -> void:
@@ -108,8 +110,8 @@ func _build_bottom_bar() -> void:
 	add_child(layer)
 	_heal_button = Button.new()
 	_heal_button.text = "Heal All ♥"
-	_heal_button.size = Vector2(148, BOTTOM_BAR_H - 10)
-	_heal_button.position = Vector2(SCREEN_W - 156.0, SCREEN_H - BOTTOM_BAR_H + 5.0)
+	_heal_button.size = Vector2(150, 36)
+	_heal_button.position = Vector2(SCREEN_W - 190.0, SCREEN_H - BOTTOM_BAR_H + 10.0)
 	_heal_button.pressed.connect(_on_heal_all_pressed)
 	layer.add_child(_heal_button)
 

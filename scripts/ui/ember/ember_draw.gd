@@ -131,8 +131,9 @@ static func visible_rect(ci: CanvasItem) -> Rect2:
 ## Dark strip along the bottom for buttons and a hint line (buttons are Controls on top).
 static func bottom_bar(ci: CanvasItem, hint := "", hint_x := 40.0) -> void:
 	var y := SCREEN.size.y - BOTTOM_BAR_H
-	ci.draw_rect(Rect2(0, y, SCREEN.size.x, BOTTOM_BAR_H), Color("#140d09"))
-	ci.draw_line(Vector2(0, y), Vector2(SCREEN.size.x, y), Palette.COLOR_BORDER, 1.5)
+	var visible := visible_rect(ci)
+	ci.draw_rect(Rect2(visible.position.x, y, visible.size.x, visible.end.y - y), Color("#140d09"))
+	ci.draw_line(Vector2(visible.position.x, y), Vector2(visible.end.x, y), Palette.COLOR_BORDER, 1.5)
 	if hint != "":
 		text(ci, Vector2(hint_x, y + 34.0), hint, 14, Palette.COLOR_TEXT_DIM)
 
