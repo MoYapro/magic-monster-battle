@@ -198,6 +198,7 @@ func _build_setup() -> void:
 	var biome: BiomeData = GameState.current_biome
 	if biome == null:
 		biome = BiomesData.all()[0]
+	enemy_grid.set_ground_tiles(GroundTiles.base_for_biome(biome.name))
 	var biome_level: int = _debug_bar.get_level()
 	var composition := BattleComposer.compose(biome, biome_level, rng)
 	_battle_enemies = composition["enemies"]

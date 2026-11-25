@@ -64,10 +64,6 @@ func set_hovered_cells(cells: Array[Vector2i], blocked: bool = false) -> void:
 	queue_redraw()
 
 
-func _hover_color() -> Color:
-	return Palette.COLOR_TARGET_BLOCKED if _hover_blocked else Palette.COLOR_TARGET_HOVER
-
-
 static func get_hit_cells(target: Vector2i, pattern: Array[Vector2i]) -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
 	for offset in pattern:
@@ -194,42 +190,66 @@ func get_enemy_at(grid_pos: Vector2i) -> EnemyData:
 
 # --- rendering ---
 
+const OBSTACLE_TILES := {"stone": "stone_3", "boulder": "stone_3"}
+const CELL_LINE := Color(0.04, 0.03, 0.02, 0.85)
+
+var _ground_base: Array[String] = GroundTiles.DEFAULT_BASE
+var _art: Dictionary = {}  # art id -> Texture2D (or null when the monster has no art yet)
+
+
+func set_ground_tiles(base: Array[String]) -> void:
+	_ground_base = base
+	queue_redraw()
+
+
 func _draw() -> void:
+	_draw_frame()
 	_draw_grid()
 	_draw_obstacles()
 	_draw_enemies()
+	_draw_targeting()
+
+
+func _draw_frame() -> void:
+	var grid := Rect2(Vector2.ZERO, Vector2(COLS, ROWS) * cell_size)
+	EmberDraw.panel(self, grid.grow(18))
 
 
 func _draw_grid() -> void:
 	for row in ROWS:
 		for col in COLS:
-			var rect := Rect2(Vector2(col, row) * cell_size, cell_size)
-			draw_rect(rect, Palette.COLOR_GRID_CELL, true)
-			if _ground.get(Vector2i(col, row), GroundType.Type.SOIL) == GroundType.Type.PUDDLE:
-				draw_rect(rect, Palette.COLOR_STATUS_PUDDLE, true)
-			draw_rect(rect, Palette.COLOR_GRID_BORDER, false)
+			var cell := Vector2i(col, row)
+			var rect := Rect2(Vector2(cell) * cell_size, cell_size)
+			var ground: GroundType.Type = _ground.get(cell, GroundType.Type.SOIL)
+			var tex := GroundTiles.texture(GroundTiles.tile_for(_ground_base, ground, cell))
+			if tex != null:
+				draw_texture_rect(tex, rect, false)
+			else:
+				draw_rect(rect, Palette.COLOR_GRID_CELL, true)
+			draw_rect(rect, CELL_LINE, false, 1.5)
+
+
+## Target overlays go on top of tokens so a monster under the reticle is visibly targeted.
+func _draw_targeting() -> void:
+	var target := Palette.COLOR_TARGET_BLOCKED if _hover_blocked else Palette.COLOR_TARGET_AVAILABLE
+	for row in ROWS:
+		for col in COLS:
+			var rect := Rect2(Vector2(col, row) * cell_size, cell_size).grow(-1.5)
 			if _hovered_cells.has(Vector2i(col, row)):
-				draw_rect(rect, _hover_color(), false, 3.0)
+				draw_rect(rect, Color(target, 0.22), true)
+				draw_rect(rect, target, false, 3.0)
 			elif _highlighted:
-				draw_rect(rect, Palette.COLOR_TARGET_AVAILABLE, false, 2.5)
+				draw_rect(rect, Color(Palette.COLOR_TARGET_AVAILABLE, 0.35), false, 1.5)
 
 
 func _draw_obstacles() -> void:
-	var font := ThemeDB.fallback_font
 	for i in _obstacles.size():
 		var obs := _obstacles[i]
 		if not _obstacle_hp.has(obs.id):
 			continue
-		var grid_pos := _obstacle_positions[i]
-		var pixel_pos := Vector2(grid_pos) * cell_size
-		var pixel_size := Vector2(obs.grid_size) * cell_size
-		draw_rect(Rect2(pixel_pos, pixel_size), obs.color, true)
-		draw_rect(Rect2(pixel_pos, pixel_size), Color.WHITE, false, 2.0)
-		draw_string(font, pixel_pos + Vector2(5, 16), obs.display_name,
-				HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
-		draw_string(font, pixel_pos + Vector2(5, 32),
-				"%d / %d" % [_obstacle_hp[obs.id], obs.max_hp],
-				HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Palette.COLOR_GRID_HP)
+		var rect := Rect2(Vector2(_obstacle_positions[i]) * cell_size, Vector2(obs.grid_size) * cell_size)
+		var tile: String = OBSTACLE_TILES.get(_script_id(obs), "")
+		TokenDraw.obstacle(self, rect, obs, _obstacle_hp[obs.id], GroundTiles.texture(tile) if tile else null)
 
 
 func _draw_enemies() -> void:
@@ -239,58 +259,52 @@ func _draw_enemies() -> void:
 		if drawn.has(enemy.id):
 			continue
 		drawn[enemy.id] = true
-
 		var grid_pos: Vector2i = _enemy_positions[enemy.id]
-		var pixel_pos := Vector2(grid_pos) * cell_size
-		var pixel_size := Vector2(enemy.grid_size) * cell_size
+		_draw_enemy(enemy, Rect2(Vector2(grid_pos) * cell_size, Vector2(enemy.grid_size) * cell_size), grid_pos)
 
-		var enemy_rect := Rect2(pixel_pos, pixel_size)
-		draw_rect(enemy_rect, enemy.color, true)
 
-		var occupied := get_cells_for_enemy(grid_pos, enemy.grid_size)
-		var is_hovered := false
-		for hc in _hovered_cells:
-			if occupied.has(hc):
-				is_hovered = true
-				break
-		var border_color := _hover_color() if is_hovered \
-				else (Palette.COLOR_TARGET_AVAILABLE if _highlighted else Color.WHITE)
-		var border_width := 3.0 if (is_hovered or _highlighted) else 2.0
-		draw_rect(enemy_rect, border_color, false, border_width)
+func _draw_enemy(enemy: EnemyData, rect: Rect2, grid_pos: Vector2i) -> void:
+	var hovered := get_cells_for_enemy(grid_pos, enemy.grid_size).any(
+			func(c: Vector2i) -> bool: return _hovered_cells.has(c))
+	var tex := _art_for(enemy)
+	if tex != null:
+		TokenDraw.art(self, rect, tex)
+	else:
+		TokenDraw.placeholder(self, rect, enemy)
+	TokenDraw.card(self, rect, enemy.color, hovered, _highlighted)
+	TokenDraw.hp_bar(self, rect, enemy.current_hp, enemy.max_hp)
+	TokenDraw.side_chips(self, rect, _status_chips(enemy.id), _defence_chips(enemy.id))
+	if _intents.has(enemy.id):
+		TokenDraw.intent_chip(self, rect, IntentLabel.text_for(enemy, _intents[enemy.id]))
 
-		var font := ThemeDB.fallback_font
-		draw_string(font, pixel_pos + Vector2(5, 16), enemy.display_name,
-				HORIZONTAL_ALIGNMENT_LEFT, -1, 13, enemy.label_color)
-		draw_string(font, pixel_pos + Vector2(5, 32),
-				"%d / %d" % [enemy.current_hp, enemy.max_hp],
-				HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Palette.COLOR_GRID_HP)
-		if _armors.has(enemy.id) and _armors[enemy.id] > 0:
-			draw_string(font, pixel_pos + Vector2(5, 44),
-					"🛡 %d" % _armors[enemy.id],
-					HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Palette.COLOR_GRID_INTENT)
-		if _shields.has(enemy.id) and _shields[enemy.id] > 0:
-			draw_string(font, pixel_pos + Vector2(pixel_size.x - 5, 44),
-					"◇ %d" % _shields[enemy.id],
-					HORIZONTAL_ALIGNMENT_RIGHT, -1, 11, Palette.COLOR_GRID_FROZEN)
-		if _blocks.has(enemy.id) and _blocks[enemy.id] > 0:
-			draw_string(font, pixel_pos + Vector2(pixel_size.x - 5, 56),
-					"🔲 %d" % _blocks[enemy.id],
-					HORIZONTAL_ALIGNMENT_RIGHT, -1, 11, Palette.COLOR_GRID_BLOCK)
-		var status_icons: Array = (_enemy_statuses.get(enemy.id, []) as Array).filter(
-				func(s: StatusData) -> bool: return s.display_name != "")
-		if not status_icons.is_empty():
-			var intent_reserve := 16.0 if _intents.has(enemy.id) else 4.0
-			var icon_y := pixel_size.y - intent_reserve - 2.0
-			var icon_x := 5.0
-			for status: StatusData in status_icons:
-				draw_string(font, pixel_pos + Vector2(icon_x, icon_y),
-						status.icon, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, status.display_color)
-				icon_x += 12.0
-		if _intents.has(enemy.id):
-			var intent: Dictionary = _intents[enemy.id]
-			var action_name: String = intent.get("action_name", "")
-			var target_name: String = intent.get("target_name", "")
-			var label := action_name + (" → " + target_name if target_name != "" else "")
-			draw_string(font, pixel_pos + Vector2(5, pixel_size.y - 6),
-					label, HORIZONTAL_ALIGNMENT_LEFT, pixel_size.x - 10, 10,
-					Palette.COLOR_GRID_SHIELD_TEXT)
+
+func _status_chips(enemy_id: String) -> Array:
+	var out := []
+	for status: StatusData in _enemy_statuses.get(enemy_id, []):
+		if status.display_name != "":
+			var stacks := str(status.stacks) if status.stacks > 0 else ""
+			out.append([status.icon + stacks, status.display_color])
+	return out
+
+
+func _defence_chips(enemy_id: String) -> Array:
+	var out := []
+	if _armors.get(enemy_id, 0) > 0:
+		out.append(["⛨ %d" % _armors[enemy_id], Palette.COLOR_GRID_INTENT])
+	if _shields.get(enemy_id, 0) > 0:
+		out.append(["◇ %d" % _shields[enemy_id], Palette.COLOR_GRID_FROZEN])
+	if _blocks.get(enemy_id, 0) > 0:
+		out.append(["▣ %d" % _blocks[enemy_id], Palette.COLOR_GRID_BLOCK])
+	return out
+
+
+func _art_for(enemy: EnemyData) -> Texture2D:
+	var art_id := MonsterRig.art_id_for(enemy)
+	if not _art.has(art_id):
+		_art[art_id] = MonsterRig.full_texture(art_id)
+	return _art[art_id]
+
+
+static func _script_id(obj: Object) -> String:
+	var script: Script = obj.get_script()
+	return script.resource_path.get_file().get_basename() if script else ""
