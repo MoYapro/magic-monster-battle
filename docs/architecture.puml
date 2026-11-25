@@ -65,6 +65,22 @@ package "UI" {
   [MageDisplay / ManaDisplay]
   [BattleTooltipManager]
   [FloatingDamage]
+  [BattleChrome]
+  [Details overlays\nMonsterDetails / MageDetails\nVictoryPlaque]
+}
+
+package "Ember UI kit" {
+  [ScreenFrame (autoload)]
+  [EmberDraw / Palette / Theme]
+  [UI components\nFramedPanel, WaxSealButton,\nHpBar, PortraitBadge, SpellSlot]
+  [SpellRunes / RuneGeometry]
+}
+
+package "Monster art" {
+  [ProceduralMonster]
+  [MonsterRig / RigBuilder]
+  [MonsterAnimator]
+  [assets/monsters/*/rig.json]
 }
 
 ' --- Game Loop transitions ---
@@ -117,5 +133,14 @@ GameState --> [BattleScene] : mages, wands,\ncurrent_biome
 [BattleScene] --> [MageDisplay / ManaDisplay] : per-mage HP/mana UI
 [BattleScene] --> [BattleTooltipManager] : spell / status tooltips
 [BattleScene] --> [FloatingDamage] : combat text popups
+[BattleScene] --> [BattleChrome] : backdrop, turn counter
+[BattleScene] --> [Details overlays\nMonsterDetails / MageDetails\nVictoryPlaque] : click / win
+[EnemyGrid] --> [ProceduralMonster] : one per living enemy\nhit / die / attack
+[ProceduralMonster] --> [MonsterRig / RigBuilder] : assembles parts
+[ProceduralMonster] --> [MonsterAnimator] : tweens
+[MonsterRig / RigBuilder] --> [assets/monsters/*/rig.json] : exported by\ntools/export_art.py
+[WandDisplay] --> [EmberDraw / Palette / Theme] : sockets, staff
+[EnemyGrid] --> [EmberDraw / Palette / Theme] : tiles, tokens
+[EmberDraw / Palette / Theme] --> [SpellRunes / RuneGeometry] : rune glyphs
 
 @enduml

@@ -311,6 +311,17 @@ All three mages share a single mana pool that persists between battles.
 - [x] Battles composed from the selected biome's monster and obstacle pools
 - [x] Codex biomes tab listing every biome and its monsters
 
+### UI & Art
+- [x] Ember Grimoire look from `layout-drafts/` on every screen: shared palette (`Palette`), project theme (`assets/theme/ember_theme.tres`), bundled EB Garamond (OFL)
+- [x] Layout stays 1280×720 and scales to any window; it is centred and the backdrop fills the space around it (`ScreenFrame`)
+- [x] Shared drawing (`EmberDraw`) and components: framed panels, wax-seal buttons, HP bars, portrait badges, spell sockets (coloured ring, rune glyph, cost pips below), see `scenes/debug/ui_gallery.tscn`
+- [x] Spell runes for every spell and alchemy result (`SpellRunes`, `RuneGeometry`)
+- [x] Battlefield: ground tile per cell from the biome's mix (puddles show the wet tile), monster cards with intent, status and defence chips, gold targeting overlay, area banner, Battle · Turn counter, END TURN seal
+- [x] Monsters as animated cut-out rigs (`ProceduralMonster`): idle breathing, attack, take hit, die — played from HP changes and turn ends
+- [x] Monster and mage details panels (click a monster or mage card while no wand is aiming) and a Victory plaque before the spoils
+- [x] Restyled loot (Spoils / Satchel / Wielded Wands), level up (The Embers Grow), path selection (area cards with approach pips) and game over (The Embers Fade)
+- [x] Art pipeline: `python3 tools/export_art.py` exports ground tiles and splits each monster SVG into part layers with pivots and draw order (`assets/monsters/<id>/rig.json`); `tools/check_rig.py` verifies the layers re-stack to the full image
+
 ## Architecture
 
 See [`docs/architecture.puml`](docs/architecture.puml) for the high-level component diagram.
