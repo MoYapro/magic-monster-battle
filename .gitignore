@@ -4,3 +4,4 @@ addons/
 
 
 .godot/
+__pycache__/
