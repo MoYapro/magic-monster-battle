@@ -14,8 +14,8 @@ const CARD_MARGIN := (SCREEN_W - CARDS_TOTAL_W) * 0.5
 
 const OPTION_H := 50.0
 const OPTION_PAD := 12.0
-const HP_GAIN := 10
-const MANA_GAIN := 1
+const HP_GAIN := MageProgression.HP_GAIN
+const MANA_GAIN := MageProgression.MANA_GAIN
 
 var _mages: Array[MageData] = []
 var _heal_button: Button = null
@@ -115,22 +115,12 @@ func _build_bottom_bar() -> void:
 
 
 func _on_heal_all_pressed() -> void:
-	for mage: MageData in _mages:
-		if mage.current_hp <= 0:
-			mage.current_hp = int(mage.max_hp * 0.3)
-		else:
-			var heal := int(mage.max_hp * 0.8)
-			mage.current_hp = mini(mage.max_hp, mage.current_hp + heal)
+	MageProgression.heal_all(_mages)
 	GameState.mages = _mages
 	get_tree().change_scene_to_file("res://scenes/world/path_selection_screen.tscn")
 
 
 func _apply_upgrade(mage_i: int, stat: String) -> void:
-	var mage := _mages[mage_i]
-	if stat == "hp":
-		mage.max_hp += HP_GAIN
-		mage.current_hp = mini(mage.max_hp, mage.current_hp + HP_GAIN)
-	else:
-		mage.mana_allowance += MANA_GAIN
+	MageProgression.apply_upgrade(_mages[mage_i], stat)
 	GameState.mages = _mages
 	get_tree().change_scene_to_file("res://scenes/world/path_selection_screen.tscn")
