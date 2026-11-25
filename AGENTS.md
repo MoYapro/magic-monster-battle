@@ -160,7 +160,7 @@ tests/                       ← GUT test files; one file per system under test
 - **`MonsterRole.Type`** enum drives placement bias (TANK → front column, ARTILLERY → back column). Set `main_role` and optionally `off_role` on new monsters.
 - **`StatusData.stacks = -1`** is the default "uninitialized / unlimited" sentinel; statuses with `stacks == 0` after a tick should set themselves to 0 and the system will filter them on next access — check existing status subclasses for the exact pattern.
 - **Mana key `mage_mana_spent`** tracks per-mage spending this turn; `setup.mages[i].mana_allowance` is the cap. Both reset to 0 in `ActionEndTurn`.
-- **Win condition** is detected in `BattleScene._apply_state`: if `state.enemy_hp.is_empty()` AND `_history.can_undo()` (i.e., at least one action was taken), battle is won.
+- **Win condition** is `BattleRules.outcome(state, has_actions)` (called from `BattleScene._apply_state`): if `state.enemies.is_empty()` AND `_history.can_undo()` (i.e., at least one action was taken), battle is won; all mages at 0 HP loses first.
 
 ## Adding New Content Checklist
 

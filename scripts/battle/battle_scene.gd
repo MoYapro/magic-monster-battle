@@ -205,20 +205,14 @@ func _build_setup() -> void:
 	_battle_obstacles = composition["obstacles"]
 	_battle_obstacle_positions = composition["obstacle_positions"]
 	_place_id_counter.clear()
-	var wands: Array[WandData] = []
-	for wd: WandDisplay in _wand_displays:
-		wands.append(wd.get_wand_data())
-	_setup = BattleSetup.new(_battle_enemies, _battle_positions, _mages, wands, 10, _battle_obstacles, _battle_obstacle_positions)
+	_setup = BattleSetup.new(_battle_enemies, _battle_positions, _mages, _current_wands(), 10, _battle_obstacles, _battle_obstacle_positions)
 	_history = BattleHistory.new(_setup.make_initial_state(), _setup)
 	_apply_state(_history.current_state())
 
 
 func _rebuild_battle() -> void:
 	var prev := _history.current_state()
-	var wands: Array[WandData] = []
-	for wd: WandDisplay in _wand_displays:
-		wands.append(wd.get_wand_data())
-	_setup = BattleSetup.new(_battle_enemies, _battle_positions, _mages, wands, _setup.max_mana, _battle_obstacles, _battle_obstacle_positions)
+	_setup = BattleSetup.new(_battle_enemies, _battle_positions, _mages, _current_wands(), _setup.max_mana, _battle_obstacles, _battle_obstacle_positions)
 	var new_state := _setup.make_initial_state()
 	for i in new_state.mages.size():
 		var prev_ms := prev.mages[i] as MageState
@@ -233,45 +227,20 @@ func _rebuild_battle() -> void:
 
 func _apply_state(state: BattleState) -> void:
 	_current_state = state
+	BattleRules.sync_current_hp(state, _setup)
 	_refresh_enemy_grid(state)
 	for i in _setup.mages.size():
 		var ms := state.mages[i] as MageState
-		_setup.mages[i].current_hp = ms.combatant.hp
-		var incoming_attack := 0
-		for enemy_id: String in state.enemies:
-			var es := state.enemies[enemy_id] as EnemyState
-			if es.intent.is_empty():
-				continue
-			var targets_mage: bool = es.intent.get("target", -1) == i or es.intent.get("all_mages", false)
-			if not targets_mage:
-				continue
-			if es.combatant.statuses.any(func(s: StatusData) -> bool: return s.blocks_action()):
-				continue
-			var enemy := _setup.get_enemy(enemy_id)
-			if enemy == null:
-				continue
-			var action_index: int = es.intent.get("action_index", 0)
-			if action_index >= enemy.action_pool.size():
-				continue
-			var action := enemy.action_pool[action_index]
-			if action is MonsterActionAttack:
-				incoming_attack += (action as MonsterActionAttack).damage
-			elif action is MonsterActionCleave:
-				incoming_attack += (action as MonsterActionCleave).damage
-		_mage_displays[i].set_status(incoming_attack, ms.combatant.statuses, ms.combatant.shield)
+		var incoming := BattleRules.incoming_attack(state, _setup, i)
+		_mage_displays[i].set_status(incoming, ms.combatant.statuses, ms.combatant.shield)
 	_mana_display.setup(state.mana, _setup.max_mana, _panel_height)
 	_refresh_wand_charges(state)
 	_debug_bar.set_undo_enabled(_history.can_undo())
-	var all_mages_dead := true
-	for ms: MageState in state.mages:
-		if ms.combatant.hp > 0:
-			all_mages_dead = false
-			break
-	if all_mages_dead:
-		_on_battle_lost()
-		return
-	if _history.can_undo() and state.enemies.is_empty():
-		_on_battle_won()
+	match BattleRules.outcome(state, _history.can_undo()):
+		BattleRules.Outcome.LOST:
+			_on_battle_lost()
+		BattleRules.Outcome.WON:
+			_on_battle_won()
 
 
 func _refresh_wand_charges(state: BattleState) -> void:
@@ -299,28 +268,18 @@ func _on_battle_lost() -> void:
 
 func _on_battle_won() -> void:
 	_cancel_targeting()
-	GameState.battle_count += 1
-	if GameState.current_biome != null:
-		var biome_name := GameState.current_biome.name
-		GameState.battle_count_by_biome[biome_name] = GameState.battle_count_by_biome.get(biome_name, 0) + 1
-	var wands: Array[WandData] = []
-	for wd: WandDisplay in _wand_displays:
-		wands.append(wd.get_wand_data())
-	GameState.mages = _mages
-	GameState.wands = wands
-	_generate_loot()
+	RunProgress.record_win(GameState, _mages, _current_wands())
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	RunProgress.generate_loot(GameState, _setup.enemies, rng)
 	get_tree().change_scene_to_file("res://scenes/level_up/level_up_screen.tscn")
 
 
-func _generate_loot() -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.randomize()
-	var biome: BiomeData = GameState.current_biome if GameState.current_biome != null else BiomesData.all()[0]
-	GameState.pending_loot.clear()
-	GameState.pending_loot_wands.clear()
-	GameState.pending_loot_wands.append(WandGenerator.generate_biome_wand(rng, biome.layer))
-	GameState.battle_drops = LootRoller.roll_drops(_setup.enemies, rng)
-	GameState.pending_loot.append_array(GameState.battle_drops)
+func _current_wands() -> Array[WandData]:
+	var wands: Array[WandData] = []
+	for wd: WandDisplay in _wand_displays:
+		wands.append(wd.get_wand_data())
+	return wands
 
 
 func _refresh_enemy_grid(state: BattleState) -> void:
@@ -335,7 +294,6 @@ func _refresh_enemy_grid(state: BattleState) -> void:
 		if not state.enemies.has(enemy.id):
 			continue
 		var es := state.enemies[enemy.id] as EnemyState
-		enemy.current_hp = es.combatant.hp
 		enemy_grid.place_enemy(enemy, _setup.get_enemy_pos(i, state))
 		if not es.intent.is_empty():
 			intents[enemy.id] = es.intent
@@ -373,7 +331,7 @@ func _on_body_slot_clicked(wand: WandDisplay, slot_id: String) -> void:
 		_cancel_targeting()
 		return
 	var mage_index := _wand_displays.find(wand)
-	if (_history.current_state().mages[mage_index] as MageState).combatant.hp <= 0:
+	if BattleRules.is_mage_dead(_history.current_state(), mage_index):
 		return
 	_apply_state(_history.push(ActionAddMana.new(mage_index, slot_id)).state)
 
@@ -382,7 +340,7 @@ func _on_body_slot_right_clicked(wand: WandDisplay, slot_id: String) -> void:
 	if _targeting_wand != null:
 		return
 	var mage_index := _wand_displays.find(wand)
-	if (_history.current_state().mages[mage_index] as MageState).combatant.hp <= 0:
+	if BattleRules.is_mage_dead(_history.current_state(), mage_index):
 		return
 	_apply_state(_history.push(ActionRemoveMana.new(mage_index, slot_id)).state)
 
@@ -392,18 +350,12 @@ func _on_tip_pressed(wand: WandDisplay) -> void:
 		_cancel_targeting()
 		return
 	var mage_index := _wand_displays.find(wand)
-	var cur := _history.current_state()
-	if (cur.mages[mage_index] as MageState).combatant.hp <= 0:
-		return
-	var tip := _setup.wands[mage_index].get_tip_slot()
-	if tip == null or tip.spell == null:
-		_start_targeting(wand)  # tipless wands fire as a single-cell hit
-		return
-	var charges: int = (cur.mages[mage_index] as MageState).slot_charges.get(tip.id, 0)
-	if charges < tip.spell.mana_cost:
-		_apply_state(_history.push(ActionAddMana.new(mage_index, tip.id)).state)
-	elif (cur.mages[mage_index] as MageState).mana_spent < _setup.mages[mage_index].mana_allowance:
-		_start_targeting(wand)
+	match BattleRules.tip_click(_history.current_state(), _setup, mage_index):
+		BattleRules.TipClick.TARGET:
+			_start_targeting(wand)  # tipless wands fire as a single-cell hit
+		BattleRules.TipClick.ADD_MANA:
+			var tip_id := _setup.wands[mage_index].get_tip_slot().id
+			_apply_state(_history.push(ActionAddMana.new(mage_index, tip_id)).state)
 
 
 func _start_targeting(wand: WandDisplay) -> void:
@@ -533,23 +485,25 @@ func _update_hover(mouse: Vector2) -> void:
 			return
 
 
+func _enemy_occupied_cells() -> Dictionary:
+	var sizes: Array[Vector2i] = []
+	for e: EnemyData in _battle_enemies:
+		sizes.append(e.grid_size)
+	return BattleRules.occupied_cells(_battle_positions, sizes)
+
+
+func _obstacle_occupied_cells() -> Dictionary:
+	var sizes: Array[Vector2i] = []
+	for o: ObstacleData in _battle_obstacles:
+		sizes.append(o.grid_size)
+	return BattleRules.occupied_cells(_battle_obstacle_positions, sizes)
+
+
 func _place_obstacle_at(cell: Vector2i) -> void:
-	var occupied: Dictionary = {}
-	for i in _battle_positions.size():
-		var sz: Vector2i = _battle_enemies[i].grid_size
-		for dx in range(sz.x):
-			for dy in range(sz.y):
-				occupied[_battle_positions[i] + Vector2i(dx, dy)] = true
-	for i in _battle_obstacle_positions.size():
-		var sz: Vector2i = _battle_obstacles[i].grid_size
-		for dx in range(sz.x):
-			for dy in range(sz.y):
-				occupied[_battle_obstacle_positions[i] + Vector2i(dx, dy)] = true
-	for dx in range(_place_size.x):
-		for dy in range(_place_size.y):
-			var c := cell + Vector2i(dx, dy)
-			if c.x >= EnemyGrid.COLS or c.y >= EnemyGrid.ROWS or occupied.has(c):
-				return
+	var occupied := _enemy_occupied_cells()
+	occupied.merge(_obstacle_occupied_cells())
+	if not BattleRules.can_place(cell, _place_size, occupied):
+		return
 	var obstacle: ObstacleData = _place_obstacle_cls.new()
 	var base_id := obstacle.display_name.to_lower().replace(" ", "_")
 	_place_id_counter[base_id] = _place_id_counter.get(base_id, 0) + 1
@@ -562,17 +516,8 @@ func _place_obstacle_at(cell: Vector2i) -> void:
 
 
 func _place_enemy_at(cell: Vector2i) -> void:
-	var occupied: Dictionary = {}
-	for i in _battle_positions.size():
-		var sz: Vector2i = _battle_enemies[i].grid_size
-		for dx in range(sz.x):
-			for dy in range(sz.y):
-				occupied[_battle_positions[i] + Vector2i(dx, dy)] = true
-	for dx in range(_place_size.x):
-		for dy in range(_place_size.y):
-			var c := cell + Vector2i(dx, dy)
-			if c.x >= EnemyGrid.COLS or c.y >= EnemyGrid.ROWS or occupied.has(c):
-				return
+	if not BattleRules.can_place(cell, _place_size, _enemy_occupied_cells()):
+		return
 	var enemy: EnemyData = _place_cls.new()
 	var base_id := enemy.display_name.to_lower().replace(" ", "_")
 	_place_id_counter[base_id] = _place_id_counter.get(base_id, 0) + 1
