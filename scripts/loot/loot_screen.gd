@@ -3,7 +3,8 @@ extends Node2D
 const SCREEN_W := 1280.0
 const SCREEN_H := 720.0
 const HEADER_H := 48.0
-const BOTTOM_BAR_H := 38.0
+const BOTTOM_BAR_H := EmberDraw.BOTTOM_BAR_H
+const HEADING_H := 58.0  # panel title, rule and counter above the card grid
 
 const MARGIN_X := 20.0
 const PANEL_W := 400.0
@@ -18,6 +19,7 @@ const WAND_X := PACK_X + PANEL_W + PANEL_GAP
 const CARD_SIZE := 80.0
 const CARD_GAP := 8.0
 const CARDS_PER_ROW := 4
+const GRID_INSET := (PANEL_W - CARDS_PER_ROW * CARD_SIZE - (CARDS_PER_ROW - 1) * CARD_GAP) * 0.5
 const BACKPACK_SLOTS := LootInventory.BACKPACK_SLOTS
 const MAGE_HEADER_H := 30.0
 const EMPTY_WAND_SLOT_H := 52.0
@@ -44,7 +46,7 @@ var _drag_source: LootInventory.Area = LootInventory.Area.NONE
 var _dragging_wand: WandData = null
 var _drag_wand_source: int = -2  # -1 = from loot; >= 0 = mage index
 var _drag_pos: Vector2 = Vector2.ZERO
-var _continue_btn: Button = null
+var _continue_btn: BaseButton = null
 var _auto_assign_btn: Button = null
 var _add_spell_btn: Button = null
 var _reroll_btn: Button = null
@@ -72,7 +74,7 @@ func _ready() -> void:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, Vector2(SCREEN_W, SCREEN_H)), Palette.COLOR_BG, true)
+	EmberDraw.backdrop(self)
 	_draw_header()
 	_draw_loot_panel()
 	_draw_backpack_panel()
@@ -277,7 +279,7 @@ func _try_pick_spell_from_wand(pos: Vector2) -> SpellData:
 func _loot_wand_index_at(pos: Vector2) -> int:
 	for i in _loot_wand_displays.size():
 		var wd := _loot_wand_displays[i]
-		if Rect2(wd.position, wd.get_display_size()).has_point(pos):
+		if Rect2(wd.position, wd.get_display_size() * wd.scale).has_point(pos):
 			return i
 	return -1
 
@@ -292,8 +294,8 @@ func _card_index_at(pos: Vector2, panel_x: float, count: int) -> int:
 func _card_rect(panel_x: float, index: int) -> Rect2:
 	return Rect2(
 		Vector2(
-			panel_x + 12.0 + float(index % CARDS_PER_ROW) * (CARD_SIZE + CARD_GAP),
-			PANEL_TOP + 32.0 + float(index / CARDS_PER_ROW) * (CARD_SIZE + CARD_GAP)
+			panel_x + GRID_INSET + float(index % CARDS_PER_ROW) * (CARD_SIZE + CARD_GAP),
+			PANEL_TOP + HEADING_H + float(index / CARDS_PER_ROW) * (CARD_SIZE + CARD_GAP)
 		),
 		Vector2(CARD_SIZE, CARD_SIZE)
 	)
@@ -301,7 +303,7 @@ func _card_rect(panel_x: float, index: int) -> Rect2:
 
 func _loot_wand_section_y() -> float:
 	var spell_rows := ceili(float(_inventory.pending_loot.size()) / float(CARDS_PER_ROW))
-	var y := PANEL_TOP + 32.0 + float(spell_rows) * (CARD_SIZE + CARD_GAP)
+	var y := PANEL_TOP + HEADING_H + float(spell_rows) * (CARD_SIZE + CARD_GAP)
 	return y + (CARD_GAP if spell_rows > 0 else 0.0)
 
 
@@ -320,22 +322,22 @@ func _panel_rect(panel_x: float) -> Rect2:
 # --- header ---
 
 func _draw_header() -> void:
-	draw_rect(Rect2(Vector2.ZERO, Vector2(SCREEN_W, HEADER_H)), Palette.COLOR_HEADER_BG, true)
-	draw_rect(Rect2(Vector2(0, HEADER_H - 1), Vector2(SCREEN_W, 1)), Palette.COLOR_BORDER, true)
-	draw_string(ThemeDB.fallback_font,
-			Vector2(SCREEN_W * 0.5, HEADER_H * 0.5 + 9.0),
-			"Loot", HORIZONTAL_ALIGNMENT_CENTER, -1, 22, Palette.COLOR_TEXT_BRIGHT)
+	var area := GameState.current_biome.name if GameState.current_biome != null else ""
+	EmberDraw.title_plate(self, Rect2(440, 8, 400, 40), "Spoils of the " + area if area != "" else "Spoils")
+	if GameState.battle_count > 0:
+		EmberDraw.text(self, Vector2(24, 34), "Battle %d won" % GameState.battle_count, 18, Palette.COLOR_TEXT_DIM, true)
 
 
 # --- panels ---
 
-func _draw_panel_frame(panel_x: float, title: String) -> void:
+func _draw_panel_frame(panel_x: float, title: String, subtitle := "") -> void:
 	var r := _panel_rect(panel_x)
-	draw_rect(r, Palette.COLOR_PANEL, true)
-	draw_rect(r, Palette.COLOR_BORDER, false, 1.0)
-	draw_string(ThemeDB.fallback_font,
-			Vector2(panel_x + 12.0, PANEL_TOP + 20.0),
-			title, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Palette.COLOR_SECTION)
+	EmberDraw.panel(self, r)
+	var cx := r.get_center().x
+	EmberDraw.text_centered(self, cx, PANEL_TOP + 28.0, title, 19, Palette.COLOR_TEXT_BRIGHT, true)
+	draw_line(Vector2(cx - 70, PANEL_TOP + 36.0), Vector2(cx + 70, PANEL_TOP + 36.0), Palette.COLOR_BORDER, 1.0)
+	if subtitle != "":
+		EmberDraw.text_centered(self, cx, PANEL_TOP + 52.0, subtitle, 13, Palette.COLOR_TEXT_DIM)
 
 
 func _draw_drop_highlight(panel_x: float) -> void:
@@ -343,39 +345,35 @@ func _draw_drop_highlight(panel_x: float) -> void:
 		return
 	if not _panel_rect(panel_x).has_point(_drag_pos):
 		return
-	draw_rect(_panel_rect(panel_x), Palette.COLOR_DROP_HIGHLIGHT, true)
-	draw_rect(_panel_rect(panel_x), Palette.COLOR_DROP_BORDER, false, 2.0)
+	EmberDraw.rounded_rect(self, _panel_rect(panel_x), Palette.COLOR_DROP_HIGHLIGHT, Palette.COLOR_DROP_BORDER, 2, 4)
 
 
 # --- loot panel ---
 
 func _draw_loot_panel() -> void:
-	_draw_panel_frame(LOOT_X, _loot_panel_title())
+	_draw_panel_frame(LOOT_X, "Spoils", _loot_panel_subtitle())
 	_draw_drop_highlight(LOOT_X)
 	if _inventory.pending_loot.is_empty() and _inventory.pending_loot_wands.is_empty():
-		draw_string(ThemeDB.fallback_font,
-				Vector2(LOOT_X + PANEL_W * 0.5, PANEL_TOP + 80.0),
-				"No loot this battle",
-				HORIZONTAL_ALIGNMENT_CENTER, PANEL_W, 13, Palette.COLOR_SLOT_BORDER)
+		EmberDraw.text_centered(self, LOOT_X + PANEL_W * 0.5, PANEL_TOP + 110.0, "No loot this battle", 14, Palette.COLOR_TEXT_DIM)
 		return
 	if not _inventory.pending_loot.is_empty():
 		_draw_spell_grid(LOOT_X, _inventory.pending_loot, -1)
 	if not _inventory.pending_loot_wands.is_empty():
-		draw_string(ThemeDB.fallback_font,
-				Vector2(LOOT_X + 12.0, _loot_wand_section_y() + 13.0),
-				"Wands", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Palette.COLOR_SECTION)
+		var y := _loot_wand_section_y() + 12.0
+		EmberDraw.text(self, Vector2(LOOT_X + 16.0, y), "Wands", 14, Palette.COLOR_TEXT_DIM)
+		draw_line(Vector2(LOOT_X + 66.0, y - 4.0), Vector2(LOOT_X + PANEL_W - 16.0, y - 4.0), Palette.COLOR_BORDER, 1.0)
 
 
-func _loot_panel_title() -> String:
+func _loot_panel_subtitle() -> String:
 	if _inventory.battle_drops.is_empty():
-		return "Battle Loot"
-	return "Battle Loot — picks %d / %d" % [_inventory.picks_used(), LootRoller.MAX_PICKS]
+		return "What you leave behind is lost to the dark."
+	return "%d of %d taken" % [_inventory.picks_used(), LootRoller.MAX_PICKS]
 
 
 # --- backpack panel ---
 
 func _draw_backpack_panel() -> void:
-	_draw_panel_frame(PACK_X, "Backpack")
+	_draw_panel_frame(PACK_X, "Satchel", "%d of %d pockets" % [_inventory.backpack.size(), BACKPACK_SLOTS])
 	_draw_drop_highlight(PACK_X)
 	_draw_spell_grid(PACK_X, _inventory.backpack, BACKPACK_SLOTS)
 
@@ -392,52 +390,32 @@ func _draw_spell_grid(panel_x: float, spells: Array[SpellData], total_slots: int
 			_draw_empty_slot(pos)
 
 
+## A spell as its rune socket with the name below, inside the card's hit area.
 func _draw_spell_card(pos: Vector2, spell: SpellData) -> void:
-	var rect := Rect2(pos, Vector2(CARD_SIZE, CARD_SIZE))
-	var tint := spell.element_color
-	tint.a = 0.22
-	draw_rect(rect, tint, true)
-	draw_rect(rect, Palette.COLOR_SLOT_BORDER, false, 1.0)
-	var font := ThemeDB.fallback_font
-	var label := spell.abbreviation if not spell.abbreviation.is_empty() else "?"
-	draw_string(font,
-			Vector2(pos.x, pos.y + CARD_SIZE * 0.5 + 6.0),
-			label, HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE, 20,
-			Color(spell.element_color.r, spell.element_color.g, spell.element_color.b))
-	draw_string(font,
-			Vector2(pos.x, pos.y + CARD_SIZE - 8.0),
-			spell.display_name, HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE, 10, Palette.COLOR_SECTION)
+	EmberDraw.spell_socket(self, spell, pos + Vector2(CARD_SIZE * 0.5, 30.0), 24.0)
+	EmberDraw.text_centered(self, pos.x + CARD_SIZE * 0.5, pos.y + CARD_SIZE - 2.0, spell.display_name, 12, Palette.COLOR_TEXT_DIM)
 
 
+## A wand being dragged: a short staff with its rune count and tip.
 func _draw_wand_card(pos: Vector2, wand: WandData) -> void:
-	var rect := Rect2(pos, Vector2(CARD_SIZE, CARD_SIZE))
-	draw_rect(rect, Palette.COLOR_WAND_CARD, true)
-	draw_rect(rect, Palette.COLOR_WAND_CARD_BORDER, false, 1.5)
-	var body_count := 0
-	var tip_abbr := "—"
-	for slot: SpellSlotData in wand.slots:
-		if slot.is_tip:
-			if slot.spell != null:
-				tip_abbr = slot.spell.abbreviation
-		else:
-			body_count += 1
-	var font := ThemeDB.fallback_font
-	draw_string(font, Vector2(pos.x, pos.y + CARD_SIZE * 0.5 - 2.0),
-			"Wand", HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE, 15, Color.WHITE)
-	draw_string(font, Vector2(pos.x, pos.y + CARD_SIZE * 0.5 + 16.0),
-			"%d slots  %s" % [body_count, tip_abbr],
-			HORIZONTAL_ALIGNMENT_CENTER, CARD_SIZE, 10, Palette.COLOR_SECTION)
+	var rect := Rect2(pos, Vector2(CARD_SIZE * 1.6, CARD_SIZE * 0.7))
+	EmberDraw.panel(self, rect, true, Palette.COLOR_WAND_CARD)
+	EmberDraw.staff(self, rect.position + Vector2(10, rect.size.y * 0.5 - 7.0), rect.size.x - 20)
+	var tip := wand.get_tip_slot()
+	var label := "%d runes" % (wand.slots.size() - 1)
+	if tip != null and tip.spell != null:
+		label += " · " + tip.spell.display_name
+	EmberDraw.text_centered(self, rect.get_center().x, rect.position.y + 18.0, label, 12, Palette.COLOR_TEXT_BRIGHT)
 
 
 func _draw_empty_slot(pos: Vector2) -> void:
-	draw_rect(Rect2(pos, Vector2(CARD_SIZE, CARD_SIZE)), Palette.COLOR_SLOT_EMPTY, true)
-	draw_rect(Rect2(pos, Vector2(CARD_SIZE, CARD_SIZE)), Palette.COLOR_SLOT_BORDER, false, 1.0)
+	EmberDraw.empty_socket(self, pos + Vector2(CARD_SIZE * 0.5, 30.0), 24.0)
 
 
 # --- equipped wand panel ---
 
 func _draw_equip_wand_panel() -> void:
-	_draw_panel_frame(WAND_X, "Wands")
+	_draw_panel_frame(WAND_X, "Wielded Wands")
 	for i in _mage_row_ys.size():
 		if i >= _inventory.mages.size():
 			break
@@ -447,52 +425,48 @@ func _draw_equip_wand_panel() -> void:
 
 
 func _draw_mage_header(mage: MageData, row_y: float) -> void:
-	var pad := 12.0
-	var font := ThemeDB.fallback_font
-	draw_string(font, Vector2(WAND_X + pad, row_y + 14.0),
-			mage.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Palette.COLOR_TEXT_BRIGHT)
-	draw_string(font, Vector2(WAND_X + PANEL_W - pad, row_y + 14.0),
-			"%d / %d" % [mage.current_hp, mage.max_hp],
-			HORIZONTAL_ALIGNMENT_RIGHT, -1, 11, Palette.COLOR_SECTION)
-	var bar_y := row_y + 19.0
-	var bar_w := PANEL_W - pad * 2.0
-	draw_rect(Rect2(Vector2(WAND_X + pad, bar_y), Vector2(bar_w, 5.0)), Palette.COLOR_PANEL, true)
-	var hp_frac := float(mage.current_hp) / float(mage.max_hp)
-	var hp_color := Palette.COLOR_HP_FULL.lerp(Palette.COLOR_HP_LOW, 1.0 - hp_frac)
-	draw_rect(Rect2(Vector2(WAND_X + pad, bar_y), Vector2(bar_w * hp_frac, 5.0)), hp_color, true)
+	var x := WAND_X + 16.0
+	EmberDraw.medallion(self, Vector2(x + 11.0, row_y + 11.0), 11.0, MageColors.color_for(mage.name))
+	EmberDraw.text(self, Vector2(x + 30.0, row_y + 16.0), mage.name, 15, Palette.COLOR_TEXT_BRIGHT, true)
+	EmberDraw.text_right(self, WAND_X + PANEL_W - 16.0, row_y + 16.0, "%d/%d" % [mage.current_hp, mage.max_hp], 12, Palette.COLOR_TEXT_DIM)
+	EmberDraw.hp_bar(self, Rect2(x + 100.0, row_y + 9.0, PANEL_W - 190.0, 6.0), mage.current_hp, mage.max_hp)
 
 
 func _draw_empty_wand_slot(mage_index: int) -> void:
 	var slot_y := _mage_row_ys[mage_index] + MAGE_HEADER_H
-	var r := Rect2(Vector2(WAND_X + 10.0, slot_y), Vector2(PANEL_W - 20.0, EMPTY_WAND_SLOT_H))
+	var r := Rect2(Vector2(WAND_X + 12.0, slot_y), Vector2(PANEL_W - 24.0, EMPTY_WAND_SLOT_H))
 	var is_target := _dragging_wand != null and _mage_equip_index_at(_drag_pos) == mage_index
-	draw_rect(r, Palette.COLOR_DROP_HIGHLIGHT if is_target else Palette.COLOR_SLOT_EMPTY, true)
-	draw_rect(r, Palette.COLOR_DROP_BORDER if is_target else Palette.COLOR_SLOT_BORDER, false, 1.5)
-	draw_string(ThemeDB.fallback_font,
-			Vector2(WAND_X + 10.0, slot_y + EMPTY_WAND_SLOT_H * 0.5 + 5.0),
-			"Drop wand here", HORIZONTAL_ALIGNMENT_CENTER, PANEL_W - 20.0, 11, Palette.COLOR_SLOT_BORDER)
+	EmberDraw.rounded_rect(self, r, Palette.COLOR_DROP_HIGHLIGHT if is_target else Palette.COLOR_SLOT_EMPTY,
+			Palette.COLOR_DROP_BORDER if is_target else Palette.COLOR_INNER_BORDER, 1, 4)
+	EmberDraw.text_centered(self, r.get_center().x, r.get_center().y + 5.0, "The wand rack is empty — drop a wand here", 13, Palette.COLOR_TEXT_DIM)
 
 
 func _build_loot_wands() -> void:
-	var y := _loot_wand_section_y() + 18.0
 	for wand: WandData in _inventory.pending_loot_wands:
 		var wd := WandDisplay.new()
 		add_child(wd)
 		wd.setup(wand)
-		wd.position = Vector2(LOOT_X + (PANEL_W - wd.get_display_size().x) * 0.5, y)
+		wd.min_width = PANEL_W - 24.0
 		_loot_wand_displays.append(wd)
-		y += wd.get_display_size().y + ROW_GAP
+	_reposition_loot_wands()
 
 
+## Stacks the loot wands below the spells and shrinks them when they would overflow the panel.
 func _reposition_loot_wands() -> void:
-	var y := _loot_wand_section_y() + 18.0
+	var top := _loot_wand_section_y() + 18.0
+	var total := 0.0
 	for wd: WandDisplay in _loot_wand_displays:
-		wd.position = Vector2(LOOT_X + (PANEL_W - wd.get_display_size().x) * 0.5, y)
-		y += wd.get_display_size().y + ROW_GAP
+		total += wd.get_display_size().y + ROW_GAP
+	var k := minf(1.0, (PANEL_TOP + PANEL_H - 8.0 - top) / maxf(total, 1.0))
+	var y := top
+	for wd: WandDisplay in _loot_wand_displays:
+		wd.scale = Vector2.ONE * k
+		wd.position = Vector2(LOOT_X + (PANEL_W - wd.get_display_size().x * k) * 0.5, y)
+		y += (wd.get_display_size().y + ROW_GAP) * k
 
 
 func _build_equip_wands() -> void:
-	var y := PANEL_TOP + 30.0
+	var y := PANEL_TOP + HEADING_H
 	for i in _inventory.mages.size():
 		_mage_row_ys.append(y)
 		var wand_data := _inventory.equipped_wand(i)
@@ -502,6 +476,7 @@ func _build_equip_wands() -> void:
 			wd = WandDisplay.new()
 			add_child(wd)
 			wd.setup(wand_data)
+			wd.min_width = PANEL_W - 24.0
 			wand_h = wd.get_display_size().y
 			wd.position = Vector2(WAND_X + (PANEL_W - wd.get_display_size().x) * 0.5,
 					y + MAGE_HEADER_H)
@@ -675,9 +650,7 @@ func _update_hover(pos: Vector2) -> void:
 # --- bottom bar ---
 
 func _draw_bottom_bar_bg() -> void:
-	var bar_y := SCREEN_H - BOTTOM_BAR_H
-	draw_rect(Rect2(Vector2(0, bar_y), Vector2(SCREEN_W, BOTTOM_BAR_H)), Palette.COLOR_HEADER_BG, true)
-	draw_rect(Rect2(Vector2(0, bar_y), Vector2(SCREEN_W, 1)), Palette.COLOR_BORDER, true)
+	EmberDraw.bottom_bar(self, "Drag spells between spoils, satchel and wands", 460.0)
 
 
 func _build_bottom_bar() -> void:
@@ -685,34 +658,35 @@ func _build_bottom_bar() -> void:
 	add_child(layer)
 	_add_spell_btn = Button.new()
 	_add_spell_btn.text = "+ Spell"
-	_add_spell_btn.size = Vector2(90, BOTTOM_BAR_H - 10)
-	_add_spell_btn.position = Vector2(8.0, SCREEN_H - BOTTOM_BAR_H + 5.0)
+	_add_spell_btn.size = Vector2(90, 36)
+	_add_spell_btn.position = Vector2(24.0, SCREEN_H - BOTTOM_BAR_H + 10.0)
 	_add_spell_btn.pressed.connect(_on_add_spell_pressed)
 	layer.add_child(_add_spell_btn)
 	_reroll_btn = Button.new()
 	_reroll_btn.text = "↺ Reroll"
-	_reroll_btn.size = Vector2(90, BOTTOM_BAR_H - 10)
-	_reroll_btn.position = Vector2(106.0, SCREEN_H - BOTTOM_BAR_H + 5.0)
+	_reroll_btn.size = Vector2(90, 36)
+	_reroll_btn.position = Vector2(122.0, SCREEN_H - BOTTOM_BAR_H + 10.0)
 	_reroll_btn.disabled = _inventory.is_initial_setup
 	_reroll_btn.pressed.connect(_on_reroll_pressed)
 	layer.add_child(_reroll_btn)
 	var codex_btn := Button.new()
 	codex_btn.text = "Codex"
-	codex_btn.size = Vector2(90, BOTTOM_BAR_H - 10)
-	codex_btn.position = Vector2(204.0, SCREEN_H - BOTTOM_BAR_H + 5.0)
+	codex_btn.size = Vector2(90, 36)
+	codex_btn.position = Vector2(220.0, SCREEN_H - BOTTOM_BAR_H + 10.0)
 	codex_btn.pressed.connect(_on_codex_pressed)
 	layer.add_child(codex_btn)
-	_continue_btn = Button.new()
-	_continue_btn.text = "Continue →"
-	_continue_btn.size = Vector2(148, BOTTOM_BAR_H - 10)
-	_continue_btn.position = Vector2(SCREEN_W - 156.0, SCREEN_H - BOTTOM_BAR_H + 5.0)
+	var seal := WaxSealButton.new()
+	seal.line1 = "GO"
+	seal.line2 = "FORTH"
+	seal.position = Vector2(SCREEN_W - 98.0, SCREEN_H - 92.0)
+	_continue_btn = seal
 	_continue_btn.pressed.connect(_on_continue_pressed)
 	layer.add_child(_continue_btn)
 	if _inventory.is_initial_setup:
 		_auto_assign_btn = Button.new()
 		_auto_assign_btn.text = "Auto Assign"
-		_auto_assign_btn.size = Vector2(120, BOTTOM_BAR_H - 10)
-		_auto_assign_btn.position = Vector2(SCREEN_W - 292.0, SCREEN_H - BOTTOM_BAR_H + 5.0)
+		_auto_assign_btn.size = Vector2(120, 36)
+		_auto_assign_btn.position = Vector2(318.0, SCREEN_H - BOTTOM_BAR_H + 10.0)
 		_auto_assign_btn.pressed.connect(_on_auto_assign_pressed)
 		layer.add_child(_auto_assign_btn)
 	_refresh_continue_btn()
