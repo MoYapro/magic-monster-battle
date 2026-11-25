@@ -1,0 +1,536 @@
+{
+ "id": "frost_mage",
+ "scale": 0.5,
+ "canvas": [
+  256.0,
+  256.0
+ ],
+ "cells": [
+  1,
+  1
+ ],
+ "joints": [
+  {
+   "name": "ground",
+   "pivot": [
+    130.0,
+    235.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "staff",
+   "pivot": [
+    179.0,
+    131.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "staff_crystal",
+   "pivot": [
+    176.0,
+    73.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "mantle",
+   "pivot": [
+    145.0,
+    95.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "sleeve_far",
+   "pivot": [
+    153.0,
+    98.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hand_far",
+   "pivot": [
+    179.0,
+    131.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "robe",
+   "pivot": [
+    131.0,
+    100.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "robe_trim",
+   "pivot": [
+    133.0,
+    223.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "belt",
+   "pivot": [
+    131.0,
+    146.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "collar",
+   "pivot": [
+    131.0,
+    98.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hair",
+   "pivot": [
+    137.0,
+    80.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "face",
+   "pivot": [
+    120.0,
+    93.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "circlet",
+   "pivot": [
+    123.0,
+    54.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "beard",
+   "pivot": [
+    119.0,
+    90.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "sleeve_near",
+   "pivot": [
+    118.0,
+    100.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hand_near",
+   "pivot": [
+    70.0,
+    111.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "frost_aura",
+   "pivot": [
+    39.0,
+    103.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "ice_swirl",
+   "pivot": [
+    39.0,
+    103.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "snowflakes",
+   "pivot": [
+    39.0,
+    103.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "frost",
+   "pivot": [
+    130.0,
+    233.0
+   ],
+   "parent": ""
+  }
+ ],
+ "layers": [
+  {
+   "file": "rim_ground.png",
+   "joint": "ground",
+   "z": 0,
+   "pos": [
+    45,
+    224
+   ]
+  },
+  {
+   "file": "rim_staff.png",
+   "joint": "staff",
+   "z": 1,
+   "pos": [
+    166,
+    69
+   ]
+  },
+  {
+   "file": "rim_staff_crystal.png",
+   "joint": "staff_crystal",
+   "z": 2,
+   "pos": [
+    147,
+    6
+   ]
+  },
+  {
+   "file": "rim_mantle.png",
+   "joint": "mantle",
+   "z": 3,
+   "pos": [
+    119,
+    80
+   ]
+  },
+  {
+   "file": "rim_sleeve_far.png",
+   "joint": "sleeve_far",
+   "z": 4,
+   "pos": [
+    140,
+    89
+   ]
+  },
+  {
+   "file": "rim_hand_far.png",
+   "joint": "hand_far",
+   "z": 5,
+   "pos": [
+    168,
+    121
+   ]
+  },
+  {
+   "file": "rim_robe.png",
+   "joint": "robe",
+   "z": 6,
+   "pos": [
+    85,
+    83
+   ]
+  },
+  {
+   "file": "rim_robe_trim.png",
+   "joint": "robe_trim",
+   "z": 7,
+   "pos": [
+    85,
+    102
+   ]
+  },
+  {
+   "file": "rim_belt.png",
+   "joint": "belt",
+   "z": 8,
+   "pos": [
+    97,
+    137
+   ]
+  },
+  {
+   "file": "rim_collar.png",
+   "joint": "collar",
+   "z": 9,
+   "pos": [
+    93,
+    54
+   ]
+  },
+  {
+   "file": "rim_hair.png",
+   "joint": "hair",
+   "z": 10,
+   "pos": [
+    113,
+    43
+   ]
+  },
+  {
+   "file": "rim_face.png",
+   "joint": "face",
+   "z": 11,
+   "pos": [
+    102,
+    45
+   ]
+  },
+  {
+   "file": "rim_circlet.png",
+   "joint": "circlet",
+   "z": 12,
+   "pos": [
+    105,
+    43
+   ]
+  },
+  {
+   "file": "rim_beard.png",
+   "joint": "beard",
+   "z": 13,
+   "pos": [
+    101,
+    77
+   ]
+  },
+  {
+   "file": "rim_sleeve_near.png",
+   "joint": "sleeve_near",
+   "z": 14,
+   "pos": [
+    62,
+    89
+   ]
+  },
+  {
+   "file": "rim_hand_near.png",
+   "joint": "hand_near",
+   "z": 15,
+   "pos": [
+    46,
+    91
+   ]
+  },
+  {
+   "file": "rim_frost_aura.png",
+   "joint": "frost_aura",
+   "z": 16,
+   "pos": [
+    6,
+    64
+   ]
+  },
+  {
+   "file": "rim_ice_swirl.png",
+   "joint": "ice_swirl",
+   "z": 17,
+   "pos": [
+    12,
+    71
+   ]
+  },
+  {
+   "file": "rim_snowflakes.png",
+   "joint": "snowflakes",
+   "z": 18,
+   "pos": [
+    4,
+    56
+   ]
+  },
+  {
+   "file": "rim_frost.png",
+   "joint": "frost",
+   "z": 19,
+   "pos": [
+    58,
+    210
+   ]
+  },
+  {
+   "file": "ground.png",
+   "joint": "ground",
+   "z": 1000,
+   "pos": [
+    48,
+    227
+   ]
+  },
+  {
+   "file": "staff.png",
+   "joint": "staff",
+   "z": 1001,
+   "pos": [
+    169,
+    72
+   ]
+  },
+  {
+   "file": "staff_crystal.png",
+   "joint": "staff_crystal",
+   "z": 1002,
+   "pos": [
+    150,
+    9
+   ]
+  },
+  {
+   "file": "mantle.png",
+   "joint": "mantle",
+   "z": 1003,
+   "pos": [
+    123,
+    83
+   ]
+  },
+  {
+   "file": "sleeve_far.png",
+   "joint": "sleeve_far",
+   "z": 1004,
+   "pos": [
+    143,
+    91
+   ]
+  },
+  {
+   "file": "hand_far.png",
+   "joint": "hand_far",
+   "z": 1005,
+   "pos": [
+    172,
+    124
+   ]
+  },
+  {
+   "file": "robe.png",
+   "joint": "robe",
+   "z": 1006,
+   "pos": [
+    88,
+    85
+   ]
+  },
+  {
+   "file": "robe_trim.png",
+   "joint": "robe_trim",
+   "z": 1007,
+   "pos": [
+    88,
+    105
+   ]
+  },
+  {
+   "file": "belt.png",
+   "joint": "belt",
+   "z": 1008,
+   "pos": [
+    100,
+    140
+   ]
+  },
+  {
+   "file": "collar.png",
+   "joint": "collar",
+   "z": 1009,
+   "pos": [
+    95,
+    56
+   ]
+  },
+  {
+   "file": "hair.png",
+   "joint": "hair",
+   "z": 1010,
+   "pos": [
+    116,
+    46
+   ]
+  },
+  {
+   "file": "face.png",
+   "joint": "face",
+   "z": 1011,
+   "pos": [
+    105,
+    48
+   ]
+  },
+  {
+   "file": "circlet.png",
+   "joint": "circlet",
+   "z": 1012,
+   "pos": [
+    108,
+    47
+   ]
+  },
+  {
+   "file": "beard.png",
+   "joint": "beard",
+   "z": 1013,
+   "pos": [
+    104,
+    80
+   ]
+  },
+  {
+   "file": "sleeve_near.png",
+   "joint": "sleeve_near",
+   "z": 1014,
+   "pos": [
+    64,
+    93
+   ]
+  },
+  {
+   "file": "hand_near.png",
+   "joint": "hand_near",
+   "z": 1015,
+   "pos": [
+    48,
+    95
+   ]
+  },
+  {
+   "file": "frost_aura.png",
+   "joint": "frost_aura",
+   "z": 1016,
+   "pos": [
+    9,
+    66
+   ]
+  },
+  {
+   "file": "ice_swirl.png",
+   "joint": "ice_swirl",
+   "z": 1017,
+   "pos": [
+    16,
+    74
+   ]
+  },
+  {
+   "file": "snowflakes.png",
+   "joint": "snowflakes",
+   "z": 1018,
+   "pos": [
+    6,
+    59
+   ]
+  },
+  {
+   "file": "frost.png",
+   "joint": "frost",
+   "z": 1019,
+   "pos": [
+    61,
+    214
+   ]
+  }
+ ]
+}

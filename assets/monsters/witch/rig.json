@@ -1,0 +1,362 @@
+{
+ "id": "witch",
+ "scale": 0.5,
+ "canvas": [
+  256.0,
+  256.0
+ ],
+ "cells": [
+  1,
+  1
+ ],
+ "joints": [
+  {
+   "name": "ground",
+   "pivot": [
+    130.0,
+    235.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "staff",
+   "pivot": [
+    192.0,
+    134.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "sleeve_far",
+   "pivot": [
+    160.0,
+    120.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hand_far",
+   "pivot": [
+    192.0,
+    136.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "cloak",
+   "pivot": [
+    145.0,
+    125.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "cauldron",
+   "pivot": [
+    69.0,
+    210.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "bubbles",
+   "pivot": [
+    70.0,
+    170.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "sleeve_near",
+   "pivot": [
+    120.0,
+    120.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hand_near",
+   "pivot": [
+    88.0,
+    146.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "potion",
+   "pivot": [
+    80.0,
+    156.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "head",
+   "pivot": [
+    127.0,
+    113.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hair",
+   "pivot": [
+    131.0,
+    106.0
+   ],
+   "parent": "head"
+  },
+  {
+   "name": "face",
+   "pivot": [
+    114.0,
+    111.0
+   ],
+   "parent": "head"
+  },
+  {
+   "name": "hat",
+   "pivot": [
+    123.0,
+    94.0
+   ],
+   "parent": "head"
+  }
+ ],
+ "layers": [
+  {
+   "file": "rim_ground.png",
+   "joint": "ground",
+   "z": 0,
+   "pos": [
+    25,
+    225
+   ]
+  },
+  {
+   "file": "rim_staff.png",
+   "joint": "staff",
+   "z": 1,
+   "pos": [
+    178,
+    33
+   ]
+  },
+  {
+   "file": "rim_sleeve_far.png",
+   "joint": "sleeve_far",
+   "z": 2,
+   "pos": [
+    150,
+    109
+   ]
+  },
+  {
+   "file": "rim_hand_far.png",
+   "joint": "hand_far",
+   "z": 3,
+   "pos": [
+    181,
+    126
+   ]
+  },
+  {
+   "file": "rim_cloak.png",
+   "joint": "cloak",
+   "z": 4,
+   "pos": [
+    93,
+    87
+   ]
+  },
+  {
+   "file": "rim_cauldron.png",
+   "joint": "cauldron",
+   "z": 5,
+   "pos": [
+    25,
+    179
+   ]
+  },
+  {
+   "file": "rim_bubbles.png",
+   "joint": "bubbles",
+   "z": 6,
+   "pos": [
+    41,
+    105
+   ]
+  },
+  {
+   "file": "rim_sleeve_near.png",
+   "joint": "sleeve_near",
+   "z": 7,
+   "pos": [
+    81,
+    110
+   ]
+  },
+  {
+   "file": "rim_hand_near.png",
+   "joint": "hand_near",
+   "z": 8,
+   "pos": [
+    73,
+    138
+   ]
+  },
+  {
+   "file": "rim_potion.png",
+   "joint": "potion",
+   "z": 9,
+   "pos": [
+    64,
+    146
+   ]
+  },
+  {
+   "file": "rim_hair.png",
+   "joint": "hair",
+   "z": 10,
+   "pos": [
+    112,
+    86
+   ]
+  },
+  {
+   "file": "rim_face.png",
+   "joint": "face",
+   "z": 11,
+   "pos": [
+    79,
+    87
+   ]
+  },
+  {
+   "file": "rim_hat.png",
+   "joint": "hat",
+   "z": 12,
+   "pos": [
+    78,
+    20
+   ]
+  },
+  {
+   "file": "ground.png",
+   "joint": "ground",
+   "z": 1000,
+   "pos": [
+    28,
+    228
+   ]
+  },
+  {
+   "file": "staff.png",
+   "joint": "staff",
+   "z": 1001,
+   "pos": [
+    180,
+    35
+   ]
+  },
+  {
+   "file": "sleeve_far.png",
+   "joint": "sleeve_far",
+   "z": 1002,
+   "pos": [
+    153,
+    112
+   ]
+  },
+  {
+   "file": "hand_far.png",
+   "joint": "hand_far",
+   "z": 1003,
+   "pos": [
+    184,
+    130
+   ]
+  },
+  {
+   "file": "cloak.png",
+   "joint": "cloak",
+   "z": 1004,
+   "pos": [
+    96,
+    90
+   ]
+  },
+  {
+   "file": "cauldron.png",
+   "joint": "cauldron",
+   "z": 1005,
+   "pos": [
+    28,
+    182
+   ]
+  },
+  {
+   "file": "bubbles.png",
+   "joint": "bubbles",
+   "z": 1006,
+   "pos": [
+    44,
+    108
+   ]
+  },
+  {
+   "file": "sleeve_near.png",
+   "joint": "sleeve_near",
+   "z": 1007,
+   "pos": [
+    83,
+    113
+   ]
+  },
+  {
+   "file": "hand_near.png",
+   "joint": "hand_near",
+   "z": 1008,
+   "pos": [
+    75,
+    141
+   ]
+  },
+  {
+   "file": "potion.png",
+   "joint": "potion",
+   "z": 1009,
+   "pos": [
+    67,
+    149
+   ]
+  },
+  {
+   "file": "hair.png",
+   "joint": "hair",
+   "z": 1010,
+   "pos": [
+    115,
+    89
+   ]
+  },
+  {
+   "file": "face.png",
+   "joint": "face",
+   "z": 1011,
+   "pos": [
+    81,
+    90
+   ]
+  },
+  {
+   "file": "hat.png",
+   "joint": "hat",
+   "z": 1012,
+   "pos": [
+    81,
+    24
+   ]
+  }
+ ]
+}

@@ -1,0 +1,339 @@
+{
+ "id": "sleeping_unicorn",
+ "scale": 0.5,
+ "canvas": [
+  256.0,
+  256.0
+ ],
+ "cells": [
+  1,
+  1
+ ],
+ "joints": [
+  {
+   "name": "base",
+   "pivot": [
+    0.0,
+    0.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "ground",
+   "pivot": [
+    131.5,
+    235.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_front_upper",
+   "pivot": [
+    111.0,
+    202.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_front_lower",
+   "pivot": [
+    91.0,
+    215.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_front_hoof",
+   "pivot": [
+    118.0,
+    220.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "body",
+   "pivot": [
+    155.0,
+    185.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "haunch",
+   "pivot": [
+    196.0,
+    186.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_back_shin_upper",
+   "pivot": [
+    205.0,
+    209.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_back_shin_lower",
+   "pivot": [
+    178.0,
+    220.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_back_hoof",
+   "pivot": [
+    146.0,
+    223.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "tail",
+   "pivot": [
+    224.0,
+    186.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "neck",
+   "pivot": [
+    110.0,
+    180.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "mane",
+   "pivot": [
+    85.0,
+    161.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "head",
+   "pivot": [
+    65.0,
+    180.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "forelock",
+   "pivot": [
+    63.5,
+    167.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "horn",
+   "pivot": [
+    63.5,
+    167.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_front_upper",
+   "pivot": [
+    113.0,
+    202.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_front_lower",
+   "pivot": [
+    75.0,
+    220.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_front_hoof",
+   "pivot": [
+    113.0,
+    227.5
+   ],
+   "parent": ""
+  }
+ ],
+ "layers": [
+  {
+   "file": "base.png",
+   "joint": "base",
+   "z": 1000,
+   "pos": [
+    5,
+    137
+   ]
+  },
+  {
+   "file": "ground.png",
+   "joint": "ground",
+   "z": 1001,
+   "pos": [
+    11,
+    202
+   ]
+  },
+  {
+   "file": "leg_far_front_upper.png",
+   "joint": "leg_far_front_upper",
+   "z": 1002,
+   "pos": [
+    82,
+    193
+   ]
+  },
+  {
+   "file": "leg_far_front_lower.png",
+   "joint": "leg_far_front_lower",
+   "z": 1003,
+   "pos": [
+    89,
+    207
+   ]
+  },
+  {
+   "file": "leg_far_front_hoof.png",
+   "joint": "leg_far_front_hoof",
+   "z": 1004,
+   "pos": [
+    114,
+    212
+   ]
+  },
+  {
+   "file": "body.png",
+   "joint": "body",
+   "z": 1005,
+   "pos": [
+    87,
+    152
+   ]
+  },
+  {
+   "file": "haunch.png",
+   "joint": "haunch",
+   "z": 1006,
+   "pos": [
+    171,
+    162
+   ]
+  },
+  {
+   "file": "leg_back_shin_upper.png",
+   "joint": "leg_back_shin_upper",
+   "z": 1007,
+   "pos": [
+    170,
+    200
+   ]
+  },
+  {
+   "file": "leg_back_shin_lower.png",
+   "joint": "leg_back_shin_lower",
+   "z": 1008,
+   "pos": [
+    143,
+    213
+   ]
+  },
+  {
+   "file": "leg_back_hoof.png",
+   "joint": "leg_back_hoof",
+   "z": 1009,
+   "pos": [
+    137,
+    214
+   ]
+  },
+  {
+   "file": "tail.png",
+   "joint": "tail",
+   "z": 1010,
+   "pos": [
+    155,
+    177
+   ]
+  },
+  {
+   "file": "neck.png",
+   "joint": "neck",
+   "z": 1011,
+   "pos": [
+    63,
+    155
+   ]
+  },
+  {
+   "file": "mane.png",
+   "joint": "mane",
+   "z": 1012,
+   "pos": [
+    71,
+    141
+   ]
+  },
+  {
+   "file": "head.png",
+   "joint": "head",
+   "z": 1013,
+   "pos": [
+    15,
+    154
+   ]
+  },
+  {
+   "file": "forelock.png",
+   "joint": "forelock",
+   "z": 1014,
+   "pos": [
+    45,
+    161
+   ]
+  },
+  {
+   "file": "horn.png",
+   "joint": "horn",
+   "z": 1015,
+   "pos": [
+    8,
+    140
+   ]
+  },
+  {
+   "file": "leg_front_upper.png",
+   "joint": "leg_front_upper",
+   "z": 1016,
+   "pos": [
+    66,
+    192
+   ]
+  },
+  {
+   "file": "leg_front_lower.png",
+   "joint": "leg_front_lower",
+   "z": 1017,
+   "pos": [
+    71,
+    212
+   ]
+  },
+  {
+   "file": "leg_front_hoof.png",
+   "joint": "leg_front_hoof",
+   "z": 1018,
+   "pos": [
+    109,
+    220
+   ]
+  }
+ ]
+}

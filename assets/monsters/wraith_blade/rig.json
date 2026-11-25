@@ -1,0 +1,250 @@
+{
+ "id": "wraith_blade",
+ "scale": 0.5,
+ "canvas": [
+  256.0,
+  256.0
+ ],
+ "cells": [
+  1,
+  1
+ ],
+ "joints": [
+  {
+   "name": "ground",
+   "pivot": [
+    120.0,
+    234.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "trail_pommel",
+   "pivot": [
+    192.5,
+    48.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "trail_edge_up",
+   "pivot": [
+    131.5,
+    98.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "trail_edge_down",
+   "pivot": [
+    134.0,
+    121.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "shards",
+   "pivot": [
+    159.0,
+    83.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "grip",
+   "pivot": [
+    159.0,
+    83.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "pommel",
+   "pivot": [
+    192.5,
+    48.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "blade",
+   "pivot": [
+    159.0,
+    83.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "guard",
+   "pivot": [
+    159.0,
+    83.0
+   ],
+   "parent": ""
+  }
+ ],
+ "layers": [
+  {
+   "file": "rim_ground.png",
+   "joint": "ground",
+   "z": 0,
+   "pos": [
+    75,
+    223
+   ]
+  },
+  {
+   "file": "rim_trail_pommel.png",
+   "joint": "trail_pommel",
+   "z": 1,
+   "pos": [
+    175,
+    17
+   ]
+  },
+  {
+   "file": "rim_trail_edge_up.png",
+   "joint": "trail_edge_up",
+   "z": 2,
+   "pos": [
+    70,
+    37
+   ]
+  },
+  {
+   "file": "rim_trail_edge_down.png",
+   "joint": "trail_edge_down",
+   "z": 3,
+   "pos": [
+    94,
+    82
+   ]
+  },
+  {
+   "file": "rim_shards.png",
+   "joint": "shards",
+   "z": 4,
+   "pos": [
+    22,
+    44
+   ]
+  },
+  {
+   "file": "rim_grip.png",
+   "joint": "grip",
+   "z": 5,
+   "pos": [
+    155,
+    45
+   ]
+  },
+  {
+   "file": "rim_pommel.png",
+   "joint": "pommel",
+   "z": 6,
+   "pos": [
+    179,
+    28
+   ]
+  },
+  {
+   "file": "rim_blade.png",
+   "joint": "blade",
+   "z": 7,
+   "pos": [
+    41,
+    68
+   ]
+  },
+  {
+   "file": "rim_guard.png",
+   "joint": "guard",
+   "z": 8,
+   "pos": [
+    129,
+    33
+   ]
+  },
+  {
+   "file": "ground.png",
+   "joint": "ground",
+   "z": 1000,
+   "pos": [
+    77,
+    226
+   ]
+  },
+  {
+   "file": "trail_pommel.png",
+   "joint": "trail_pommel",
+   "z": 1001,
+   "pos": [
+    179,
+    20
+   ]
+  },
+  {
+   "file": "trail_edge_up.png",
+   "joint": "trail_edge_up",
+   "z": 1002,
+   "pos": [
+    74,
+    40
+   ]
+  },
+  {
+   "file": "trail_edge_down.png",
+   "joint": "trail_edge_down",
+   "z": 1003,
+   "pos": [
+    96,
+    85
+   ]
+  },
+  {
+   "file": "shards.png",
+   "joint": "shards",
+   "z": 1004,
+   "pos": [
+    24,
+    47
+   ]
+  },
+  {
+   "file": "grip.png",
+   "joint": "grip",
+   "z": 1005,
+   "pos": [
+    159,
+    47
+   ]
+  },
+  {
+   "file": "pommel.png",
+   "joint": "pommel",
+   "z": 1006,
+   "pos": [
+    183,
+    31
+   ]
+  },
+  {
+   "file": "blade.png",
+   "joint": "blade",
+   "z": 1007,
+   "pos": [
+    42,
+    71
+   ]
+  },
+  {
+   "file": "guard.png",
+   "joint": "guard",
+   "z": 1008,
+   "pos": [
+    132,
+    36
+   ]
+  }
+ ]
+}

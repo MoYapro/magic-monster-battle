@@ -1,0 +1,203 @@
+{
+ "id": "flying_cat",
+ "scale": 0.5,
+ "canvas": [
+  256.0,
+  256.0
+ ],
+ "cells": [
+  1,
+  1
+ ],
+ "joints": [
+  {
+   "name": "base",
+   "pivot": [
+    0.0,
+    0.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "ground_shadow",
+   "pivot": [
+    135.0,
+    235.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "wing_far",
+   "pivot": [
+    134.0,
+    110.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_back",
+   "pivot": [
+    183.0,
+    143.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_front",
+   "pivot": [
+    107.0,
+    142.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "tail",
+   "pivot": [
+    206.0,
+    123.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "body",
+   "pivot": [
+    145.0,
+    125.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_back",
+   "pivot": [
+    190.0,
+    135.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_front",
+   "pivot": [
+    98.0,
+    135.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "wing_near",
+   "pivot": [
+    113.0,
+    114.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "head",
+   "pivot": [
+    88.0,
+    118.0
+   ],
+   "parent": ""
+  }
+ ],
+ "layers": [
+  {
+   "file": "base.png",
+   "joint": "base",
+   "z": 1000,
+   "pos": [
+    25,
+    0
+   ]
+  },
+  {
+   "file": "ground_shadow.png",
+   "joint": "ground_shadow",
+   "z": 1001,
+   "pos": [
+    87,
+    227
+   ]
+  },
+  {
+   "file": "wing_far.png",
+   "joint": "wing_far",
+   "z": 1002,
+   "pos": [
+    126,
+    24
+   ]
+  },
+  {
+   "file": "leg_far_back.png",
+   "joint": "leg_far_back",
+   "z": 1003,
+   "pos": [
+    176,
+    135
+   ]
+  },
+  {
+   "file": "leg_far_front.png",
+   "joint": "leg_far_front",
+   "z": 1004,
+   "pos": [
+    40,
+    133
+   ]
+  },
+  {
+   "file": "tail.png",
+   "joint": "tail",
+   "z": 1005,
+   "pos": [
+    201,
+    73
+   ]
+  },
+  {
+   "file": "body.png",
+   "joint": "body",
+   "z": 1006,
+   "pos": [
+    78,
+    97
+   ]
+  },
+  {
+   "file": "leg_back.png",
+   "joint": "leg_back",
+   "z": 1007,
+   "pos": [
+    180,
+    128
+   ]
+  },
+  {
+   "file": "leg_front.png",
+   "joint": "leg_front",
+   "z": 1008,
+   "pos": [
+    26,
+    126
+   ]
+  },
+  {
+   "file": "wing_near.png",
+   "joint": "wing_near",
+   "z": 1009,
+   "pos": [
+    102,
+    0
+   ]
+  },
+  {
+   "file": "head.png",
+   "joint": "head",
+   "z": 1010,
+   "pos": [
+    23,
+    50
+   ]
+  }
+ ]
+}

@@ -1,0 +1,577 @@
+{
+ "id": "scorpion",
+ "scale": 0.5,
+ "canvas": [
+  256.0,
+  256.0
+ ],
+ "cells": [
+  1,
+  1
+ ],
+ "joints": [
+  {
+   "name": "base",
+   "pivot": [
+    0.0,
+    0.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "ground",
+   "pivot": [
+    137.5,
+    228.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "arm_far",
+   "pivot": [
+    113.0,
+    160.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "forearm_far",
+   "pivot": [
+    99.5,
+    138.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "claw_far",
+   "pivot": [
+    87.5,
+    122.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_1_femur",
+   "pivot": [
+    129.0,
+    162.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_1_tibia",
+   "pivot": [
+    106.5,
+    131.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_2_femur",
+   "pivot": [
+    144.0,
+    159.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_2_tibia",
+   "pivot": [
+    135.5,
+    124.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_3_femur",
+   "pivot": [
+    160.0,
+    158.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_3_tibia",
+   "pivot": [
+    174.0,
+    123.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_4_femur",
+   "pivot": [
+    176.0,
+    159.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_4_tibia",
+   "pivot": [
+    204.0,
+    128.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "tail_1",
+   "pivot": [
+    192.0,
+    166.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "tail_2",
+   "pivot": [
+    213.5,
+    152.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "tail_3",
+   "pivot": [
+    227.5,
+    125.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "tail_4",
+   "pivot": [
+    228.5,
+    95.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "tail_5",
+   "pivot": [
+    216.5,
+    71.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "tail_6",
+   "pivot": [
+    195.5,
+    60.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "stinger",
+   "pivot": [
+    174.0,
+    62.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "body",
+   "pivot": [
+    158.0,
+    172.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_4_femur",
+   "pivot": [
+    178.5,
+    185.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_4_tibia",
+   "pivot": [
+    218.0,
+    160.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_3_femur",
+   "pivot": [
+    162.0,
+    189.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_3_tibia",
+   "pivot": [
+    182.5,
+    159.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_2_femur",
+   "pivot": [
+    145.0,
+    190.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_2_tibia",
+   "pivot": [
+    127.0,
+    158.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_1_femur",
+   "pivot": [
+    129.0,
+    189.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_1_tibia",
+   "pivot": [
+    99.5,
+    162.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "head",
+   "pivot": [
+    120.5,
+    172.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "arm_near",
+   "pivot": [
+    99.5,
+    188.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "forearm_near",
+   "pivot": [
+    76.0,
+    202.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "claw_near",
+   "pivot": [
+    62.0,
+    192.5
+   ],
+   "parent": ""
+  }
+ ],
+ "layers": [
+  {
+   "file": "base.png",
+   "joint": "base",
+   "z": 1000,
+   "pos": [
+    0,
+    47
+   ]
+  },
+  {
+   "file": "ground.png",
+   "joint": "ground",
+   "z": 1001,
+   "pos": [
+    26,
+    219
+   ]
+  },
+  {
+   "file": "arm_far.png",
+   "joint": "arm_far",
+   "z": 1002,
+   "pos": [
+    91,
+    130
+   ]
+  },
+  {
+   "file": "forearm_far.png",
+   "joint": "forearm_far",
+   "z": 1003,
+   "pos": [
+    79,
+    113
+   ]
+  },
+  {
+   "file": "claw_far.png",
+   "joint": "claw_far",
+   "z": 1004,
+   "pos": [
+    32,
+    104
+   ]
+  },
+  {
+   "file": "leg_far_1_femur.png",
+   "joint": "leg_far_1_femur",
+   "z": 1005,
+   "pos": [
+    100,
+    126
+   ]
+  },
+  {
+   "file": "leg_far_1_tibia.png",
+   "joint": "leg_far_1_tibia",
+   "z": 1006,
+   "pos": [
+    97,
+    128
+   ]
+  },
+  {
+   "file": "leg_far_2_femur.png",
+   "joint": "leg_far_2_femur",
+   "z": 1007,
+   "pos": [
+    130,
+    117
+   ]
+  },
+  {
+   "file": "leg_far_2_tibia.png",
+   "joint": "leg_far_2_tibia",
+   "z": 1008,
+   "pos": [
+    131,
+    121
+   ]
+  },
+  {
+   "file": "leg_far_3_femur.png",
+   "joint": "leg_far_3_femur",
+   "z": 1009,
+   "pos": [
+    155,
+    116
+   ]
+  },
+  {
+   "file": "leg_far_3_tibia.png",
+   "joint": "leg_far_3_tibia",
+   "z": 1010,
+   "pos": [
+    169,
+    121
+   ]
+  },
+  {
+   "file": "leg_far_4_femur.png",
+   "joint": "leg_far_4_femur",
+   "z": 1011,
+   "pos": [
+    171,
+    123
+   ]
+  },
+  {
+   "file": "leg_far_4_tibia.png",
+   "joint": "leg_far_4_tibia",
+   "z": 1012,
+   "pos": [
+    199,
+    125
+   ]
+  },
+  {
+   "file": "tail_1.png",
+   "joint": "tail_1",
+   "z": 1013,
+   "pos": [
+    183,
+    141
+   ]
+  },
+  {
+   "file": "tail_2.png",
+   "joint": "tail_2",
+   "z": 1014,
+   "pos": [
+    203,
+    116
+   ]
+  },
+  {
+   "file": "tail_3.png",
+   "joint": "tail_3",
+   "z": 1015,
+   "pos": [
+    215,
+    86
+   ]
+  },
+  {
+   "file": "tail_4.png",
+   "joint": "tail_4",
+   "z": 1016,
+   "pos": [
+    207,
+    61
+   ]
+  },
+  {
+   "file": "tail_5.png",
+   "joint": "tail_5",
+   "z": 1017,
+   "pos": [
+    187,
+    51
+   ]
+  },
+  {
+   "file": "tail_6.png",
+   "joint": "tail_6",
+   "z": 1018,
+   "pos": [
+    166,
+    50
+   ]
+  },
+  {
+   "file": "stinger.png",
+   "joint": "stinger",
+   "z": 1019,
+   "pos": [
+    141,
+    50
+   ]
+  },
+  {
+   "file": "body.png",
+   "joint": "body",
+   "z": 1020,
+   "pos": [
+    113,
+    145
+   ]
+  },
+  {
+   "file": "leg_near_4_femur.png",
+   "joint": "leg_near_4_femur",
+   "z": 1021,
+   "pos": [
+    174,
+    153
+   ]
+  },
+  {
+   "file": "leg_near_4_tibia.png",
+   "joint": "leg_near_4_tibia",
+   "z": 1022,
+   "pos": [
+    213,
+    157
+   ]
+  },
+  {
+   "file": "leg_near_3_femur.png",
+   "joint": "leg_near_3_femur",
+   "z": 1023,
+   "pos": [
+    156,
+    152
+   ]
+  },
+  {
+   "file": "leg_near_3_tibia.png",
+   "joint": "leg_near_3_tibia",
+   "z": 1024,
+   "pos": [
+    177,
+    157
+   ]
+  },
+  {
+   "file": "leg_near_2_femur.png",
+   "joint": "leg_near_2_femur",
+   "z": 1025,
+   "pos": [
+    120,
+    152
+   ]
+  },
+  {
+   "file": "leg_near_2_tibia.png",
+   "joint": "leg_near_2_tibia",
+   "z": 1026,
+   "pos": [
+    113,
+    155
+   ]
+  },
+  {
+   "file": "leg_near_1_femur.png",
+   "joint": "leg_near_1_femur",
+   "z": 1027,
+   "pos": [
+    93,
+    155
+   ]
+  },
+  {
+   "file": "leg_near_1_tibia.png",
+   "joint": "leg_near_1_tibia",
+   "z": 1028,
+   "pos": [
+    81,
+    160
+   ]
+  },
+  {
+   "file": "head.png",
+   "joint": "head",
+   "z": 1029,
+   "pos": [
+    73,
+    146
+   ]
+  },
+  {
+   "file": "arm_near.png",
+   "joint": "arm_near",
+   "z": 1030,
+   "pos": [
+    67,
+    181
+   ]
+  },
+  {
+   "file": "forearm_near.png",
+   "joint": "forearm_near",
+   "z": 1031,
+   "pos": [
+    53,
+    183
+   ]
+  },
+  {
+   "file": "claw_near.png",
+   "joint": "claw_near",
+   "z": 1032,
+   "pos": [
+    1,
+    173
+   ]
+  }
+ ]
+}

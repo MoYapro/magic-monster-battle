@@ -1,0 +1,536 @@
+{
+ "id": "goblin",
+ "scale": 0.5,
+ "canvas": [
+  256.0,
+  256.0
+ ],
+ "cells": [
+  1,
+  1
+ ],
+ "joints": [
+  {
+   "name": "ground",
+   "pivot": [
+    130.0,
+    235.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "upper_arm_far",
+   "pivot": [
+    150.0,
+    119.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "forearm_far",
+   "pivot": [
+    167.0,
+    147.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hand_far",
+   "pivot": [
+    164.0,
+    173.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "thigh_far",
+   "pivot": [
+    142.0,
+    166.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "shin_far",
+   "pivot": [
+    165.0,
+    193.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "foot_far",
+   "pivot": [
+    159.0,
+    223.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "thigh_near",
+   "pivot": [
+    120.0,
+    166.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "shin_near",
+   "pivot": [
+    95.0,
+    193.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "foot_near",
+   "pivot": [
+    102.0,
+    223.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "torso",
+   "pivot": [
+    131.0,
+    167.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "tunic_hem",
+   "pivot": [
+    131.0,
+    170.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "belt",
+   "pivot": [
+    131.0,
+    161.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "head",
+   "pivot": [
+    122.0,
+    120.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "ear_far",
+   "pivot": [
+    99.5,
+    88.5
+   ],
+   "parent": "head"
+  },
+  {
+   "name": "ear_near",
+   "pivot": [
+    136.0,
+    86.5
+   ],
+   "parent": "head"
+  },
+  {
+   "name": "upper_arm_near",
+   "pivot": [
+    108.0,
+    120.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "forearm_near",
+   "pivot": [
+    83.0,
+    138.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "knife",
+   "pivot": [
+    67.0,
+    114.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hand_near",
+   "pivot": [
+    69.0,
+    117.0
+   ],
+   "parent": ""
+  }
+ ],
+ "layers": [
+  {
+   "file": "rim_ground.png",
+   "joint": "ground",
+   "z": 0,
+   "pos": [
+    60,
+    226
+   ]
+  },
+  {
+   "file": "rim_upper_arm_far.png",
+   "joint": "upper_arm_far",
+   "z": 1,
+   "pos": [
+    140,
+    111
+   ]
+  },
+  {
+   "file": "rim_forearm_far.png",
+   "joint": "forearm_far",
+   "z": 2,
+   "pos": [
+    155,
+    141
+   ]
+  },
+  {
+   "file": "rim_hand_far.png",
+   "joint": "hand_far",
+   "z": 3,
+   "pos": [
+    146,
+    164
+   ]
+  },
+  {
+   "file": "rim_thigh_far.png",
+   "joint": "thigh_far",
+   "z": 4,
+   "pos": [
+    131,
+    156
+   ]
+  },
+  {
+   "file": "rim_shin_far.png",
+   "joint": "shin_far",
+   "z": 5,
+   "pos": [
+    150,
+    183
+   ]
+  },
+  {
+   "file": "rim_foot_far.png",
+   "joint": "foot_far",
+   "z": 6,
+   "pos": [
+    133,
+    216
+   ]
+  },
+  {
+   "file": "rim_thigh_near.png",
+   "joint": "thigh_near",
+   "z": 7,
+   "pos": [
+    86,
+    155
+   ]
+  },
+  {
+   "file": "rim_shin_near.png",
+   "joint": "shin_near",
+   "z": 8,
+   "pos": [
+    84,
+    183
+   ]
+  },
+  {
+   "file": "rim_foot_near.png",
+   "joint": "foot_near",
+   "z": 9,
+   "pos": [
+    70,
+    215
+   ]
+  },
+  {
+   "file": "rim_torso.png",
+   "joint": "torso",
+   "z": 10,
+   "pos": [
+    96,
+    100
+   ]
+  },
+  {
+   "file": "rim_tunic_hem.png",
+   "joint": "tunic_hem",
+   "z": 11,
+   "pos": [
+    103,
+    156
+   ]
+  },
+  {
+   "file": "rim_belt.png",
+   "joint": "belt",
+   "z": 12,
+   "pos": [
+    102,
+    150
+   ]
+  },
+  {
+   "file": "rim_ear_far.png",
+   "joint": "ear_far",
+   "z": 13,
+   "pos": [
+    50,
+    63
+   ]
+  },
+  {
+   "file": "rim_ear_near.png",
+   "joint": "ear_near",
+   "z": 14,
+   "pos": [
+    130,
+    57
+   ]
+  },
+  {
+   "file": "rim_head.png",
+   "joint": "head",
+   "z": 15,
+   "pos": [
+    85,
+    55
+   ]
+  },
+  {
+   "file": "rim_upper_arm_near.png",
+   "joint": "upper_arm_near",
+   "z": 16,
+   "pos": [
+    75,
+    110
+   ]
+  },
+  {
+   "file": "rim_forearm_near.png",
+   "joint": "forearm_near",
+   "z": 17,
+   "pos": [
+    61,
+    109
+   ]
+  },
+  {
+   "file": "rim_knife.png",
+   "joint": "knife",
+   "z": 18,
+   "pos": [
+    20,
+    76
+   ]
+  },
+  {
+   "file": "rim_hand_near.png",
+   "joint": "hand_near",
+   "z": 19,
+   "pos": [
+    58,
+    98
+   ]
+  },
+  {
+   "file": "ground.png",
+   "joint": "ground",
+   "z": 1000,
+   "pos": [
+    63,
+    229
+   ]
+  },
+  {
+   "file": "upper_arm_far.png",
+   "joint": "upper_arm_far",
+   "z": 1001,
+   "pos": [
+    143,
+    114
+   ]
+  },
+  {
+   "file": "forearm_far.png",
+   "joint": "forearm_far",
+   "z": 1002,
+   "pos": [
+    157,
+    144
+   ]
+  },
+  {
+   "file": "hand_far.png",
+   "joint": "hand_far",
+   "z": 1003,
+   "pos": [
+    148,
+    167
+   ]
+  },
+  {
+   "file": "thigh_far.png",
+   "joint": "thigh_far",
+   "z": 1004,
+   "pos": [
+    135,
+    160
+   ]
+  },
+  {
+   "file": "shin_far.png",
+   "joint": "shin_far",
+   "z": 1005,
+   "pos": [
+    152,
+    185
+   ]
+  },
+  {
+   "file": "foot_far.png",
+   "joint": "foot_far",
+   "z": 1006,
+   "pos": [
+    137,
+    219
+   ]
+  },
+  {
+   "file": "thigh_near.png",
+   "joint": "thigh_near",
+   "z": 1007,
+   "pos": [
+    89,
+    159
+   ]
+  },
+  {
+   "file": "shin_near.png",
+   "joint": "shin_near",
+   "z": 1008,
+   "pos": [
+    87,
+    186
+   ]
+  },
+  {
+   "file": "foot_near.png",
+   "joint": "foot_near",
+   "z": 1009,
+   "pos": [
+    72,
+    218
+   ]
+  },
+  {
+   "file": "torso.png",
+   "joint": "torso",
+   "z": 1010,
+   "pos": [
+    99,
+    103
+   ]
+  },
+  {
+   "file": "tunic_hem.png",
+   "joint": "tunic_hem",
+   "z": 1011,
+   "pos": [
+    106,
+    159
+   ]
+  },
+  {
+   "file": "belt.png",
+   "joint": "belt",
+   "z": 1012,
+   "pos": [
+    105,
+    153
+   ]
+  },
+  {
+   "file": "ear_far.png",
+   "joint": "ear_far",
+   "z": 1013,
+   "pos": [
+    53,
+    66
+   ]
+  },
+  {
+   "file": "head.png",
+   "joint": "head",
+   "z": 1014,
+   "pos": [
+    87,
+    59
+   ]
+  },
+  {
+   "file": "ear_near.png",
+   "joint": "ear_near",
+   "z": 1015,
+   "pos": [
+    132,
+    60
+   ]
+  },
+  {
+   "file": "upper_arm_near.png",
+   "joint": "upper_arm_near",
+   "z": 1016,
+   "pos": [
+    78,
+    114
+   ]
+  },
+  {
+   "file": "forearm_near.png",
+   "joint": "forearm_near",
+   "z": 1017,
+   "pos": [
+    63,
+    112
+   ]
+  },
+  {
+   "file": "knife.png",
+   "joint": "knife",
+   "z": 1018,
+   "pos": [
+    23,
+    78
+   ]
+  },
+  {
+   "file": "hand_near.png",
+   "joint": "hand_near",
+   "z": 1019,
+   "pos": [
+    61,
+    100
+   ]
+  }
+ ]
+}

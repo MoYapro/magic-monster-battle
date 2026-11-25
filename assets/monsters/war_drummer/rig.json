@@ -1,0 +1,407 @@
+{
+ "id": "war_drummer",
+ "scale": 0.5,
+ "canvas": [
+  256.0,
+  256.0
+ ],
+ "cells": [
+  1,
+  1
+ ],
+ "joints": [
+  {
+   "name": "base",
+   "pivot": [
+    0.0,
+    0.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "ground",
+   "pivot": [
+    128.0,
+    244.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "upper_arm_far",
+   "pivot": [
+    159.0,
+    107.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "forearm_far",
+   "pivot": [
+    194.0,
+    92.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "stick_far",
+   "pivot": [
+    191.0,
+    52.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hand_far",
+   "pivot": [
+    191.0,
+    52.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "thigh_far",
+   "pivot": [
+    150.0,
+    189.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "shin_far",
+   "pivot": [
+    165.0,
+    214.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "foot_far",
+   "pivot": [
+    167.0,
+    235.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "torso",
+   "pivot": [
+    131.5,
+    189.5
+   ],
+   "parent": ""
+  },
+  {
+   "name": "kilt",
+   "pivot": [
+    132.0,
+    191.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "fur_mantle",
+   "pivot": [
+    107.0,
+    98.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "thigh_near",
+   "pivot": [
+    113.0,
+    190.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "shin_near",
+   "pivot": [
+    98.0,
+    214.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "foot_near",
+   "pivot": [
+    97.0,
+    235.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "drum_strap",
+   "pivot": [
+    159.0,
+    107.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "drum",
+   "pivot": [
+    113.0,
+    156.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "head",
+   "pivot": [
+    107.0,
+    98.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "ear",
+   "pivot": [
+    131.0,
+    64.0
+   ],
+   "parent": "head"
+  },
+  {
+   "name": "upper_arm_near",
+   "pivot": [
+    97.0,
+    111.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "forearm_near",
+   "pivot": [
+    62.0,
+    136.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "stick_near",
+   "pivot": [
+    52.0,
+    97.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hand_near",
+   "pivot": [
+    52.0,
+    97.0
+   ],
+   "parent": ""
+  }
+ ],
+ "layers": [
+  {
+   "file": "base.png",
+   "joint": "base",
+   "z": 1000,
+   "pos": [
+    19,
+    1
+   ]
+  },
+  {
+   "file": "ground.png",
+   "joint": "ground",
+   "z": 1001,
+   "pos": [
+    32,
+    230
+   ]
+  },
+  {
+   "file": "upper_arm_far.png",
+   "joint": "upper_arm_far",
+   "z": 1002,
+   "pos": [
+    153,
+    79
+   ]
+  },
+  {
+   "file": "forearm_far.png",
+   "joint": "forearm_far",
+   "z": 1003,
+   "pos": [
+    178,
+    46
+   ]
+  },
+  {
+   "file": "stick_far.png",
+   "joint": "stick_far",
+   "z": 1004,
+   "pos": [
+    185,
+    4
+   ]
+  },
+  {
+   "file": "hand_far.png",
+   "joint": "hand_far",
+   "z": 1005,
+   "pos": [
+    173,
+    36
+   ]
+  },
+  {
+   "file": "thigh_far.png",
+   "joint": "thigh_far",
+   "z": 1006,
+   "pos": [
+    135,
+    177
+   ]
+  },
+  {
+   "file": "shin_far.png",
+   "joint": "shin_far",
+   "z": 1007,
+   "pos": [
+    149,
+    202
+   ]
+  },
+  {
+   "file": "foot_far.png",
+   "joint": "foot_far",
+   "z": 1008,
+   "pos": [
+    153,
+    228
+   ]
+  },
+  {
+   "file": "torso.png",
+   "joint": "torso",
+   "z": 1009,
+   "pos": [
+    84,
+    92
+   ]
+  },
+  {
+   "file": "kilt.png",
+   "joint": "kilt",
+   "z": 1010,
+   "pos": [
+    95,
+    182
+   ]
+  },
+  {
+   "file": "fur_mantle.png",
+   "joint": "fur_mantle",
+   "z": 1011,
+   "pos": [
+    82,
+    96
+   ]
+  },
+  {
+   "file": "thigh_near.png",
+   "joint": "thigh_near",
+   "z": 1012,
+   "pos": [
+    85,
+    181
+   ]
+  },
+  {
+   "file": "shin_near.png",
+   "joint": "shin_near",
+   "z": 1013,
+   "pos": [
+    82,
+    200
+   ]
+  },
+  {
+   "file": "foot_near.png",
+   "joint": "foot_near",
+   "z": 1014,
+   "pos": [
+    70,
+    227
+   ]
+  },
+  {
+   "file": "drum_strap.png",
+   "joint": "drum_strap",
+   "z": 1015,
+   "pos": [
+    71,
+    97
+   ]
+  },
+  {
+   "file": "drum.png",
+   "joint": "drum",
+   "z": 1016,
+   "pos": [
+    58,
+    137
+   ]
+  },
+  {
+   "file": "head.png",
+   "joint": "head",
+   "z": 1017,
+   "pos": [
+    63,
+    19
+   ]
+  },
+  {
+   "file": "ear.png",
+   "joint": "ear",
+   "z": 1018,
+   "pos": [
+    124,
+    42
+   ]
+  },
+  {
+   "file": "upper_arm_near.png",
+   "joint": "upper_arm_near",
+   "z": 1019,
+   "pos": [
+    54,
+    97
+   ]
+  },
+  {
+   "file": "forearm_near.png",
+   "joint": "forearm_near",
+   "z": 1020,
+   "pos": [
+    41,
+    90
+   ]
+  },
+  {
+   "file": "stick_near.png",
+   "joint": "stick_near",
+   "z": 1021,
+   "pos": [
+    21,
+    51
+   ]
+  },
+  {
+   "file": "hand_near.png",
+   "joint": "hand_near",
+   "z": 1022,
+   "pos": [
+    34,
+    81
+   ]
+  }
+ ]
+}

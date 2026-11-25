@@ -35,6 +35,13 @@ window/stretch/aspect="expand"
 
 theme/custom="res://assets/theme/ember_theme.tres"
 
+[importer_defaults]
+
+texture={
+"mipmaps/generate": true
+}
+
 [rendering]
 
+textures/canvas_textures/default_texture_filter=3
 environment/defaults/default_clear_color=Color(0.0431373, 0.027451, 0.0196078, 1)

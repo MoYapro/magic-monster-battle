@@ -1,0 +1,237 @@
+{
+ "id": "grove_tender",
+ "scale": 0.5,
+ "canvas": [
+  256.0,
+  256.0
+ ],
+ "cells": [
+  1,
+  1
+ ],
+ "joints": [
+  {
+   "name": "base",
+   "pivot": [
+    0.0,
+    0.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "ground",
+   "pivot": [
+    128.0,
+    233.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "upper_arm_far",
+   "pivot": [
+    148.0,
+    87.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "forearm_far",
+   "pivot": [
+    161.0,
+    124.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hand_far",
+   "pivot": [
+    157.0,
+    159.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "robe",
+   "pivot": [
+    131.0,
+    139.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "antlers",
+   "pivot": [
+    125.0,
+    38.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "torso",
+   "pivot": [
+    131.0,
+    139.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "head",
+   "pivot": [
+    125.0,
+    80.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "staff",
+   "pivot": [
+    70.0,
+    119.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "upper_arm_near",
+   "pivot": [
+    116.0,
+    89.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "forearm_near",
+   "pivot": [
+    97.0,
+    116.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hand_near",
+   "pivot": [
+    70.0,
+    119.0
+   ],
+   "parent": ""
+  }
+ ],
+ "layers": [
+  {
+   "file": "base.png",
+   "joint": "base",
+   "z": 1000,
+   "pos": [
+    27,
+    0
+   ]
+  },
+  {
+   "file": "ground.png",
+   "joint": "ground",
+   "z": 1001,
+   "pos": [
+    21,
+    224
+   ]
+  },
+  {
+   "file": "upper_arm_far.png",
+   "joint": "upper_arm_far",
+   "z": 1002,
+   "pos": [
+    140,
+    81
+   ]
+  },
+  {
+   "file": "forearm_far.png",
+   "joint": "forearm_far",
+   "z": 1003,
+   "pos": [
+    150,
+    116
+   ]
+  },
+  {
+   "file": "hand_far.png",
+   "joint": "hand_far",
+   "z": 1004,
+   "pos": [
+    142,
+    153
+   ]
+  },
+  {
+   "file": "robe.png",
+   "joint": "robe",
+   "z": 1005,
+   "pos": [
+    86,
+    135
+   ]
+  },
+  {
+   "file": "antlers.png",
+   "joint": "antlers",
+   "z": 1006,
+   "pos": [
+    78,
+    2
+   ]
+  },
+  {
+   "file": "torso.png",
+   "joint": "torso",
+   "z": 1007,
+   "pos": [
+    106,
+    75
+   ]
+  },
+  {
+   "file": "head.png",
+   "joint": "head",
+   "z": 1008,
+   "pos": [
+    84,
+    20
+   ]
+  },
+  {
+   "file": "staff.png",
+   "joint": "staff",
+   "z": 1009,
+   "pos": [
+    30,
+    0
+   ]
+  },
+  {
+   "file": "upper_arm_near.png",
+   "joint": "upper_arm_near",
+   "z": 1010,
+   "pos": [
+    90,
+    83
+   ]
+  },
+  {
+   "file": "forearm_near.png",
+   "joint": "forearm_near",
+   "z": 1011,
+   "pos": [
+    65,
+    108
+   ]
+  },
+  {
+   "file": "hand_near.png",
+   "joint": "hand_near",
+   "z": 1012,
+   "pos": [
+    48,
+    111
+   ]
+  }
+ ]
+}

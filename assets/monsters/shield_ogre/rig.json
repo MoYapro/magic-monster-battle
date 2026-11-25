@@ -1,0 +1,356 @@
+{
+ "id": "shield_ogre",
+ "scale": 0.5,
+ "canvas": [
+  256.0,
+  512.0
+ ],
+ "cells": [
+  1,
+  2
+ ],
+ "joints": [
+  {
+   "name": "base",
+   "pivot": [
+    0.0,
+    0.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "ground",
+   "pivot": [
+    128.0,
+    490.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "thigh_far",
+   "pivot": [
+    185.0,
+    371.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "shin_far",
+   "pivot": [
+    199.0,
+    429.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "foot_far",
+   "pivot": [
+    193.0,
+    474.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "upper_arm_far",
+   "pivot": [
+    196.0,
+    219.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "forearm_far",
+   "pivot": [
+    235.0,
+    186.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "axe",
+   "pivot": [
+    218.0,
+    141.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hand_far",
+   "pivot": [
+    218.0,
+    141.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "torso",
+   "pivot": [
+    158.0,
+    372.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "belt",
+   "pivot": [
+    155.0,
+    356.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "loincloth",
+   "pivot": [
+    158.0,
+    370.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "thigh_near",
+   "pivot": [
+    131.0,
+    373.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "shin_near",
+   "pivot": [
+    117.0,
+    429.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "foot_near",
+   "pivot": [
+    123.0,
+    474.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "head",
+   "pivot": [
+    125.0,
+    195.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "nose",
+   "pivot": [
+    70.0,
+    165.0
+   ],
+   "parent": "head"
+  },
+  {
+   "name": "ear",
+   "pivot": [
+    158.0,
+    159.0
+   ],
+   "parent": "head"
+  },
+  {
+   "name": "upper_arm_near",
+   "pivot": [
+    107.0,
+    224.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "shield",
+   "pivot": [
+    75.0,
+    280.0
+   ],
+   "parent": ""
+  }
+ ],
+ "layers": [
+  {
+   "file": "base.png",
+   "joint": "base",
+   "z": 1000,
+   "pos": [
+    12,
+    8
+   ]
+  },
+  {
+   "file": "ground.png",
+   "joint": "ground",
+   "z": 1001,
+   "pos": [
+    12,
+    475
+   ]
+  },
+  {
+   "file": "thigh_far.png",
+   "joint": "thigh_far",
+   "z": 1002,
+   "pos": [
+    154,
+    355
+   ]
+  },
+  {
+   "file": "shin_far.png",
+   "joint": "shin_far",
+   "z": 1003,
+   "pos": [
+    171,
+    412
+   ]
+  },
+  {
+   "file": "foot_far.png",
+   "joint": "foot_far",
+   "z": 1004,
+   "pos": [
+    172,
+    464
+   ]
+  },
+  {
+   "file": "upper_arm_far.png",
+   "joint": "upper_arm_far",
+   "z": 1005,
+   "pos": [
+    182,
+    172
+   ]
+  },
+  {
+   "file": "forearm_far.png",
+   "joint": "forearm_far",
+   "z": 1006,
+   "pos": [
+    202,
+    128
+   ]
+  },
+  {
+   "file": "axe.png",
+   "joint": "axe",
+   "z": 1007,
+   "pos": [
+    120,
+    11
+   ]
+  },
+  {
+   "file": "hand_far.png",
+   "joint": "hand_far",
+   "z": 1008,
+   "pos": [
+    197,
+    132
+   ]
+  },
+  {
+   "file": "torso.png",
+   "joint": "torso",
+   "z": 1009,
+   "pos": [
+    71,
+    183
+   ]
+  },
+  {
+   "file": "belt.png",
+   "joint": "belt",
+   "z": 1010,
+   "pos": [
+    75,
+    338
+   ]
+  },
+  {
+   "file": "loincloth.png",
+   "joint": "loincloth",
+   "z": 1011,
+   "pos": [
+    102,
+    361
+   ]
+  },
+  {
+   "file": "thigh_near.png",
+   "joint": "thigh_near",
+   "z": 1012,
+   "pos": [
+    92,
+    369
+   ]
+  },
+  {
+   "file": "shin_near.png",
+   "joint": "shin_near",
+   "z": 1013,
+   "pos": [
+    91,
+    414
+   ]
+  },
+  {
+   "file": "foot_near.png",
+   "joint": "foot_near",
+   "z": 1014,
+   "pos": [
+    71,
+    465
+   ]
+  },
+  {
+   "file": "head.png",
+   "joint": "head",
+   "z": 1015,
+   "pos": [
+    55,
+    103
+   ]
+  },
+  {
+   "file": "nose.png",
+   "joint": "nose",
+   "z": 1016,
+   "pos": [
+    46,
+    155
+   ]
+  },
+  {
+   "file": "ear.png",
+   "joint": "ear",
+   "z": 1017,
+   "pos": [
+    150,
+    139
+   ]
+  },
+  {
+   "file": "upper_arm_near.png",
+   "joint": "upper_arm_near",
+   "z": 1018,
+   "pos": [
+    51,
+    205
+   ]
+  },
+  {
+   "file": "shield.png",
+   "joint": "shield",
+   "z": 1019,
+   "pos": [
+    14,
+    202
+   ]
+  }
+ ]
+}

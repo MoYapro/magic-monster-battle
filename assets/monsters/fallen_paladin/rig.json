@@ -1,0 +1,562 @@
+{
+ "id": "fallen_paladin",
+ "scale": 0.5,
+ "canvas": [
+  256.0,
+  256.0
+ ],
+ "cells": [
+  1,
+  1
+ ],
+ "joints": [
+  {
+   "name": "ground",
+   "pivot": [
+    129.0,
+    235.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "cloak",
+   "pivot": [
+    128.0,
+    80.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "thigh_far",
+   "pivot": [
+    142.0,
+    156.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "shin_far",
+   "pivot": [
+    151.0,
+    193.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "foot_far",
+   "pivot": [
+    158.0,
+    224.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "thigh_near",
+   "pivot": [
+    116.0,
+    156.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "shin_near",
+   "pivot": [
+    107.0,
+    193.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "foot_near",
+   "pivot": [
+    102.0,
+    224.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "tabard",
+   "pivot": [
+    127.0,
+    150.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "belt",
+   "pivot": [
+    127.0,
+    148.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "pauldron_far",
+   "pivot": [
+    151.0,
+    82.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "upper_arm_far",
+   "pivot": [
+    151.0,
+    82.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "forearm_far",
+   "pivot": [
+    152.0,
+    115.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "torso",
+   "pivot": [
+    127.0,
+    115.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "helm",
+   "pivot": [
+    124.0,
+    70.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "pauldron_near",
+   "pivot": [
+    102.0,
+    84.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "upper_arm_near",
+   "pivot": [
+    102.0,
+    84.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "forearm_near",
+   "pivot": [
+    90.0,
+    117.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "sword",
+   "pivot": [
+    103.0,
+    143.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hand_far",
+   "pivot": [
+    109.0,
+    138.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hand_near",
+   "pivot": [
+    100.0,
+    146.0
+   ],
+   "parent": ""
+  }
+ ],
+ "layers": [
+  {
+   "file": "rim_ground.png",
+   "joint": "ground",
+   "z": 0,
+   "pos": [
+    26,
+    227
+   ]
+  },
+  {
+   "file": "rim_cloak.png",
+   "joint": "cloak",
+   "z": 1,
+   "pos": [
+    85,
+    63
+   ]
+  },
+  {
+   "file": "rim_thigh_far.png",
+   "joint": "thigh_far",
+   "z": 2,
+   "pos": [
+    129,
+    149
+   ]
+  },
+  {
+   "file": "rim_shin_far.png",
+   "joint": "shin_far",
+   "z": 3,
+   "pos": [
+    138,
+    180
+   ]
+  },
+  {
+   "file": "rim_foot_far.png",
+   "joint": "foot_far",
+   "z": 4,
+   "pos": [
+    130,
+    215
+   ]
+  },
+  {
+   "file": "rim_thigh_near.png",
+   "joint": "thigh_near",
+   "z": 5,
+   "pos": [
+    95,
+    148
+   ]
+  },
+  {
+   "file": "rim_shin_near.png",
+   "joint": "shin_near",
+   "z": 6,
+   "pos": [
+    91,
+    180
+   ]
+  },
+  {
+   "file": "rim_foot_near.png",
+   "joint": "foot_near",
+   "z": 7,
+   "pos": [
+    74,
+    215
+   ]
+  },
+  {
+   "file": "rim_tabard.png",
+   "joint": "tabard",
+   "z": 8,
+   "pos": [
+    104,
+    140
+   ]
+  },
+  {
+   "file": "rim_belt.png",
+   "joint": "belt",
+   "z": 9,
+   "pos": [
+    97,
+    139
+   ]
+  },
+  {
+   "file": "rim_pauldron_far.png",
+   "joint": "pauldron_far",
+   "z": 10,
+   "pos": [
+    129,
+    65
+   ]
+  },
+  {
+   "file": "rim_upper_arm_far.png",
+   "joint": "upper_arm_far",
+   "z": 11,
+   "pos": [
+    138,
+    76
+   ]
+  },
+  {
+   "file": "rim_forearm_far.png",
+   "joint": "forearm_far",
+   "z": 12,
+   "pos": [
+    103,
+    104
+   ]
+  },
+  {
+   "file": "rim_torso.png",
+   "joint": "torso",
+   "z": 13,
+   "pos": [
+    88,
+    67
+   ]
+  },
+  {
+   "file": "rim_helm.png",
+   "joint": "helm",
+   "z": 14,
+   "pos": [
+    94,
+    10
+   ]
+  },
+  {
+   "file": "rim_pauldron_near.png",
+   "joint": "pauldron_near",
+   "z": 15,
+   "pos": [
+    80,
+    66
+   ]
+  },
+  {
+   "file": "rim_upper_arm_near.png",
+   "joint": "upper_arm_near",
+   "z": 16,
+   "pos": [
+    79,
+    76
+   ]
+  },
+  {
+   "file": "rim_forearm_near.png",
+   "joint": "forearm_near",
+   "z": 17,
+   "pos": [
+    79,
+    105
+   ]
+  },
+  {
+   "file": "rim_sword.png",
+   "joint": "sword",
+   "z": 18,
+   "pos": [
+    38,
+    115
+   ]
+  },
+  {
+   "file": "rim_hand_far.png",
+   "joint": "hand_far",
+   "z": 19,
+   "pos": [
+    97,
+    126
+   ]
+  },
+  {
+   "file": "rim_hand_near.png",
+   "joint": "hand_near",
+   "z": 20,
+   "pos": [
+    88,
+    133
+   ]
+  },
+  {
+   "file": "ground.png",
+   "joint": "ground",
+   "z": 1000,
+   "pos": [
+    29,
+    230
+   ]
+  },
+  {
+   "file": "cloak.png",
+   "joint": "cloak",
+   "z": 1001,
+   "pos": [
+    88,
+    67
+   ]
+  },
+  {
+   "file": "thigh_far.png",
+   "joint": "thigh_far",
+   "z": 1002,
+   "pos": [
+    131,
+    152
+   ]
+  },
+  {
+   "file": "shin_far.png",
+   "joint": "shin_far",
+   "z": 1003,
+   "pos": [
+    142,
+    183
+   ]
+  },
+  {
+   "file": "foot_far.png",
+   "joint": "foot_far",
+   "z": 1004,
+   "pos": [
+    134,
+    217
+   ]
+  },
+  {
+   "file": "thigh_near.png",
+   "joint": "thigh_near",
+   "z": 1005,
+   "pos": [
+    98,
+    152
+   ]
+  },
+  {
+   "file": "shin_near.png",
+   "joint": "shin_near",
+   "z": 1006,
+   "pos": [
+    94,
+    183
+   ]
+  },
+  {
+   "file": "foot_near.png",
+   "joint": "foot_near",
+   "z": 1007,
+   "pos": [
+    77,
+    218
+   ]
+  },
+  {
+   "file": "tabard.png",
+   "joint": "tabard",
+   "z": 1008,
+   "pos": [
+    108,
+    142
+   ]
+  },
+  {
+   "file": "belt.png",
+   "joint": "belt",
+   "z": 1009,
+   "pos": [
+    100,
+    141
+   ]
+  },
+  {
+   "file": "pauldron_far.png",
+   "joint": "pauldron_far",
+   "z": 1010,
+   "pos": [
+    132,
+    67
+   ]
+  },
+  {
+   "file": "upper_arm_far.png",
+   "joint": "upper_arm_far",
+   "z": 1011,
+   "pos": [
+    141,
+    78
+   ]
+  },
+  {
+   "file": "forearm_far.png",
+   "joint": "forearm_far",
+   "z": 1012,
+   "pos": [
+    106,
+    106
+   ]
+  },
+  {
+   "file": "torso.png",
+   "joint": "torso",
+   "z": 1013,
+   "pos": [
+    90,
+    70
+   ]
+  },
+  {
+   "file": "helm.png",
+   "joint": "helm",
+   "z": 1014,
+   "pos": [
+    97,
+    12
+   ]
+  },
+  {
+   "file": "pauldron_near.png",
+   "joint": "pauldron_near",
+   "z": 1015,
+   "pos": [
+    83,
+    70
+   ]
+  },
+  {
+   "file": "upper_arm_near.png",
+   "joint": "upper_arm_near",
+   "z": 1016,
+   "pos": [
+    81,
+    79
+   ]
+  },
+  {
+   "file": "forearm_near.png",
+   "joint": "forearm_near",
+   "z": 1017,
+   "pos": [
+    81,
+    108
+   ]
+  },
+  {
+   "file": "sword.png",
+   "joint": "sword",
+   "z": 1018,
+   "pos": [
+    41,
+    118
+   ]
+  },
+  {
+   "file": "hand_far.png",
+   "joint": "hand_far",
+   "z": 1019,
+   "pos": [
+    100,
+    128
+   ]
+  },
+  {
+   "file": "hand_near.png",
+   "joint": "hand_near",
+   "z": 1020,
+   "pos": [
+    91,
+    136
+   ]
+  }
+ ]
+}

@@ -1,0 +1,543 @@
+{
+ "id": "cave_spider",
+ "scale": 0.5,
+ "canvas": [
+  256.0,
+  256.0
+ ],
+ "cells": [
+  1,
+  1
+ ],
+ "joints": [
+  {
+   "name": "base",
+   "pivot": [
+    0.0,
+    0.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "ground",
+   "pivot": [
+    128.0,
+    226.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_1_femur",
+   "pivot": [
+    98.0,
+    159.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_1_tibia",
+   "pivot": [
+    75.0,
+    84.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_1_tarsus",
+   "pivot": [
+    44.0,
+    111.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_2_femur",
+   "pivot": [
+    106.0,
+    157.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_2_tibia",
+   "pivot": [
+    98.0,
+    75.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_2_tarsus",
+   "pivot": [
+    75.0,
+    125.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_3_femur",
+   "pivot": [
+    120.0,
+    156.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_3_tibia",
+   "pivot": [
+    150.0,
+    59.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_3_tarsus",
+   "pivot": [
+    194.0,
+    78.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_4_femur",
+   "pivot": [
+    128.0,
+    154.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_4_tibia",
+   "pivot": [
+    210.0,
+    61.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_4_tarsus",
+   "pivot": [
+    241.0,
+    100.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "abdomen",
+   "pivot": [
+    131.0,
+    156.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_3_femur",
+   "pivot": [
+    119.0,
+    183.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_3_tibia",
+   "pivot": [
+    159.0,
+    144.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_3_tarsus",
+   "pivot": [
+    198.0,
+    172.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_4_femur",
+   "pivot": [
+    126.0,
+    180.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_4_tibia",
+   "pivot": [
+    215.0,
+    150.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_4_tarsus",
+   "pivot": [
+    245.0,
+    184.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_2_femur",
+   "pivot": [
+    100.0,
+    180.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_2_tibia",
+   "pivot": [
+    88.0,
+    98.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_2_tarsus",
+   "pivot": [
+    59.0,
+    150.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_1_femur",
+   "pivot": [
+    88.0,
+    173.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_1_tibia",
+   "pivot": [
+    56.0,
+    107.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_near_1_tarsus",
+   "pivot": [
+    22.0,
+    148.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "cephalothorax",
+   "pivot": [
+    107.5,
+    165.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "chelicera_far",
+   "pivot": [
+    93.0,
+    181.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "palp_near",
+   "pivot": [
+    75.0,
+    180.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "chelicera_near",
+   "pivot": [
+    80.0,
+    184.0
+   ],
+   "parent": ""
+  }
+ ],
+ "layers": [
+  {
+   "file": "base.png",
+   "joint": "base",
+   "z": 1000,
+   "pos": [
+    7,
+    53
+   ]
+  },
+  {
+   "file": "ground.png",
+   "joint": "ground",
+   "z": 1001,
+   "pos": [
+    11,
+    216
+   ]
+  },
+  {
+   "file": "leg_far_1_femur.png",
+   "joint": "leg_far_1_femur",
+   "z": 1002,
+   "pos": [
+    68,
+    77
+   ]
+  },
+  {
+   "file": "leg_far_1_tibia.png",
+   "joint": "leg_far_1_tibia",
+   "z": 1003,
+   "pos": [
+    38,
+    79
+   ]
+  },
+  {
+   "file": "leg_far_1_tarsus.png",
+   "joint": "leg_far_1_tarsus",
+   "z": 1004,
+   "pos": [
+    28,
+    108
+   ]
+  },
+  {
+   "file": "leg_far_2_femur.png",
+   "joint": "leg_far_2_femur",
+   "z": 1005,
+   "pos": [
+    92,
+    69
+   ]
+  },
+  {
+   "file": "leg_far_2_tibia.png",
+   "joint": "leg_far_2_tibia",
+   "z": 1006,
+   "pos": [
+    70,
+    71
+   ]
+  },
+  {
+   "file": "leg_far_2_tarsus.png",
+   "joint": "leg_far_2_tarsus",
+   "z": 1007,
+   "pos": [
+    70,
+    123
+   ]
+  },
+  {
+   "file": "leg_far_3_femur.png",
+   "joint": "leg_far_3_femur",
+   "z": 1008,
+   "pos": [
+    115,
+    53
+   ]
+  },
+  {
+   "file": "leg_far_3_tibia.png",
+   "joint": "leg_far_3_tibia",
+   "z": 1009,
+   "pos": [
+    145,
+    54
+   ]
+  },
+  {
+   "file": "leg_far_3_tarsus.png",
+   "joint": "leg_far_3_tarsus",
+   "z": 1010,
+   "pos": [
+    189,
+    75
+   ]
+  },
+  {
+   "file": "leg_far_4_femur.png",
+   "joint": "leg_far_4_femur",
+   "z": 1011,
+   "pos": [
+    123,
+    55
+   ]
+  },
+  {
+   "file": "leg_far_4_tibia.png",
+   "joint": "leg_far_4_tibia",
+   "z": 1012,
+   "pos": [
+    204,
+    57
+   ]
+  },
+  {
+   "file": "leg_far_4_tarsus.png",
+   "joint": "leg_far_4_tarsus",
+   "z": 1013,
+   "pos": [
+    234,
+    97
+   ]
+  },
+  {
+   "file": "abdomen.png",
+   "joint": "abdomen",
+   "z": 1014,
+   "pos": [
+    109,
+    63
+   ]
+  },
+  {
+   "file": "leg_near_3_femur.png",
+   "joint": "leg_near_3_femur",
+   "z": 1015,
+   "pos": [
+    113,
+    137
+   ]
+  },
+  {
+   "file": "leg_near_3_tibia.png",
+   "joint": "leg_near_3_tibia",
+   "z": 1016,
+   "pos": [
+    155,
+    138
+   ]
+  },
+  {
+   "file": "leg_near_3_tarsus.png",
+   "joint": "leg_near_3_tarsus",
+   "z": 1017,
+   "pos": [
+    192,
+    169
+   ]
+  },
+  {
+   "file": "leg_near_4_femur.png",
+   "joint": "leg_near_4_femur",
+   "z": 1018,
+   "pos": [
+    122,
+    142
+   ]
+  },
+  {
+   "file": "leg_near_4_tibia.png",
+   "joint": "leg_near_4_tibia",
+   "z": 1019,
+   "pos": [
+    210,
+    146
+   ]
+  },
+  {
+   "file": "leg_near_4_tarsus.png",
+   "joint": "leg_near_4_tarsus",
+   "z": 1020,
+   "pos": [
+    240,
+    180
+   ]
+  },
+  {
+   "file": "leg_near_2_femur.png",
+   "joint": "leg_near_2_femur",
+   "z": 1021,
+   "pos": [
+    81,
+    90
+   ]
+  },
+  {
+   "file": "leg_near_2_tibia.png",
+   "joint": "leg_near_2_tibia",
+   "z": 1022,
+   "pos": [
+    53,
+    94
+   ]
+  },
+  {
+   "file": "leg_near_2_tarsus.png",
+   "joint": "leg_near_2_tarsus",
+   "z": 1023,
+   "pos": [
+    52,
+    146
+   ]
+  },
+  {
+   "file": "leg_near_1_femur.png",
+   "joint": "leg_near_1_femur",
+   "z": 1024,
+   "pos": [
+    49,
+    100
+   ]
+  },
+  {
+   "file": "leg_near_1_tibia.png",
+   "joint": "leg_near_1_tibia",
+   "z": 1025,
+   "pos": [
+    17,
+    103
+   ]
+  },
+  {
+   "file": "leg_near_1_tarsus.png",
+   "joint": "leg_near_1_tarsus",
+   "z": 1026,
+   "pos": [
+    8,
+    144
+   ]
+  },
+  {
+   "file": "cephalothorax.png",
+   "joint": "cephalothorax",
+   "z": 1027,
+   "pos": [
+    63,
+    138
+   ]
+  },
+  {
+   "file": "chelicera_far.png",
+   "joint": "chelicera_far",
+   "z": 1028,
+   "pos": [
+    80,
+    175
+   ]
+  },
+  {
+   "file": "palp_near.png",
+   "joint": "palp_near",
+   "z": 1029,
+   "pos": [
+    44,
+    174
+   ]
+  },
+  {
+   "file": "chelicera_near.png",
+   "joint": "chelicera_near",
+   "z": 1030,
+   "pos": [
+    67,
+    177
+   ]
+  }
+ ]
+}

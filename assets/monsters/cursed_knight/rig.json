@@ -1,0 +1,588 @@
+{
+ "id": "cursed_knight",
+ "scale": 0.5,
+ "canvas": [
+  256.0,
+  256.0
+ ],
+ "cells": [
+  1,
+  1
+ ],
+ "joints": [
+  {
+   "name": "ground",
+   "pivot": [
+    129.0,
+    235.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "smoke",
+   "pivot": [
+    133.0,
+    36.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "upper_arm_far",
+   "pivot": [
+    150.0,
+    84.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "forearm_far",
+   "pivot": [
+    161.0,
+    113.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "shield",
+   "pivot": [
+    165.0,
+    138.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "thigh_far",
+   "pivot": [
+    142.0,
+    151.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "shin_far",
+   "pivot": [
+    154.0,
+    188.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "foot_far",
+   "pivot": [
+    161.0,
+    223.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "thigh_near",
+   "pivot": [
+    114.0,
+    151.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "shin_near",
+   "pivot": [
+    104.0,
+    189.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "foot_near",
+   "pivot": [
+    98.0,
+    223.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "skirt",
+   "pivot": [
+    127.0,
+    146.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "faulds",
+   "pivot": [
+    127.0,
+    144.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "pauldron_far",
+   "pivot": [
+    150.0,
+    84.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "torso",
+   "pivot": [
+    126.0,
+    115.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "gorget",
+   "pivot": [
+    124.0,
+    79.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "helm",
+   "pivot": [
+    123.0,
+    70.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "pauldron_near",
+   "pivot": [
+    100.0,
+    86.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "upper_arm_near",
+   "pivot": [
+    100.0,
+    86.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "forearm_near",
+   "pivot": [
+    90.0,
+    119.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "sword",
+   "pivot": [
+    84.0,
+    148.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hand_near",
+   "pivot": [
+    83.0,
+    152.0
+   ],
+   "parent": ""
+  }
+ ],
+ "layers": [
+  {
+   "file": "rim_ground.png",
+   "joint": "ground",
+   "z": 0,
+   "pos": [
+    32,
+    224
+   ]
+  },
+  {
+   "file": "rim_smoke.png",
+   "joint": "smoke",
+   "z": 1,
+   "pos": [
+    122,
+    3
+   ]
+  },
+  {
+   "file": "rim_upper_arm_far.png",
+   "joint": "upper_arm_far",
+   "z": 2,
+   "pos": [
+    138,
+    76
+   ]
+  },
+  {
+   "file": "rim_forearm_far.png",
+   "joint": "forearm_far",
+   "z": 3,
+   "pos": [
+    149,
+    101
+   ]
+  },
+  {
+   "file": "rim_shield.png",
+   "joint": "shield",
+   "z": 4,
+   "pos": [
+    146,
+    92
+   ]
+  },
+  {
+   "file": "rim_thigh_far.png",
+   "joint": "thigh_far",
+   "z": 5,
+   "pos": [
+    129,
+    143
+   ]
+  },
+  {
+   "file": "rim_shin_far.png",
+   "joint": "shin_far",
+   "z": 6,
+   "pos": [
+    141,
+    175
+   ]
+  },
+  {
+   "file": "rim_foot_far.png",
+   "joint": "foot_far",
+   "z": 7,
+   "pos": [
+    134,
+    213
+   ]
+  },
+  {
+   "file": "rim_thigh_near.png",
+   "joint": "thigh_near",
+   "z": 8,
+   "pos": [
+    92,
+    143
+   ]
+  },
+  {
+   "file": "rim_shin_near.png",
+   "joint": "shin_near",
+   "z": 9,
+   "pos": [
+    87,
+    176
+   ]
+  },
+  {
+   "file": "rim_foot_near.png",
+   "joint": "foot_near",
+   "z": 10,
+   "pos": [
+    70,
+    214
+   ]
+  },
+  {
+   "file": "rim_skirt.png",
+   "joint": "skirt",
+   "z": 11,
+   "pos": [
+    98,
+    137
+   ]
+  },
+  {
+   "file": "rim_faulds.png",
+   "joint": "faulds",
+   "z": 12,
+   "pos": [
+    96,
+    134
+   ]
+  },
+  {
+   "file": "rim_pauldron_far.png",
+   "joint": "pauldron_far",
+   "z": 13,
+   "pos": [
+    136,
+    67
+   ]
+  },
+  {
+   "file": "rim_torso.png",
+   "joint": "torso",
+   "z": 14,
+   "pos": [
+    88,
+    68
+   ]
+  },
+  {
+   "file": "rim_gorget.png",
+   "joint": "gorget",
+   "z": 15,
+   "pos": [
+    99,
+    64
+   ]
+  },
+  {
+   "file": "rim_helm.png",
+   "joint": "helm",
+   "z": 16,
+   "pos": [
+    91,
+    25
+   ]
+  },
+  {
+   "file": "rim_pauldron_near.png",
+   "joint": "pauldron_near",
+   "z": 17,
+   "pos": [
+    76,
+    55
+   ]
+  },
+  {
+   "file": "rim_upper_arm_near.png",
+   "joint": "upper_arm_near",
+   "z": 18,
+   "pos": [
+    79,
+    79
+   ]
+  },
+  {
+   "file": "rim_forearm_near.png",
+   "joint": "forearm_near",
+   "z": 19,
+   "pos": [
+    73,
+    107
+   ]
+  },
+  {
+   "file": "rim_sword.png",
+   "joint": "sword",
+   "z": 20,
+   "pos": [
+    34,
+    131
+   ]
+  },
+  {
+   "file": "rim_hand_near.png",
+   "joint": "hand_near",
+   "z": 21,
+   "pos": [
+    71,
+    138
+   ]
+  },
+  {
+   "file": "ground.png",
+   "joint": "ground",
+   "z": 1000,
+   "pos": [
+    35,
+    227
+   ]
+  },
+  {
+   "file": "smoke.png",
+   "joint": "smoke",
+   "z": 1001,
+   "pos": [
+    126,
+    5
+   ]
+  },
+  {
+   "file": "upper_arm_far.png",
+   "joint": "upper_arm_far",
+   "z": 1002,
+   "pos": [
+    142,
+    78
+   ]
+  },
+  {
+   "file": "forearm_far.png",
+   "joint": "forearm_far",
+   "z": 1003,
+   "pos": [
+    152,
+    103
+   ]
+  },
+  {
+   "file": "shield.png",
+   "joint": "shield",
+   "z": 1004,
+   "pos": [
+    149,
+    95
+   ]
+  },
+  {
+   "file": "thigh_far.png",
+   "joint": "thigh_far",
+   "z": 1005,
+   "pos": [
+    131,
+    146
+   ]
+  },
+  {
+   "file": "shin_far.png",
+   "joint": "shin_far",
+   "z": 1006,
+   "pos": [
+    144,
+    179
+   ]
+  },
+  {
+   "file": "foot_far.png",
+   "joint": "foot_far",
+   "z": 1007,
+   "pos": [
+    136,
+    217
+   ]
+  },
+  {
+   "file": "thigh_near.png",
+   "joint": "thigh_near",
+   "z": 1008,
+   "pos": [
+    95,
+    146
+   ]
+  },
+  {
+   "file": "shin_near.png",
+   "joint": "shin_near",
+   "z": 1009,
+   "pos": [
+    91,
+    180
+   ]
+  },
+  {
+   "file": "foot_near.png",
+   "joint": "foot_near",
+   "z": 1010,
+   "pos": [
+    73,
+    217
+   ]
+  },
+  {
+   "file": "skirt.png",
+   "joint": "skirt",
+   "z": 1011,
+   "pos": [
+    100,
+    140
+   ]
+  },
+  {
+   "file": "faulds.png",
+   "joint": "faulds",
+   "z": 1012,
+   "pos": [
+    99,
+    136
+   ]
+  },
+  {
+   "file": "pauldron_far.png",
+   "joint": "pauldron_far",
+   "z": 1013,
+   "pos": [
+    138,
+    71
+   ]
+  },
+  {
+   "file": "torso.png",
+   "joint": "torso",
+   "z": 1014,
+   "pos": [
+    91,
+    72
+   ]
+  },
+  {
+   "file": "gorget.png",
+   "joint": "gorget",
+   "z": 1015,
+   "pos": [
+    102,
+    67
+   ]
+  },
+  {
+   "file": "helm.png",
+   "joint": "helm",
+   "z": 1016,
+   "pos": [
+    95,
+    28
+   ]
+  },
+  {
+   "file": "pauldron_near.png",
+   "joint": "pauldron_near",
+   "z": 1017,
+   "pos": [
+    78,
+    58
+   ]
+  },
+  {
+   "file": "upper_arm_near.png",
+   "joint": "upper_arm_near",
+   "z": 1018,
+   "pos": [
+    82,
+    81
+   ]
+  },
+  {
+   "file": "forearm_near.png",
+   "joint": "forearm_near",
+   "z": 1019,
+   "pos": [
+    76,
+    110
+   ]
+  },
+  {
+   "file": "sword.png",
+   "joint": "sword",
+   "z": 1020,
+   "pos": [
+    36,
+    133
+   ]
+  },
+  {
+   "file": "hand_near.png",
+   "joint": "hand_near",
+   "z": 1021,
+   "pos": [
+    73,
+    140
+   ]
+  }
+ ]
+}

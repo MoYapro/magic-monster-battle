@@ -1,0 +1,220 @@
+{
+ "id": "fire_elemental",
+ "scale": 0.5,
+ "canvas": [
+  256.0,
+  256.0
+ ],
+ "cells": [
+  1,
+  1
+ ],
+ "joints": [
+  {
+   "name": "base",
+   "pivot": [
+    0.0,
+    0.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "blaze_back",
+   "pivot": [
+    135.0,
+    235.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "upper_arm_back",
+   "pivot": [
+    176.0,
+    80.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "forearm_back",
+   "pivot": [
+    205.0,
+    118.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "claw_back",
+   "pivot": [
+    207.0,
+    159.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "body",
+   "pivot": [
+    129.0,
+    150.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "head",
+   "pivot": [
+    120.0,
+    67.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "upper_arm_front",
+   "pivot": [
+    83.0,
+    81.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "forearm_front",
+   "pivot": [
+    56.0,
+    121.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "claw_front",
+   "pivot": [
+    46.0,
+    161.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "blaze_front",
+   "pivot": [
+    130.0,
+    239.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "sparks",
+   "pivot": [
+    128.0,
+    60.0
+   ],
+   "parent": ""
+  }
+ ],
+ "layers": [
+  {
+   "file": "base.png",
+   "joint": "base",
+   "z": 1000,
+   "pos": [
+    11,
+    0
+   ]
+  },
+  {
+   "file": "blaze_back.png",
+   "joint": "blaze_back",
+   "z": 1001,
+   "pos": [
+    48,
+    107
+   ]
+  },
+  {
+   "file": "upper_arm_back.png",
+   "joint": "upper_arm_back",
+   "z": 1002,
+   "pos": [
+    161,
+    62
+   ]
+  },
+  {
+   "file": "forearm_back.png",
+   "joint": "forearm_back",
+   "z": 1003,
+   "pos": [
+    191,
+    104
+   ]
+  },
+  {
+   "file": "claw_back.png",
+   "joint": "claw_back",
+   "z": 1004,
+   "pos": [
+    181,
+    145
+   ]
+  },
+  {
+   "file": "body.png",
+   "joint": "body",
+   "z": 1005,
+   "pos": [
+    67,
+    32
+   ]
+  },
+  {
+   "file": "head.png",
+   "joint": "head",
+   "z": 1006,
+   "pos": [
+    92,
+    3
+   ]
+  },
+  {
+   "file": "upper_arm_front.png",
+   "joint": "upper_arm_front",
+   "z": 1007,
+   "pos": [
+    41,
+    62
+   ]
+  },
+  {
+   "file": "forearm_front.png",
+   "joint": "forearm_front",
+   "z": 1008,
+   "pos": [
+    33,
+    108
+   ]
+  },
+  {
+   "file": "claw_front.png",
+   "joint": "claw_front",
+   "z": 1009,
+   "pos": [
+    14,
+    147
+   ]
+  },
+  {
+   "file": "blaze_front.png",
+   "joint": "blaze_front",
+   "z": 1010,
+   "pos": [
+    19,
+    157
+   ]
+  },
+  {
+   "file": "sparks.png",
+   "joint": "sparks",
+   "z": 1011,
+   "pos": [
+    32,
+    9
+   ]
+  }
+ ]
+}

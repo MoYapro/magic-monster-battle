@@ -1,0 +1,169 @@
+{
+ "id": "cat",
+ "scale": 0.5,
+ "canvas": [
+  256.0,
+  256.0
+ ],
+ "cells": [
+  1,
+  1
+ ],
+ "joints": [
+  {
+   "name": "base",
+   "pivot": [
+    0.0,
+    0.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "ground",
+   "pivot": [
+    128.0,
+    228.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "tail",
+   "pivot": [
+    163.0,
+    220.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_far_front",
+   "pivot": [
+    102.0,
+    150.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "body",
+   "pivot": [
+    120.0,
+    170.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "paw_back",
+   "pivot": [
+    142.0,
+    226.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "leg_front",
+   "pivot": [
+    89.0,
+    148.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "head",
+   "pivot": [
+    95.5,
+    94.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "grass",
+   "pivot": [
+    43.0,
+    226.0
+   ],
+   "parent": ""
+  }
+ ],
+ "layers": [
+  {
+   "file": "base.png",
+   "joint": "base",
+   "z": 1000,
+   "pos": [
+    25,
+    37
+   ]
+  },
+  {
+   "file": "ground.png",
+   "joint": "ground",
+   "z": 1001,
+   "pos": [
+    42,
+    218
+   ]
+  },
+  {
+   "file": "tail.png",
+   "joint": "tail",
+   "z": 1002,
+   "pos": [
+    160,
+    90
+   ]
+  },
+  {
+   "file": "leg_far_front.png",
+   "joint": "leg_far_front",
+   "z": 1003,
+   "pos": [
+    86,
+    147
+   ]
+  },
+  {
+   "file": "body.png",
+   "joint": "body",
+   "z": 1004,
+   "pos": [
+    68,
+    93
+   ]
+  },
+  {
+   "file": "paw_back.png",
+   "joint": "paw_back",
+   "z": 1005,
+   "pos": [
+    125,
+    217
+   ]
+  },
+  {
+   "file": "leg_front.png",
+   "joint": "leg_front",
+   "z": 1006,
+   "pos": [
+    66,
+    144
+   ]
+  },
+  {
+   "file": "head.png",
+   "joint": "head",
+   "z": 1007,
+   "pos": [
+    42,
+    36
+   ]
+  },
+  {
+   "file": "grass.png",
+   "joint": "grass",
+   "z": 1008,
+   "pos": [
+    25,
+    199
+   ]
+  }
+ ]
+}

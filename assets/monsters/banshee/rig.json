@@ -1,0 +1,152 @@
+{
+ "id": "banshee",
+ "scale": 0.5,
+ "canvas": [
+  256.0,
+  256.0
+ ],
+ "cells": [
+  1,
+  1
+ ],
+ "joints": [
+  {
+   "name": "base",
+   "pivot": [
+    0.0,
+    0.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hair",
+   "pivot": [
+    132.0,
+    59.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "arm_back",
+   "pivot": [
+    131.0,
+    100.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hand_back",
+   "pivot": [
+    169.0,
+    129.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "gown",
+   "pivot": [
+    118.0,
+    100.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "arm_front",
+   "pivot": [
+    104.0,
+    99.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "hand_front",
+   "pivot": [
+    49.0,
+    102.0
+   ],
+   "parent": ""
+  },
+  {
+   "name": "head",
+   "pivot": [
+    113.0,
+    88.0
+   ],
+   "parent": ""
+  }
+ ],
+ "layers": [
+  {
+   "file": "base.png",
+   "joint": "base",
+   "z": 1000,
+   "pos": [
+    3,
+    5
+   ]
+  },
+  {
+   "file": "hair.png",
+   "joint": "hair",
+   "z": 1001,
+   "pos": [
+    119,
+    8
+   ]
+  },
+  {
+   "file": "arm_back.png",
+   "joint": "arm_back",
+   "z": 1002,
+   "pos": [
+    121,
+    93
+   ]
+  },
+  {
+   "file": "hand_back.png",
+   "joint": "hand_back",
+   "z": 1003,
+   "pos": [
+    164,
+    123
+   ]
+  },
+  {
+   "file": "gown.png",
+   "joint": "gown",
+   "z": 1004,
+   "pos": [
+    86,
+    80
+   ]
+  },
+  {
+   "file": "arm_front.png",
+   "joint": "arm_front",
+   "z": 1005,
+   "pos": [
+    46,
+    92
+   ]
+  },
+  {
+   "file": "hand_front.png",
+   "joint": "hand_front",
+   "z": 1006,
+   "pos": [
+    6,
+    85
+   ]
+  },
+  {
+   "file": "head.png",
+   "joint": "head",
+   "z": 1007,
+   "pos": [
+    80,
+    33
+   ]
+  }
+ ]
+}
