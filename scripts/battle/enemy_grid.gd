@@ -140,6 +140,7 @@ func clear_enemies() -> void:
 	_cells.clear()
 	_enemy_positions.clear()
 	queue_redraw()
+	_queue_sync()
 
 
 func set_obstacles(obstacles: Array[ObstacleData], positions: Array[Vector2i], hp: Dictionary) -> void:
@@ -167,6 +168,7 @@ func place_enemy(enemy: EnemyData, grid_pos: Vector2i) -> bool:
 		_cells[cell] = enemy
 	_enemy_positions[enemy.id] = grid_pos
 	queue_redraw()
+	_queue_sync()
 	return true
 
 
@@ -181,6 +183,7 @@ func remove_enemy(enemy_id: String) -> void:
 		_cells.erase(cell)
 	_enemy_positions.erase(enemy_id)
 	queue_redraw()
+	_queue_sync()
 
 
 func get_enemy_at(grid_pos: Vector2i) -> EnemyData:
@@ -194,8 +197,26 @@ const OBSTACLE_TILES := {"stone": "stone_3", "boulder": "stone_3"}
 const CELL_LINE := Color(0.04, 0.03, 0.02, 0.85)
 
 var _ground_base: Array[String] = GroundTiles.DEFAULT_BASE
-var _art: Dictionary = {}  # art id -> Texture2D (or null when the monster has no art yet)
 var _title := ""
+var _monster_layer := Node2D.new()
+var _overlay := Node2D.new()
+var _monsters: Dictionary = {}  # enemy id -> ProceduralMonster
+var _last_hp: Dictionary = {}   # enemy id -> hp at the last sync, to spot hits and deaths
+var _sync_pending := false
+
+
+func _ready() -> void:
+	add_child(_monster_layer)
+	_overlay.z_index = 2000  # above every monster part (their layers use z up to ~1100)
+	_overlay.draw.connect(_draw_overlay)
+	add_child(_overlay)
+
+
+## Monsters that act at the end of the turn swing at the mages.
+func play_attacks(enemy_ids: Array[String]) -> void:
+	for id in enemy_ids:
+		if _monsters.has(id):
+			(_monsters[id] as ProceduralMonster).play(&"attack")
 
 
 func set_title(title: String) -> void:
@@ -212,8 +233,17 @@ func _draw() -> void:
 	_draw_frame()
 	_draw_grid()
 	_draw_obstacles()
-	_draw_enemies()
-	_draw_targeting()
+	_draw_placeholders()
+	_overlay.queue_redraw()
+
+
+## Cards, bars, chips and target overlays, drawn by the overlay node above the monsters.
+func _draw_overlay() -> void:
+	for id: String in _enemy_positions:
+		var enemy := _enemy_by_id(id)
+		if enemy != null:
+			_draw_enemy_overlay(enemy, _enemy_rect(enemy), _enemy_positions[id])
+	_draw_targeting(_overlay)
 
 
 func _draw_frame() -> void:
@@ -238,16 +268,16 @@ func _draw_grid() -> void:
 
 
 ## Target overlays go on top of tokens so a monster under the reticle is visibly targeted.
-func _draw_targeting() -> void:
+func _draw_targeting(ci: CanvasItem) -> void:
 	var target := Palette.COLOR_TARGET_BLOCKED if _hover_blocked else Palette.COLOR_TARGET_AVAILABLE
 	for row in ROWS:
 		for col in COLS:
 			var rect := Rect2(Vector2(col, row) * cell_size, cell_size).grow(-1.5)
 			if _hovered_cells.has(Vector2i(col, row)):
-				draw_rect(rect, Color(target, 0.22), true)
-				draw_rect(rect, target, false, 3.0)
+				ci.draw_rect(rect, Color(target, 0.22), true)
+				ci.draw_rect(rect, target, false, 3.0)
 			elif _highlighted:
-				draw_rect(rect, Color(Palette.COLOR_TARGET_AVAILABLE, 0.35), false, 1.5)
+				ci.draw_rect(rect, Color(Palette.COLOR_TARGET_AVAILABLE, 0.35), false, 1.5)
 
 
 func _draw_obstacles() -> void:
@@ -260,30 +290,84 @@ func _draw_obstacles() -> void:
 		TokenDraw.obstacle(self, rect, obs, _obstacle_hp[obs.id], GroundTiles.texture(tile) if tile else null)
 
 
-func _draw_enemies() -> void:
-	var drawn: Dictionary = {}
-	for cell_pos: Vector2i in _cells:
-		var enemy: EnemyData = _cells[cell_pos]
-		if drawn.has(enemy.id):
-			continue
-		drawn[enemy.id] = true
-		var grid_pos: Vector2i = _enemy_positions[enemy.id]
-		_draw_enemy(enemy, Rect2(Vector2(grid_pos) * cell_size, Vector2(enemy.grid_size) * cell_size), grid_pos)
+## Monsters without exported art yet are drawn as a coloured token with their name.
+func _draw_placeholders() -> void:
+	for id: String in _enemy_positions:
+		var enemy := _enemy_by_id(id)
+		if enemy != null and not _monsters.has(id):
+			TokenDraw.placeholder(self, _enemy_rect(enemy), enemy)
 
 
-func _draw_enemy(enemy: EnemyData, rect: Rect2, grid_pos: Vector2i) -> void:
+func _draw_enemy_overlay(enemy: EnemyData, rect: Rect2, grid_pos: Vector2i) -> void:
 	var hovered := get_cells_for_enemy(grid_pos, enemy.grid_size).any(
 			func(c: Vector2i) -> bool: return _hovered_cells.has(c))
-	var tex := _art_for(enemy)
-	if tex != null:
-		TokenDraw.art(self, rect, tex)
-	else:
-		TokenDraw.placeholder(self, rect, enemy)
-	TokenDraw.card(self, rect, enemy.color, hovered, _highlighted)
-	TokenDraw.hp_bar(self, rect, enemy.current_hp, enemy.max_hp)
-	TokenDraw.side_chips(self, rect, _status_chips(enemy.id), _defence_chips(enemy.id))
+	TokenDraw.card(_overlay, rect, enemy.color, hovered, _highlighted)
+	TokenDraw.hp_bar(_overlay, rect, enemy.current_hp, enemy.max_hp)
+	TokenDraw.side_chips(_overlay, rect, _status_chips(enemy.id), _defence_chips(enemy.id))
 	if _intents.has(enemy.id):
-		TokenDraw.intent_chip(self, rect, IntentLabel.text_for(enemy, _intents[enemy.id]))
+		TokenDraw.intent_chip(_overlay, rect, IntentLabel.text_for(enemy, _intents[enemy.id]))
+
+
+func _enemy_by_id(id: String) -> EnemyData:
+	var pos: Vector2i = _enemy_positions.get(id, Vector2i(-1, -1))
+	return _cells.get(pos, null)
+
+
+func _enemy_rect(enemy: EnemyData) -> Rect2:
+	return Rect2(Vector2(_enemy_positions[enemy.id]) * cell_size, Vector2(enemy.grid_size) * cell_size)
+
+
+# --- animated monsters ---
+
+func _queue_sync() -> void:
+	if not _sync_pending:
+		_sync_pending = true
+		_sync_monsters.call_deferred()
+
+
+## Keeps one ProceduralMonster per living enemy and plays hit and death reactions.
+func _sync_monsters() -> void:
+	_sync_pending = false
+	var hp_now := {}
+	for id: String in _enemy_positions:
+		var enemy := _enemy_by_id(id)
+		if enemy != null:
+			hp_now[id] = enemy.current_hp
+			_place_monster(enemy)
+	for id in MonsterReactions.died(_last_hp, hp_now):
+		_kill_monster(id)
+	for id in MonsterReactions.hit(_last_hp, hp_now):
+		if _monsters.has(id):
+			(_monsters[id] as ProceduralMonster).play(&"take_hit")
+	_last_hp = hp_now
+	queue_redraw()
+
+
+func _place_monster(enemy: EnemyData) -> void:
+	var rect := _enemy_rect(enemy)
+	var feet := Vector2(rect.get_center().x, rect.end.y - 4.0)
+	var m: ProceduralMonster = _monsters.get(enemy.id)
+	if m == null:
+		m = ProceduralMonster.create(MonsterRig.art_id_for(enemy), rect.size - Vector2(8, 8))
+		if m == null:
+			return
+		_monsters[enemy.id] = m
+		m.position = feet
+		_monster_layer.add_child(m)
+	elif m.position != feet:
+		m.create_tween().tween_property(m, "position", feet, 0.25).set_trans(Tween.TRANS_QUAD)
+	m.fit(rect.size - Vector2(8, 8))
+
+
+func _kill_monster(id: String) -> void:
+	if not _monsters.has(id):
+		return
+	var m: ProceduralMonster = _monsters[id]
+	_monsters.erase(id)
+	m.animation_finished.connect(func(anim: StringName) -> void:
+		if anim == &"die":
+			m.queue_free())
+	m.play(&"die")
 
 
 func _status_chips(enemy_id: String) -> Array:
@@ -304,13 +388,6 @@ func _defence_chips(enemy_id: String) -> Array:
 	if _blocks.get(enemy_id, 0) > 0:
 		out.append(["▣ %d" % _blocks[enemy_id], Palette.COLOR_GRID_BLOCK])
 	return out
-
-
-func _art_for(enemy: EnemyData) -> Texture2D:
-	var art_id := MonsterRig.art_id_for(enemy)
-	if not _art.has(art_id):
-		_art[art_id] = MonsterRig.full_texture(art_id)
-	return _art[art_id]
 
 
 static func _script_id(obj: Object) -> String:

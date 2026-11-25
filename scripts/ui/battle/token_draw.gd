@@ -12,11 +12,7 @@ const SHADE := Color(0.0, 0.0, 0.0, 0.35)
 static func card(ci: CanvasItem, rect: Rect2, color: Color, hovered: bool, targetable: bool) -> void:
 	var inner := rect.grow(-3)
 	var border := Palette.COLOR_TARGET_AVAILABLE if (hovered or targetable) else color.lightened(0.15)
-	EmberDraw.rounded_rect(ci, inner, Color(0, 0, 0, 0.12), border, 3 if hovered else 2, 4)
-
-
-static func art(ci: CanvasItem, rect: Rect2, tex: Texture2D) -> void:
-	ci.draw_texture_rect(tex, rect.grow(-4), false)
+	EmberDraw.rounded_rect(ci, inner, Color.TRANSPARENT, border, 3 if hovered else 2, 4)
 
 
 static func placeholder(ci: CanvasItem, rect: Rect2, enemy: EnemyData) -> void:

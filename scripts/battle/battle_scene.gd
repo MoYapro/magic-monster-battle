@@ -90,9 +90,21 @@ func _refresh_chrome() -> void:
 
 func _on_end_turn_pressed() -> void:
 	_cancel_targeting()
+	var attackers := _enemies_with_intent(_current_state)
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	_apply_state(_history.push(ActionEndTurn.new(rng.seed)).state)
+	enemy_grid.play_attacks(attackers)
+
+
+func _enemies_with_intent(state: BattleState) -> Array[String]:
+	var out: Array[String] = []
+	if state == null:
+		return out
+	for id: String in state.enemies:
+		if not (state.enemies[id] as EnemyState).intent.is_empty():
+			out.append(id)
+	return out
 
 
 func _on_undo_pressed() -> void:
