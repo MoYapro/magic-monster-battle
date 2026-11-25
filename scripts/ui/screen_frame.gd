@@ -15,6 +15,7 @@ func _ready() -> void:
 func _center_layout() -> void:
 	var root := get_tree().root
 	root.global_canvas_transform = Transform2D(0.0, centering_offset(root.get_visible_rect().size))
+	get_tree().call_group(EmberDraw.BACKDROP_GROUP, &"queue_redraw")
 
 
 static func centering_offset(visible_size: Vector2) -> Vector2:

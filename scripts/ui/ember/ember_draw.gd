@@ -103,6 +103,40 @@ static func _glow_texture() -> GradientTexture2D:
 	return _glow_tex
 
 
+const SCREEN := Rect2(0, 0, 1280, 720)
+const BOTTOM_BAR_H := 56.0
+
+
+const BACKDROP_GROUP := &"ember_backdrop"
+
+
+## Screen background with vignette over the whole visible window, so the space around the
+## centred 16:9 layout blends in. Drawers join a group that ScreenFrame redraws on resize.
+static func backdrop(ci: CanvasItem) -> void:
+	if not ci.is_in_group(BACKDROP_GROUP):
+		ci.add_to_group(BACKDROP_GROUP)
+	var visible := visible_rect(ci)
+	ci.draw_rect(visible, Palette.COLOR_BG)
+	vignette(ci, visible)
+
+
+## The window's visible area in layout coordinates (wider or taller than 1280x720).
+static func visible_rect(ci: CanvasItem) -> Rect2:
+	var vp := ci.get_viewport()
+	if vp == null:
+		return SCREEN
+	return Rect2(-vp.global_canvas_transform.origin, vp.get_visible_rect().size)
+
+
+## Dark strip along the bottom for buttons and a hint line (buttons are Controls on top).
+static func bottom_bar(ci: CanvasItem, hint := "", hint_x := 40.0) -> void:
+	var y := SCREEN.size.y - BOTTOM_BAR_H
+	ci.draw_rect(Rect2(0, y, SCREEN.size.x, BOTTOM_BAR_H), Color("#140d09"))
+	ci.draw_line(Vector2(0, y), Vector2(SCREEN.size.x, y), Palette.COLOR_BORDER, 1.5)
+	if hint != "":
+		text(ci, Vector2(hint_x, y + 34.0), hint, 14, Palette.COLOR_TEXT_DIM)
+
+
 ## Darkens the edges of rect, as in the drafts' backdrop.
 static func vignette(ci: CanvasItem, rect: Rect2) -> void:
 	if _vignette_tex == null:

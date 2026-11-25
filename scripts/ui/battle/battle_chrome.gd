@@ -3,8 +3,6 @@ extends Node2D
 ## Battle screen backdrop: background, vignette and the battle/turn counter.
 ## Drawn behind everything else (negative z_index).
 
-const SCREEN := Rect2(0, 0, 1280, 720)
-
 var _counter := ""
 
 
@@ -18,6 +16,5 @@ func set_counter(battle_number: int, turn: int) -> void:
 
 
 func _draw() -> void:
-	draw_rect(SCREEN, Palette.COLOR_BG)
-	EmberDraw.vignette(self, SCREEN)
+	EmberDraw.backdrop(self)
 	EmberDraw.text(self, Vector2(40, 28), _counter, 17, Palette.COLOR_TEXT_DIM, true)
