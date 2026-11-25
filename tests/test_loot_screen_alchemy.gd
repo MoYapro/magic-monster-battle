@@ -1,22 +1,23 @@
 extends GutTest
 
-# Integration test: verifies that LootScreen._try_fuse_wand correctly fuses a
-# linear alchemy recipe and stores the result spell in the wand.
+# Integration test: verifies that the loot screen's model (LootInventory) fuses
+# a linear alchemy recipe when a body spell is placed, and stores the result
+# spell in the wand.
 
-var _saved_wands: Array[WandData] = []
-var _saved_mages: Array[MageData] = []
+const GameStateScript := preload("res://scripts/game_state.gd")
+
+var _run: Node
+var _inventory: LootInventory
 
 
 func before_each() -> void:
-	_saved_wands = GameState.wands.duplicate()
-	_saved_mages = GameState.mages.duplicate()
-	GameState.wands.clear()
-	GameState.mages.clear()
+	_run = autofree(GameStateScript.new())
+	_inventory = LootInventory.new(_run)
 
 
-func after_each() -> void:
-	GameState.wands = _saved_wands
-	GameState.mages = _saved_mages
+func _equip(wand: WandData) -> void:
+	_run.wands.append(wand)
+	_run.mages.append(MageData.new("Test Mage", 30))
 
 
 # --- helpers (mirrored from test_alchemy_fuser for self-containment) ---
@@ -70,46 +71,53 @@ func _parallel_wand(sp0: SpellData, sp1: SpellData, sp2: SpellData) -> WandData:
 
 # --- integration tests ---
 
-func test_loot_screen_fuses_linear_recipe_and_places_spell_in_wand() -> void:
+func test_loot_inventory_fuses_linear_recipe_and_places_spell_in_wand() -> void:
 	var wand := _linear_wand(
 			_catalyst("fire_catalyst"), _projectile("ember"), _projectile("ember"))
-	GameState.wands.append(wand)
-	GameState.mages.append(MageData.new("Test Mage", 30))
+	_equip(wand)
 
-	var screen: Node = load("res://scenes/loot/loot_screen.tscn").instantiate()
-	screen.call("_try_fuse_wand", 0)
-	screen.free()
+	_inventory.try_fuse_wand(0)
 
 	assert_not_null(wand.get_slot("s0").spell,
 			"catalyst slot should have the fused spell after fusion")
 	assert_eq(wand.get_slot("s0").spell.spell_id, "flame_burst")
 
 
-func test_loot_screen_clears_reactant_slots_after_fusion() -> void:
+func test_loot_inventory_clears_reactant_slots_after_fusion() -> void:
 	var wand := _linear_wand(
 			_catalyst("fire_catalyst"), _projectile("ember"), _projectile("ember"))
-	GameState.wands.append(wand)
-	GameState.mages.append(MageData.new("Test Mage", 30))
+	_equip(wand)
 
-	var screen: Node = load("res://scenes/loot/loot_screen.tscn").instantiate()
-	screen.call("_try_fuse_wand", 0)
-	screen.free()
+	_inventory.try_fuse_wand(0)
 
 	assert_null(wand.get_slot("s1").spell, "first reactant slot should be cleared")
 	assert_null(wand.get_slot("s2").spell, "second reactant slot should be cleared")
 
 
-func test_loot_screen_does_not_fuse_parallel_branches() -> void:
+func test_loot_inventory_does_not_fuse_parallel_branches() -> void:
 	var wand := _parallel_wand(
 			_catalyst("fire_catalyst"), _projectile("ember"), _projectile("ember"))
-	GameState.wands.append(wand)
-	GameState.mages.append(MageData.new("Test Mage", 30))
+	_equip(wand)
 
-	var screen: Node = load("res://scenes/loot/loot_screen.tscn").instantiate()
-	screen.call("_try_fuse_wand", 0)
-	screen.free()
+	_inventory.try_fuse_wand(0)
 
 	assert_eq(wand.get_slot("s0").spell.spell_id, "fire_catalyst",
 			"parallel slots must not be consumed — catalyst slot unchanged")
 	assert_not_null(wand.get_slot("s1").spell, "parallel ember slot should be untouched")
 	assert_not_null(wand.get_slot("s2").spell, "parallel ember slot should be untouched")
+
+
+func test_placing_last_reactant_fuses_via_place_in_slot() -> void:
+	var wand := _linear_wand(_catalyst("fire_catalyst"), _projectile("ember"), null)
+	_equip(wand)
+	var result := _inventory.place_in_slot(0, wand.get_slot("s2"), _projectile("ember"))
+	assert_not_null(result)
+	assert_eq(wand.get_slot("s0").spell.spell_id, "flame_burst")
+
+
+func test_placing_tip_never_fuses() -> void:
+	var wand := _linear_wand(
+			_catalyst("fire_catalyst"), _projectile("ember"), _projectile("ember"))
+	_equip(wand)
+	assert_null(_inventory.place_in_slot(0, wand.get_slot("tip"), _tip()))
+	assert_eq(wand.get_slot("s0").spell.spell_id, "fire_catalyst")

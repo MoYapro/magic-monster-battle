@@ -17,6 +17,14 @@ package "Game Loop" {
   [GameOverScreen]
 }
 
+' --- Screen logic (pure / testable, screens are thin views) ---
+package "Screen Logic" {
+  [LootInventory]
+  [BattleRules]
+  [RunProgress]
+  [MageProgression]
+}
+
 ' --- Battle Engine ---
 package "Battle Engine" {
   [BattleComposer]
@@ -90,7 +98,12 @@ GameState --> [BattleScene] : mages, wands,\ncurrent_biome
 [WandData / SpellSlotData] --> [SpellData] : contains spells
 [LootScreen] --> [WandGenerator] : generate loot wands
 [LootScreen] --> [SpellRegistry] : list all spells
-[LootScreen] --> [AlchemyTable] : catalyst fusion
+[LootScreen] --> [LootInventory] : take / drop / equip / fuse
+[LootInventory] --> GameState : backed by
+[LootInventory] --> [AlchemyFuser] : catalyst fusion
+[BattleScene] --> [BattleRules] : outcome, tip click,\nincoming damage
+[BattleScene] --> [RunProgress] : record win, roll loot
+[LevelUpScreen] --> [MageProgression] : upgrade / heal
 [Actions] --> [WandData / SpellSlotData] : read spell/mana cost
 
 ' --- Enemies ---

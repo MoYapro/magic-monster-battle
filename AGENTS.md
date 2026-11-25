@@ -121,11 +121,13 @@ Key format: `"catalyst_id|sorted_reactant_a|sorted_reactant_b"`. Wildcard `*` in
 ```
 scripts/
   game_state.gd              ← Autoload; persists mages/wands/backpack/loot between scenes
+  run_progress.gd            ← Run bookkeeping: battle counts, post-battle loot (rng injected)
   battle/
     battle_state.gd          ← Pure data snapshot (no Nodes)
     battle_setup.gd          ← Immutable encounter data
     battle_history.gd        ← Action log + replay
     battle_scene.gd          ← Top-level scene controller
+    battle_rules.gd          ← Pure scene rules: outcome, tip click, incoming damage, placement
     battle_composer.gd       ← Procedural encounter builder (budget-based)
     wand_evaluator.gd        ← Cast-time spell resolution (static methods only)
     wand_generator.gd        ← Procedural wand builder (static methods only)
@@ -140,8 +142,10 @@ scripts/
   world/
     biome_data.gd            ← Biome definition (monster_pool, obstacle_pool, unlock chain)
     biomes_data.gd           ← Registry of all biomes; BiomesData.all() → Array[BiomeData]
-  loot/loot_screen.gd        ← Drag-and-drop loot management + alchemy fusion UI
+  loot/loot_screen.gd        ← Drag-and-drop loot UI (view only)
+  loot/loot_inventory.gd     ← Loot-screen rules model (picks, drops, slots, fusion, equip)
   level_up/level_up_screen.gd
+  level_up/mage_progression.gd ← Level-up upgrade + heal rules
   world/path_selection_screen.gd
 
 scenes/                      ← .tscn files mirror the scripts/ structure
