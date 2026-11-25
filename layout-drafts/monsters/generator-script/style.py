@@ -14,7 +14,7 @@ import subprocess
 from contextlib import contextmanager
 from pathlib import Path
 
-OUT = Path(__file__).parent / "out"
+OUT = Path(__file__).parent.parent
 INK = "#17110c"
 PAPER = "#f1e4c6"
 EMBER = "#f0a030"

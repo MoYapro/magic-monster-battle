@@ -1,7 +1,7 @@
-"""Render every linocut monster into out/ and the overview 00_all_monsters.png.
+"""Render every linocut monster into the monsters folder and rebuild 00_all_monsters.png.
 
 Usage: python3 build.py
-Each monster script writes out/<id>.svg and out/<id>.png. The overview shows each monster
+Each monster script writes ../<id>.svg and ../<id>.png. The overview shows each monster
 at 300 px per grid cell and at 128 px per grid cell (tile size) on the dark UI colour.
 """
 import subprocess
@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).parent
-OUT = HERE / "out"
+OUT = HERE.parent
 MONSTERS = ["skeleton", "banshee", "goblin", "cave_spider", "shadow_panther", "fire_elemental",
             "troll", "treant"]
 BG = "#1b120d"
@@ -53,7 +53,7 @@ def main():
             cards.append(str(Path(tmp) / f"{i:02d}.png"))
             card(monster, cards[-1])
         subprocess.run(["magick", "montage", *cards, "-tile", "4x2", "-geometry", "+0+0",
-                        "-background", "#0b0705", str(HERE / "00_all_monsters.png")], check=True)
+                        "-background", "#0b0705", str(OUT / "00_all_monsters.png")], check=True)
 
 
 if __name__ == "__main__":

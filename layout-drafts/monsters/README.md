@@ -2,20 +2,21 @@
 
 The monsters are drawn as two-colour linocut prints: black ink plus one colour block per monster, printed slightly out of register on cream paper. The carving marks follow each form, one paper rim runs around the whole figure, and the eyes are ember-coloured. Every monster faces left, towards the mages.
 
-`00_all_monsters.png` shows every monster at bestiary size and at 128 px tile size.
+`00_all_monsters.png` shows every monster at bestiary size and at 128 px tile size. Each monster is `<id>.svg` (with body-part groups) plus `<id>.png`.
 
 ## Build
 
 ```
-python3 build.py
+python3 generator-script/build.py
 ```
 
-This runs every monster script, writes `out/<id>.svg` and `out/<id>.png`, and rebuilds `00_all_monsters.png`. It needs `python3`, `rsvg-convert` and `magick`. The SVGs are git-ignored because they are generated.
+This runs every monster script, writes `<id>.svg` and `<id>.png` into this folder, and rebuilds `00_all_monsters.png`. It needs `python3`, `rsvg-convert` and `magick`.
 
-## Layout
+## Generator scripts (`generator-script/`)
 
 | File | Role |
 |---|---|
+| `build.py` | Renders all monsters and the overview |
 | `style.py` | The `Print` class, jittered polygons, gouges, shared primitives (`bone`, `limb`, `mass`, `strand`, `claw`, `branch`, `flame`, `rag`, `eyes`, `ground`) |
 | `helpers_a.py` … `helpers_d.py` | Helpers for one rim around the figure, curved shading, extra body-part shapes. They overlap and should be merged into `style.py` |
 | `<id>.py` | One script per monster, with a fixed random seed so every build is identical |
