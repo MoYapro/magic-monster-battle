@@ -300,6 +300,7 @@ func _draw_enemy_overlay(enemy: EnemyData, rect: Rect2, grid_pos: Vector2i) -> v
 	var hovered := get_cells_for_enemy(grid_pos, enemy.grid_size).any(
 			func(c: Vector2i) -> bool: return _hovered_cells.has(c))
 	TokenDraw.card(_overlay, rect, enemy.color, hovered, _highlighted)
+	TokenDraw.hp_bar(_overlay, rect, enemy.current_hp, enemy.max_hp)
 	TokenDraw.side_chips(_overlay, rect, _status_chips(enemy.id), _defence_chips(enemy.id))
 	if _intents.has(enemy.id):
 		TokenDraw.intent_chip(_overlay, rect, IntentLabel.text_for(enemy, _intents[enemy.id]))

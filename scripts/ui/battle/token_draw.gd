@@ -41,13 +41,25 @@ static func side_chips(ci: CanvasItem, rect: Rect2, left: Array, right: Array) -
 		chip(ci, Vector2(rect.end.x - 20, rect.position.y + 24 + i * 20), right[i][0], right[i][1])
 
 
-## An obstacle as its linocut art over its cells; obstacles without art stay a coloured block
-## with their name and HP.
+## An obstacle as its linocut art over its cells (HP bar once damaged); obstacles without art stay a
+## coloured block with their name and HP.
 static func obstacle(ci: CanvasItem, rect: Rect2, obs: ObstacleData, hp: int, tex: Texture2D) -> void:
 	if tex != null:
 		ci.draw_texture_rect(tex, rect, false)
+		hp_bar(ci, rect, hp, obs.max_hp, Palette.COLOR_TEXT_STAT)
 		return
 	var inner := rect.grow(-3)
 	EmberDraw.rounded_rect(ci, inner, Color(obs.color.darkened(0.2), 0.7), obs.color.darkened(0.45), 2, 4)
 	ci.draw_rect(Rect2(inner.position.x, inner.end.y - 22, inner.size.x, 22), SHADE)
 	EmberDraw.text_centered(ci, inner.get_center().x, inner.end.y - 9, "%s  %d" % [obs.display_name, hp], 11, Palette.COLOR_TEXT_BRIGHT)
+
+
+## Slim HP bar along the bottom of a token, drawn only once the token has taken damage.
+static func hp_bar(ci: CanvasItem, rect: Rect2, hp: int, max_hp: int, fill := Palette.COLOR_HP_LOW) -> void:
+	if hp >= max_hp:
+		return
+	var bar := Rect2(rect.position.x + 9, rect.end.y - 13, rect.size.x - 18, 5)
+	EmberDraw.rounded_rect(ci, bar.grow(1), Palette.COLOR_HP_BG, Color.TRANSPARENT, 0, 2)
+	var frac := clampf(float(hp) / float(maxi(max_hp, 1)), 0.0, 1.0)
+	if frac > 0.0:
+		EmberDraw.rounded_rect(ci, Rect2(bar.position, Vector2(bar.size.x * frac, bar.size.y)), fill, Color.TRANSPARENT, 0, 2)
