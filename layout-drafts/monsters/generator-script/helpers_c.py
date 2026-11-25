@@ -143,3 +143,84 @@ def spots(cx, cy, rx, ry, n, rmin, rmax, color=PAPER, keep=None):
 
 __all__ = ["INK", "PAPER", "part", "figure_rim", "curve_cut", "groove", "spikes", "segment",
            "smoke", "oval", "spots", "along", "unit", "swell", "bend"]
+
+
+# ---------------------------------------------------------------- cats (tabby, wings, grass)
+
+def rings(line, ts, width, depth=0.5, color=INK):
+    """Tabby rings across a tapered strand: short bands at fractions `ts` along `line`."""
+    out = []
+    for t in ts:
+        x, y, nx, ny = along(line, t)
+        dx, dy = ny, -nx
+        h = width / 2 + 6
+        out.append((path([(x - nx * h - dx * depth * 6, y - ny * h - dy * depth * 6),
+                          (x + nx * h - dx * depth * 4, y + ny * h - dy * depth * 4),
+                          (x + nx * h + dx * depth * 10, y + ny * h + dy * depth * 10),
+                          (x - nx * h + dx * depth * 8, y - ny * h + dy * depth * 8)]), color))
+    return out
+
+
+def stripe(a, c, b, w=7, color=INK):
+    """One carved tabby stripe: a curved band, thick in the middle, pointed at both ends."""
+    line = bezier(a, c, b, 12)
+    return path(swell(line, 1.5, 1.5, w)), color
+
+
+def feather(root, ang, length, w):
+    """A single long flight feather: tapered, slightly curved, rounded at the root."""
+    dx, dy = math.cos(ang), math.sin(ang)
+    tip = (root[0] + dx * length, root[1] + dy * length)
+    mid = (root[0] + dx * length * 0.5 - dy * length * 0.06, root[1] + dy * length * 0.5 + dx * length * 0.06)
+    return swell(bezier(root, mid, tip, 10), w, 3, w * 0.25)
+
+
+def wing(base, wrist, tip, n=8, lmin=60, lmax=150, ang=0.9, w=24, coverts=2, fan=0.35):
+    """A feathered wing spread up behind the shoulder.
+
+    The arm runs base -> wrist -> tip; flight feathers hang from it, pointing at `ang`
+    (radians), longest towards the tip. Returns (polys, marks): covert rows as scalloped
+    bands, plus a cream gouge along each feather shaft.
+    """
+    arm = bezier(base, wrist, tip, 16)
+    polys, marks = [swell(arm, w * 1.2, w * 0.5, w * 0.3)], []
+    for i in range(n):
+        t = 0.25 + 0.75 * i / (n - 1)
+        x, y, _, _ = along(arm, t)
+        L = lmin + (lmax - lmin) * t
+        a = ang - fan * t
+        polys.append(feather((x, y), a, L, w))
+        marks.append((path(taper(bezier((x, y), (x + math.cos(a) * L * 0.5, y + math.sin(a) * L * 0.5),
+                                        (x + math.cos(a) * L * 0.85, y + math.sin(a) * L * 0.85), 6), 3, 0.8)),
+                      PAPER))
+    for row in range(coverts):
+        for i in range(n + 2):
+            t = 0.1 + 0.9 * i / (n + 1)
+            x, y, _, _ = along(arm, t)
+            off = 14 + row * 22
+            cx, cy = x + math.cos(ang) * off, y + math.sin(ang) * off
+            polys.append(oval(cx, cy, w * 0.75, w * 0.55, 10, ang))
+            marks.append((sliver(cx - math.cos(ang) * 4, cy - math.sin(ang) * 4, ang, w * 0.7, 4), INK))
+    return polys, marks
+
+
+def blades(x, y, n, h, spread=50, lean=-0.2):
+    """A grass tuft: n tapered blades fanning up from around (x, y)."""
+    out = []
+    for i in range(n):
+        bx = x + (i / max(1, n - 1) - 0.5) * spread * 0.5 + rng.uniform(-4, 4)
+        a = -math.pi / 2 + lean + (i / max(1, n - 1) - 0.5) * 1.2 + rng.uniform(-0.15, 0.15)
+        L = h * rng.uniform(0.6, 1.0)
+        tip = (bx + math.cos(a) * L, y + math.sin(a) * L)
+        c = (bx + math.cos(a) * L * 0.5 - 6, y + math.sin(a) * L * 0.5)
+        out.append(taper(bezier((bx, y), c, tip, 8), 7, 1))
+    return out
+
+
+def whiskers(p, root, n=3, length=60, ang=math.pi + 0.15, spread=0.35, w=2.6, color=PAPER):
+    """Thin cream whiskers fanning out from the muzzle; not part of the figure rim."""
+    for i in range(n):
+        a = ang + spread * (i / max(1, n - 1) - 0.5)
+        tip = (root[0] + math.cos(a) * length, root[1] + math.sin(a) * length)
+        c = (root[0] + math.cos(a) * length * 0.5, root[1] + math.sin(a) * length * 0.5 - 5)
+        p.fill(path(taper(bezier(root, c, tip, 8), w, 0.6)), color)

@@ -18,10 +18,10 @@ This runs every monster script, writes `<id>.svg` and `<id>.png` into this folde
 |---|---|
 | `build.py` | Renders all monsters and the overview |
 | `style.py` | The `Print` class, jittered polygons, gouges, shared primitives (`bone`, `limb`, `mass`, `strand`, `claw`, `branch`, `flame`, `rag`, `eyes`, `ground`) |
-| `helpers_a.py` … `helpers_d.py` | Helpers for one rim around the figure, curved shading, extra body-part shapes. They overlap and should be merged into `style.py` |
+| `helpers_a.py` … `helpers_h.py` | Helpers for one rim around the figure, curved shading, extra body-part shapes. They overlap and should be merged into `style.py` |
 | `<id>.py` | One script per monster, with a fixed random seed so every build is identical |
 
-1×1 monsters use a 512×512 canvas. 1×2 monsters (troll, treant) use 512×1024.
+1×1 monsters use a 512×512 canvas. 1×2 monsters (troll, treant, shield ogre) use 512×1024, the 2×2 stone giant uses 1024×1024.
 
 ## Body parts
 
