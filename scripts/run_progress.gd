@@ -58,9 +58,14 @@ static func reroll_spell_loot(run: Object, rng: RandomNumberGenerator) -> void:
 
 # Two distinct biomes, drawn uniformly from those unlocked by the battle counts.
 static func pick_path_choices(battle_counts: Dictionary, rng: RandomNumberGenerator) -> Array[BiomeData]:
-	var pool := BiomesData.unlocked(battle_counts)
-	_shuffle(pool, rng)
-	return pool.slice(0, PATH_CHOICE_COUNT)
+	return choose_paths(BiomesData.unlocked(battle_counts), rng)
+
+
+# Up to PATH_CHOICE_COUNT distinct biomes; fewer (even none) when the pool is smaller.
+static func choose_paths(pool: Array[BiomeData], rng: RandomNumberGenerator) -> Array[BiomeData]:
+	var shuffled := pool.duplicate()
+	_shuffle(shuffled, rng)
+	return shuffled.slice(0, PATH_CHOICE_COUNT)
 
 
 static func _shuffle(items: Array, rng: RandomNumberGenerator) -> void:

@@ -10,6 +10,8 @@ const CARD_GAP := 40.0
 const CARDS_TOTAL_W := 2.0 * CARD_W + CARD_GAP
 const CARD_X_LEFT  := (SCREEN_W - CARDS_TOTAL_W) * 0.5
 const CARD_X_RIGHT := CARD_X_LEFT + CARD_W + CARD_GAP
+const CARD_X_CENTER := (SCREEN_W - CARD_W) * 0.5
+const DEAD_END_BTN_SIZE := Vector2(180, 44)
 const CARD_Y := HEADER_H + (SCREEN_H - HEADER_H - CARD_H) * 0.5
 
 var _choices: Array[BiomeData] = []
@@ -17,6 +19,8 @@ var _choices: Array[BiomeData] = []
 
 func _ready() -> void:
 	_pick_choices()
+	if _choices.is_empty():
+		_build_dead_end_button()
 
 
 func _pick_choices() -> void:
@@ -26,6 +30,8 @@ func _pick_choices() -> void:
 
 
 func _card_x(i: int) -> float:
+	if _choices.size() == 1:
+		return CARD_X_CENTER
 	return CARD_X_LEFT if i == 0 else CARD_X_RIGHT
 
 
@@ -36,8 +42,30 @@ func _card_rect(i: int) -> Rect2:
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, Vector2(SCREEN_W, SCREEN_H)), Palette.COLOR_BG, true)
 	_draw_header()
+	if _choices.is_empty():
+		_draw_dead_end()
 	for i in _choices.size():
 		_draw_card(i)
+
+
+func _draw_dead_end() -> void:
+	draw_string(ThemeDB.fallback_font, Vector2(0.0, SCREEN_H * 0.5 - 20.0),
+			"You have reached a dead end", HORIZONTAL_ALIGNMENT_CENTER, SCREEN_W, 32, Palette.COLOR_TEXT_BRIGHT)
+
+
+func _build_dead_end_button() -> void:
+	var layer := CanvasLayer.new()
+	add_child(layer)
+	var btn := Button.new()
+	btn.text = "Then I lose"
+	btn.size = DEAD_END_BTN_SIZE
+	btn.position = Vector2((SCREEN_W - DEAD_END_BTN_SIZE.x) * 0.5, SCREEN_H * 0.5 + 20.0)
+	btn.pressed.connect(_on_then_i_lose_pressed)
+	layer.add_child(btn)
+
+
+func _on_then_i_lose_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/game_over/game_over_screen.tscn")
 
 
 func _draw_header() -> void:

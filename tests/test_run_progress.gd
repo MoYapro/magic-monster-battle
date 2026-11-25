@@ -142,3 +142,20 @@ func test_path_choices_do_not_mutate_registry() -> void:
 	var before := BiomesData.all().duplicate()
 	RunProgress.pick_path_choices({}, _rng(4))
 	assert_eq(BiomesData.all(), before)
+
+
+func test_choose_paths_with_single_biome_returns_it() -> void:
+	var pool: Array[BiomeData] = [BiomesData.all()[0]]
+	assert_eq(RunProgress.choose_paths(pool, _rng(1)), pool)
+
+
+func test_choose_paths_with_empty_pool_returns_nothing() -> void:
+	var pool: Array[BiomeData] = []
+	assert_true(RunProgress.choose_paths(pool, _rng(1)).is_empty())
+
+
+func test_choose_paths_does_not_mutate_pool() -> void:
+	var pool: Array[BiomeData] = BiomesData.all().duplicate()
+	var before := pool.duplicate()
+	RunProgress.choose_paths(pool, _rng(3))
+	assert_eq(pool, before)
