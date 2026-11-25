@@ -195,6 +195,12 @@ const CELL_LINE := Color(0.04, 0.03, 0.02, 0.85)
 
 var _ground_base: Array[String] = GroundTiles.DEFAULT_BASE
 var _art: Dictionary = {}  # art id -> Texture2D (or null when the monster has no art yet)
+var _title := ""
+
+
+func set_title(title: String) -> void:
+	_title = title
+	queue_redraw()
 
 
 func set_ground_tiles(base: Array[String]) -> void:
@@ -213,6 +219,8 @@ func _draw() -> void:
 func _draw_frame() -> void:
 	var grid := Rect2(Vector2.ZERO, Vector2(COLS, ROWS) * cell_size)
 	EmberDraw.panel(self, grid.grow(18))
+	if not _title.is_empty():
+		EmberDraw.title_plate(self, Rect2(grid.size.x / 2.0 - 150.0, -38.0, 300.0, 32.0), _title)
 
 
 func _draw_grid() -> void:

@@ -33,3 +33,8 @@ func current_state() -> BattleState:
 	for action: BattleAction in _actions:
 		state = action.apply(state, _setup).state
 	return state
+
+
+## 1 at the start of a battle, +1 for every ended turn still in the history.
+func turn_number() -> int:
+	return 1 + _actions.filter(func(a: BattleAction) -> bool: return a is ActionEndTurn).size()

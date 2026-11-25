@@ -1,6 +1,5 @@
 class_name BattleDebugBar extends Node
 
-signal end_turn_requested
 signal undo_requested
 signal win_requested
 signal reroll_requested
@@ -137,31 +136,24 @@ func _build_ui(parent: Node) -> void:
 	_level_spinbox.value_changed.connect(func(v: float): level_changed.emit(v))
 	layer.add_child(_level_spinbox)
 
-	var end_turn_button := Button.new()
-	end_turn_button.text = "End Turn"
-	end_turn_button.size = Vector2(100, BOTTOM_BAR_H - 10)
-	end_turn_button.position = Vector2(SCREEN_W - 420, SCREEN_H - BOTTOM_BAR_H + 5)
-	end_turn_button.pressed.connect(func(): end_turn_requested.emit())
-	layer.add_child(end_turn_button)
-
 	var win_button := Button.new()
 	win_button.text = "🏆 Win"
 	win_button.size = Vector2(90, BOTTOM_BAR_H - 10)
-	win_button.position = Vector2(SCREEN_W - 310, SCREEN_H - BOTTOM_BAR_H + 5)
+	win_button.position = Vector2(SCREEN_W - 434, SCREEN_H - BOTTOM_BAR_H + 5)
 	win_button.pressed.connect(func(): win_requested.emit())
 	layer.add_child(win_button)
 
 	var reroll_button := Button.new()
 	reroll_button.text = "↺ Reroll"
 	reroll_button.size = Vector2(90, BOTTOM_BAR_H - 10)
-	reroll_button.position = Vector2(SCREEN_W - 210, SCREEN_H - BOTTOM_BAR_H + 5)
+	reroll_button.position = Vector2(SCREEN_W - 336, SCREEN_H - BOTTOM_BAR_H + 5)
 	reroll_button.pressed.connect(func(): reroll_requested.emit())
 	layer.add_child(reroll_button)
 
 	_undo_button = Button.new()
 	_undo_button.text = "↩ Undo  Ctrl+Z"
-	_undo_button.size = Vector2(148, BOTTOM_BAR_H - 10)
-	_undo_button.position = Vector2(SCREEN_W - 112, SCREEN_H - BOTTOM_BAR_H + 5)
+	_undo_button.size = Vector2(130, BOTTOM_BAR_H - 10)
+	_undo_button.position = Vector2(SCREEN_W - 238, SCREEN_H - BOTTOM_BAR_H + 5)
 	_undo_button.pressed.connect(func(): undo_requested.emit())
 	layer.add_child(_undo_button)
 

@@ -45,13 +45,16 @@ var _place_id_counter: Dictionary = {}
 var _debug_bar: BattleDebugBar = null
 var _tooltip_manager: BattleTooltipManager = null
 var _floating_damage: FloatingDamage = null
+var _chrome: BattleChrome = null
 
 
 func _ready() -> void:
+	_chrome = BattleChrome.new()
+	add_child(_chrome)
+	_add_end_turn_seal()
 	_debug_bar = BattleDebugBar.new()
 	add_child(_debug_bar)
 	_debug_bar.setup(self)
-	_debug_bar.end_turn_requested.connect(_on_end_turn_pressed)
 	_debug_bar.undo_requested.connect(_on_undo_pressed)
 	_debug_bar.win_requested.connect(_on_battle_won)
 	_debug_bar.reroll_requested.connect(_on_reroll_pressed)
@@ -66,6 +69,21 @@ func _ready() -> void:
 	_tooltip_manager.setup(self, _mage_displays, enemy_grid, _wand_displays)
 	_floating_damage = FloatingDamage.new()
 	add_child(_floating_damage)
+
+
+func _add_end_turn_seal() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 2
+	add_child(layer)
+	var seal := WaxSealButton.new()
+	seal.position = Vector2(SCREEN_W - 98.0, SCREEN_H - 92.0)
+	seal.pressed.connect(_on_end_turn_pressed)
+	layer.add_child(seal)
+
+
+func _refresh_chrome() -> void:
+	var turn := _history.turn_number() if _history != null else 1
+	_chrome.set_counter(GameState.battle_count + 1, turn)
 
 
 # --- bottom bar handlers ---
@@ -208,6 +226,7 @@ func _build_setup() -> void:
 	if biome == null:
 		biome = BiomesData.all()[0]
 	enemy_grid.set_ground_tiles(GroundTiles.base_for_biome(biome.name))
+	enemy_grid.set_title(biome.name)
 	var biome_level: int = _debug_bar.get_level()
 	var composition := BattleComposer.compose(biome, biome_level, rng)
 	_battle_enemies = composition["enemies"]
@@ -246,6 +265,7 @@ func _apply_state(state: BattleState) -> void:
 	_mana_display.setup(state.mana, _setup.max_mana, _panel_height)
 	_refresh_wand_charges(state)
 	_debug_bar.set_undo_enabled(_history.can_undo())
+	_refresh_chrome()
 	match BattleRules.outcome(state, _history.can_undo()):
 		BattleRules.Outcome.LOST:
 			_on_battle_lost()

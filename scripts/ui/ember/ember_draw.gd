@@ -17,6 +17,7 @@ const ALCHEMY_SPOTS: Array[Vector2] = [Vector2(0.0, 0.27), Vector2(-0.3, -0.2), 
 
 static var _bold: FontVariation
 static var _glow_tex: GradientTexture2D
+static var _vignette_tex: GradientTexture2D
 static var _boxes: Dictionary = {}
 
 
@@ -100,6 +101,20 @@ static func _glow_texture() -> GradientTexture2D:
 		_glow_tex.width = 128
 		_glow_tex.height = 128
 	return _glow_tex
+
+
+## Darkens the edges of rect, as in the drafts' backdrop.
+static func vignette(ci: CanvasItem, rect: Rect2) -> void:
+	if _vignette_tex == null:
+		var g := Gradient.new()
+		g.offsets = PackedFloat32Array([0.0, 0.55, 1.0])
+		g.colors = PackedColorArray([Color(0, 0, 0, 0), Color(0, 0, 0, 0), Color(0, 0, 0, 0.55)])
+		_vignette_tex = GradientTexture2D.new()
+		_vignette_tex.gradient = g
+		_vignette_tex.fill = GradientTexture2D.FILL_RADIAL
+		_vignette_tex.fill_from = Vector2(0.5, 0.45)
+		_vignette_tex.fill_to = Vector2(1.25, 0.45)
+	ci.draw_texture_rect(_vignette_tex, rect, false)
 
 
 ## Centred title plate: framed box with the accent title between fleurons.
