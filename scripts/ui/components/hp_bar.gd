@@ -8,6 +8,7 @@ var incoming := 0
 var shield := 0
 var status_losses: Array[int] = []
 var status_colors: Array[Color] = []
+var fill := Palette.COLOR_HP_FULL
 
 
 func set_values(p_hp: int, p_max: int, p_incoming := 0, p_shield := 0) -> void:
@@ -19,4 +20,4 @@ func set_values(p_hp: int, p_max: int, p_incoming := 0, p_shield := 0) -> void:
 
 
 func _draw() -> void:
-	EmberDraw.hp_bar(self, Rect2(Vector2.ZERO, size), hp, max_hp, incoming, status_losses, status_colors, shield)
+	EmberDraw.hp_bar(self, Rect2(Vector2.ZERO, size), hp, max_hp, incoming, status_losses, status_colors, shield, fill)

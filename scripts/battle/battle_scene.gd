@@ -86,6 +86,51 @@ func _refresh_chrome() -> void:
 	_chrome.set_counter(GameState.battle_count + 1, turn)
 
 
+# --- details overlays ---
+
+func _open_details_at(pos: Vector2) -> void:
+	var enemy := enemy_grid.get_enemy_at(enemy_grid.get_cell_at(enemy_grid.to_local(pos)))
+	if enemy != null and _current_state.enemies.has(enemy.id):
+		_open_monster_details(enemy)
+		return
+	for i in _mage_displays.size():
+		var md := _mage_displays[i]
+		if Rect2(md.position, md.get_rect().size).has_point(pos):
+			_open_mage_details(i)
+			return
+
+
+func _open_monster_details(enemy: EnemyData) -> void:
+	var es := _current_state.enemies[enemy.id] as EnemyState
+	var modal := ModalLayer.new()
+	add_child(modal)
+	var panel := MonsterDetails.new()
+	panel.setup(enemy, es, _area_name(), es.intent.get("target_name", ""), modal.close)
+	modal.show_panel(panel)
+
+
+func _open_mage_details(index: int) -> void:
+	var ms := _current_state.mages[index] as MageState
+	var modal := ModalLayer.new()
+	add_child(modal)
+	var panel := MageDetails.new()
+	panel.setup(_setup.mages[index], ms, BattleRules.incoming_attack(_current_state, _setup, index),
+			MageThreats.for_mage(_current_state, _setup, index), GameState.battle_count, modal.close)
+	modal.show_panel(panel)
+
+
+func _area_name() -> String:
+	return GameState.current_biome.name if GameState.current_biome != null else BiomesData.all()[0].name
+
+
+func _fallen_mages() -> Array[String]:
+	var out: Array[String] = []
+	for i in _setup.mages.size():
+		if BattleRules.is_mage_dead(_current_state, i):
+			out.append(_setup.mages[i].name)
+	return out
+
+
 # --- bottom bar handlers ---
 
 func _on_end_turn_pressed() -> void:
@@ -310,6 +355,15 @@ func _on_battle_lost() -> void:
 
 func _on_battle_won() -> void:
 	_cancel_targeting()
+	var modal := ModalLayer.new(false)
+	add_child(modal)
+	var plaque := VictoryPlaque.new()
+	plaque.setup("The " + _area_name(), _history.turn_number(), _current_state.dead_enemies.size(), _fallen_mages())
+	plaque.claimed.connect(_claim_spoils)
+	modal.show_panel(plaque)
+
+
+func _claim_spoils() -> void:
 	RunProgress.record_win(GameState, _mages, _current_wands())
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
@@ -613,6 +667,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			var pos := (event as InputEventMouseMotion).position
 			_update_intent_hover(pos)
 			_tooltip_manager.update(pos, _current_state, _setup)
+		elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			_open_details_at((event as InputEventMouseButton).position)
 		return
 
 	if event is InputEventMouseMotion:

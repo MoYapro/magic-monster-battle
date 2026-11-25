@@ -159,7 +159,7 @@ func _show_monster_tooltip(enemy: EnemyData, pos: Vector2) -> void:
 		_monster_tooltip_traits.visible = false
 	if not enemy.action_pool.is_empty():
 		var lines: Array = enemy.action_pool.map(
-				func(a: MonsterActionData) -> String: return _format_action(a))
+				func(a: MonsterActionData) -> String: return ActionText.summary(a))
 		_monster_tooltip_attacks.text = "\n".join(lines)
 		_monster_tooltip_attacks.visible = true
 	else:
@@ -184,28 +184,6 @@ func _get_ground_labels_for_enemy(enemy: EnemyData) -> Array[String]:
 	if puddles.size() > 0:
 		labels.append("Puddle (%d cells) — Wet +%d/round" % [puddles.size(), puddles.size() * 2])
 	return labels
-
-
-func _format_action(action: MonsterActionData) -> String:
-	if action is MonsterActionAttack:
-		var atk := action as MonsterActionAttack
-		var parts: Array[String] = ["%s  %d dmg" % [atk.name, atk.damage]]
-		if atk.wet_stacks > 0:
-			parts.append("Wet %d" % atk.wet_stacks)
-		if atk.applies_frozen:
-			parts.append("Freeze")
-		if atk.applies_web:
-			parts.append("Web")
-		return "  ".join(parts)
-	if action is MonsterActionHeal:
-		return "%s  heals %d (lowest HP ally)" % [action.name, (action as MonsterActionHeal).amount]
-	if action is MonsterActionDrumsOfWar:
-		return "Drums of War  ×2 attack for adjacent allies"
-	if action is MonsterActionVineSnare:
-		return "Vine Snare  blocks attack; breaking costs 50% HP (heals caster)"
-	if action is MonsterActionLeech:
-		return "Leech  each mana you spend heals caster by 1"
-	return action.name
 
 
 func _format_statuses_bbcode(statuses: Array) -> String:

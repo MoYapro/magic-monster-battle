@@ -149,14 +149,15 @@ static func hp_segments(hp: int, incoming: int, status_losses: Array[int]) -> Pa
 
 
 static func hp_bar(ci: CanvasItem, rect: Rect2, hp: int, max_hp: int, incoming := 0,
-		status_losses: Array[int] = [], status_colors: Array[Color] = [], shield := 0) -> void:
+		status_losses: Array[int] = [], status_colors: Array[Color] = [], shield := 0,
+		fill := Palette.COLOR_HP_FULL) -> void:
 	rounded_rect(ci, rect, Palette.COLOR_HP_BG, Color.TRANSPARENT, 0, 2)
 	if max_hp <= 0:
 		return
 	var edges := hp_segments(hp, incoming, status_losses)
 	var px := func(v: int) -> float: return rect.size.x * float(v) / float(max_hp)
 	if edges[0] > 0:
-		rounded_rect(ci, Rect2(rect.position, Vector2(px.call(edges[0]), rect.size.y)), Palette.COLOR_HP_FULL)
+		rounded_rect(ci, Rect2(rect.position, Vector2(px.call(edges[0]), rect.size.y)), fill)
 	var colors: Array[Color] = [Palette.COLOR_HP_LOW]
 	colors.append_array(status_colors)
 	for i in range(1, edges.size()):
