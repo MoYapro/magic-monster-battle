@@ -69,3 +69,76 @@ func test_generate_loot_is_deterministic_for_seed() -> void:
 	assert_eq(a.pending_loot_wands[0].slots.size(), b.pending_loot_wands[0].slots.size())
 	assert_eq(a.battle_drops.map(func(s: SpellData) -> String: return s.spell_id),
 			b.battle_drops.map(func(s: SpellData) -> String: return s.spell_id))
+
+
+# --- new game ---
+
+func test_start_new_game_creates_three_unarmed_mages() -> void:
+	var run := _run()
+	RunProgress.start_new_game(run, _rng(1))
+	assert_eq(run.mages.map(func(m: MageData) -> String: return m.name), ["Lyra", "Eron", "Vael"])
+	for m: MageData in run.mages:
+		assert_eq(m.max_hp, 30)
+		assert_eq(m.current_hp, 30)
+	assert_eq(run.wands, [null, null, null])
+
+
+func test_start_new_game_offers_four_starter_wands() -> void:
+	var run := _run()
+	RunProgress.start_new_game(run, _rng(1))
+	assert_eq(run.pending_loot_wands.size(), 4)
+	for w: WandData in run.pending_loot_wands:
+		assert_eq(w.get_tip_slot().spell.spell_id, SpellSingle.create().spell_id)
+
+
+func test_start_new_game_appends_to_existing_loot_wands() -> void:
+	var run := _run()
+	run.pending_loot_wands.append(WandGenerator.generate(_rng(3)))
+	RunProgress.start_new_game(run, _rng(1))
+	assert_eq(run.pending_loot_wands.size(), 5, "callers clear first (reset_to_new_game)")
+
+
+# --- reroll ---
+
+func test_reroll_replaces_loot_with_four_body_and_one_tip() -> void:
+	var run := _run()
+	run.battle_drops.append(SpellEmber.create())
+	run.pending_loot.append(SpellEmber.create())
+	RunProgress.reroll_spell_loot(run, _rng(5))
+	assert_eq(run.pending_loot.size(), 5)
+	assert_true(run.battle_drops.is_empty(), "rerolled loot has no pick limit")
+	assert_eq(run.pending_loot_wands.size(), 1)
+	for i in 4:
+		assert_false(run.pending_loot[i].tags.has("tip"))
+	assert_true(run.pending_loot[4].tags.has("tip"))
+
+
+# --- path choices ---
+
+func test_path_choices_are_two_distinct_unlocked_biomes() -> void:
+	for seed in 20:
+		var choices := RunProgress.pick_path_choices({}, _rng(seed))
+		assert_eq(choices.size(), 2)
+		assert_ne(choices[0], choices[1])
+		assert_true(BiomesData.unlocked({}).has(choices[0]))
+		assert_true(BiomesData.unlocked({}).has(choices[1]))
+
+
+func test_path_choices_deterministic_for_seed() -> void:
+	assert_eq(RunProgress.pick_path_choices({}, _rng(9)), RunProgress.pick_path_choices({}, _rng(9)))
+
+
+func test_path_choices_can_include_unlocked_layer_two() -> void:
+	var counts := {"Desert": 10}
+	var seen := {}
+	for seed in 200:
+		for b: BiomeData in RunProgress.pick_path_choices(counts, _rng(seed)):
+			seen[b.name] = true
+	assert_true(seen.has("Pyramids"))
+	assert_eq(seen.size(), BiomesData.unlocked(counts).size(), "every unlocked biome can come up")
+
+
+func test_path_choices_do_not_mutate_registry() -> void:
+	var before := BiomesData.all().duplicate()
+	RunProgress.pick_path_choices({}, _rng(4))
+	assert_eq(BiomesData.all(), before)

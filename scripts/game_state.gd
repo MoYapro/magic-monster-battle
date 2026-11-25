@@ -36,28 +36,14 @@ func reset_to_new_game() -> void:
 
 
 func reroll_spell_loot() -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.randomize()
-	pending_loot.clear()
-	battle_drops.clear()
-	pending_loot_wands.clear()
-	pending_loot_wands.append(WandGenerator.generate(rng))
-	var all_body := SpellRegistry.all_body_spells()
-	for _i in 4:
-		pending_loot.append(all_body[rng.randi_range(0, all_body.size() - 1)])
-	pending_loot.append(WandGenerator._pick_tip_spell(rng))
+	RunProgress.reroll_spell_loot(self, _random_rng())
 
 
 func _init_new_game() -> void:
-	mages = [
-		MageData.new("Lyra", 30),
-		MageData.new("Eron", 30),
-		MageData.new("Vael", 30),
-	]
-	wands.clear()
-	for _i in mages.size():
-		wands.append(null)
+	RunProgress.start_new_game(self, _random_rng())
+
+
+func _random_rng() -> RandomNumberGenerator:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	for _i in 4:
-		pending_loot_wands.append(WandGenerator.generate_starter(rng))
+	return rng

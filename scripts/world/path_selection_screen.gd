@@ -20,9 +20,9 @@ func _ready() -> void:
 
 
 func _pick_choices() -> void:
-	var pool := BiomesData.unlocked(GameState.battle_count_by_biome)
-	pool.shuffle()
-	_choices = [pool[0], pool[1]]
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	_choices = RunProgress.pick_path_choices(GameState.battle_count_by_biome, rng)
 
 
 func _card_x(i: int) -> float:
